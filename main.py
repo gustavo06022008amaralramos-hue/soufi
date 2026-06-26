@@ -10,8 +10,8 @@ load_dotenv()
 # ==============================================================================
 # CONFIGURAÇÃO DO SUPABASE
 # ==============================================================================
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://mkyzdzvhmhmmvvuuzbsg.supabase.co")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1reXpkenZobWhtbXZ2dXV6YnNnIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODkxMzE4NSwiZXhwIjoyMDk0NDg5MTg1fQ.Wkda4OT3BEtug2aAaEuddAjwkYIFybV1IM3IlcHr_PI")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
