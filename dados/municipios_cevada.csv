@@ -1,0 +1,86 @@
+municipio,estado,latitude,longitude,temperatura_media,precipitacao_anual,altitude,tipo_solo,ph_solo,periodo_seco,risco_geada
+Guarapuava,PR,-25.393,-51.457,17.1,1499,1078,Latossolo Bruno,6.1,2,25.0
+Castro,PR,-24.791,-50.012,17.4,1381,1005,Latossolo Vermelho,5.8,2,18.0
+Ponta Grossa,PR,-25.090,-50.168,17.2,1502,975,Latossolo Vermelho,5.7,2,22.0
+Irati,PR,-25.467,-50.650,18.2,1422,812,Latossolo Vermelho-Amarelo,5.6,2,15.0
+Prudentópolis,PR,-25.213,-50.980,17.8,1554,900,Nitossolo Vermelho,6.0,2,20.0
+Palmas,PR,-26.483,-51.990,15.2,1846,1100,Cambissolo Húmico,5.9,1,60.0
+Pitanga,PR,-24.758,-51.764,18.3,1486,960,Latossolo Vermelho,5.8,2,18.0
+Turvo,PR,-25.050,-51.520,16.9,1534,1060,Latossolo Bruno,6.2,2,30.0
+Inácio Martins,PR,-25.570,-51.074,16.5,1601,1050,Latossolo Bruno,6.1,1,35.0
+Reserva,PR,-24.652,-50.843,17.9,1461,940,Latossolo Vermelho,5.7,2,20.0
+Ipiranga,PR,-25.018,-50.582,17.5,1488,925,Latossolo Vermelho,5.8,2,22.0
+Tibagi,PR,-24.509,-50.414,18.4,1400,850,Latossolo Vermelho,5.6,3,15.0
+Candói,PR,-25.582,-52.139,16.8,1642,1055,Latossolo Vermelho,6.0,2,32.0
+Laranjeiras do Sul,PR,-25.407,-52.416,19.1,1628,870,Latossolo Vermelho,5.8,2,12.0
+Palmeira,PR,-25.428,-49.999,17.3,1416,905,Latossolo Vermelho,5.7,2,20.0
+Teixeira Soares,PR,-25.367,-50.456,17.6,1459,905,Latossolo Vermelho,5.8,2,22.0
+São João do Triunfo,PR,-25.686,-50.290,17.8,1501,870,Latossolo Vermelho-Amarelo,5.5,2,18.0
+Fernandes Pinheiro,PR,-25.452,-50.483,17.7,1480,890,Latossolo Vermelho,5.7,2,20.0
+União da Vitória,PR,-26.228,-51.087,18.1,1701,820,Cambissolo Húmico,5.8,1,15.0
+Mallet,PR,-25.876,-50.820,17.9,1543,840,Latossolo Vermelho,5.6,2,18.0
+Bituruna,PR,-26.158,-51.544,16.8,1720,970,Cambissolo Háplico,5.9,1,28.0
+Cruz Machado,PR,-26.017,-51.347,17.1,1680,960,Cambissolo Húmico,6.0,1,30.0
+General Carneiro,PR,-26.420,-51.318,15.8,1791,1080,Latossolo Bruno,6.1,1,50.0
+Clevelândia,PR,-26.409,-52.355,16.5,1812,1100,Cambissolo Húmico,5.9,1,45.0
+Coronel Domingos Soares,PR,-26.159,-52.111,16.1,1765,1060,Latossolo Bruno,6.0,1,40.0
+Honório Serpa,PR,-25.890,-51.979,16.4,1699,1040,Latossolo Bruno,5.9,1,38.0
+Mangueirinha,PR,-25.950,-52.178,16.6,1741,1050,Latossolo Vermelho,5.8,1,35.0
+São Mateus do Sul,PR,-25.872,-50.381,17.5,1500,840,Latossolo Vermelho,5.7,2,22.0
+Rebouças,PR,-25.617,-50.690,17.6,1477,900,Latossolo Vermelho-Amarelo,5.7,2,22.0
+Pinhão,PR,-25.697,-51.661,16.9,1598,1000,Latossolo Bruno,6.0,2,30.0
+São Joaquim,SC,-28.294,-49.932,12.9,1698,1360,Cambissolo Húmico,5.5,3,70.0
+Lages,SC,-27.815,-50.327,14.8,1518,916,Cambissolo Húmico,5.7,2,45.0
+Curitibanos,SC,-27.283,-50.582,15.8,1590,987,Latossolo Bruno,5.6,2,40.0
+Campos Novos,SC,-27.401,-51.224,16.2,1488,928,Latossolo Vermelho-Amarelo,5.7,2,35.0
+Caçador,SC,-26.775,-51.015,16.1,1836,960,Latossolo Bruno,5.5,2,38.0
+Ponte Serrada,SC,-26.866,-52.018,17.1,1824,1012,Latossolo Bruno,5.6,2,28.0
+Fraiburgo,SC,-27.025,-50.920,15.9,1602,1050,Latossolo Bruno,5.5,2,40.0
+Lebon Régis,SC,-26.929,-50.690,16.3,1670,1000,Latossolo Bruno,5.6,2,38.0
+Celso Ramos,SC,-27.605,-51.330,16.5,1530,850,Cambissolo Húmico,5.7,2,30.0
+Anita Garibaldi,SC,-27.690,-51.123,16.2,1540,870,Cambissolo Húmico,5.6,2,32.0
+Palmeira SC,SC,-27.884,-51.996,15.8,1562,920,Latossolo Bruno,5.7,2,42.0
+Água Doce,SC,-26.992,-51.556,16.0,1698,1050,Latossolo Bruno,5.5,2,35.0
+Joaçaba,SC,-27.172,-51.508,18.2,1751,522,Latossolo Vermelho,5.8,1,10.0
+Xanxerê,SC,-26.876,-52.404,18.3,1801,840,Latossolo Vermelho,5.7,1,10.0
+Chapecó,SC,-27.099,-52.615,19.4,1850,679,Latossolo Vermelho,5.8,1,5.0
+Vacaria,RS,-28.511,-50.935,14.3,1841,955,Cambissolo Húmico,5.5,2,50.0
+Caxias do Sul,RS,-29.168,-51.179,14.9,1904,760,Cambissolo Háplico,5.6,2,35.0
+Bento Gonçalves,RS,-29.170,-51.519,15.8,1750,643,Argissolo Vermelho,5.7,2,28.0
+Veranópolis,RS,-28.935,-51.556,16.2,1740,697,Latossolo Vermelho,5.7,2,25.0
+Passo Fundo,RS,-28.262,-52.406,17.1,1810,687,Latossolo Vermelho,5.6,2,20.0
+Erechim,RS,-27.634,-52.274,17.2,1918,765,Latossolo Vermelho,5.5,2,18.0
+Lagoa Vermelha,RS,-28.209,-51.518,15.8,1820,832,Latossolo Bruno,5.6,2,35.0
+São Francisco de Paula,RS,-29.443,-50.587,13.8,2048,912,Cambissolo Húmico,5.4,2,45.0
+Gramado,RS,-29.379,-50.876,14.5,1950,825,Cambissolo Háplico,5.5,2,40.0
+Canela,RS,-29.365,-50.812,14.8,1970,800,Cambissolo Háplico,5.5,2,38.0
+Nova Prata,RS,-28.778,-51.609,16.5,1850,720,Latossolo Vermelho,5.7,2,22.0
+São Marcos,RS,-28.966,-51.067,15.2,1890,790,Cambissolo Húmico,5.5,2,35.0
+Farroupilha,RS,-29.225,-51.352,16.3,1870,706,Argissolo Vermelho,5.6,2,25.0
+Antônio Prado,RS,-28.860,-51.287,15.9,1900,750,Cambissolo Háplico,5.5,2,30.0
+Cruz Alta,RS,-28.644,-53.611,18.4,1714,473,Latossolo Vermelho,5.7,1,12.0
+Jataí,GO,-17.880,-51.716,23.1,1430,678,Latossolo Vermelho,5.9,5,2.0
+Rio Verde,GO,-17.793,-50.929,23.4,1517,748,Latossolo Vermelho,6.0,5,3.0
+Mineiros,GO,-17.570,-52.550,22.6,1408,838,Latossolo Vermelho,5.9,5,2.0
+Catalão,GO,-18.165,-47.947,22.1,1356,874,Latossolo Vermelho,6.0,5,2.0
+Morrinhos,GO,-17.732,-49.104,22.8,1420,830,Latossolo Vermelho,6.0,5,2.0
+Caiapônia,GO,-16.946,-51.812,23.0,1380,780,Latossolo Vermelho,5.8,5,2.0
+Montividiu,GO,-17.442,-51.998,22.4,1360,900,Latossolo Vermelho,6.0,5,2.0
+Quirinópolis,GO,-18.449,-50.449,24.5,1450,480,Latossolo Vermelho,5.7,4,1.0
+Bom Jesus de Goiás,GO,-18.214,-49.728,23.8,1480,680,Latossolo Vermelho,5.9,5,1.0
+Serranópolis,GO,-18.302,-52.003,22.5,1350,810,Latossolo Vermelho,5.9,5,2.0
+Araxá,MG,-19.594,-46.943,20.4,1408,1004,Latossolo Vermelho,6.0,4,2.0
+Patos de Minas,MG,-18.578,-46.519,22.2,1071,842,Latossolo Vermelho,5.9,4,1.0
+Uberaba,MG,-19.747,-47.931,22.8,1302,768,Latossolo Vermelho,6.0,4,1.0
+Uberlândia,MG,-18.919,-48.277,22.1,1400,870,Latossolo Vermelho,6.0,4,1.0
+Carmo do Paranaíba,MG,-19.002,-46.315,20.1,1367,1008,Latossolo Vermelho-Amarelo,5.8,4,2.0
+Rio Paranaíba,MG,-19.180,-46.247,19.8,1320,1045,Latossolo Vermelho-Amarelo,5.9,4,2.0
+Patrocínio,MG,-18.944,-46.994,21.0,1340,902,Latossolo Vermelho,5.9,4,2.0
+Ibiá,MG,-19.476,-46.546,20.6,1380,960,Latossolo Vermelho,6.0,4,2.0
+São Gotardo,MG,-19.311,-46.046,19.5,1350,1050,Latossolo Vermelho,5.9,4,2.0
+Abadia dos Dourados,MG,-18.492,-47.399,21.5,1320,830,Latossolo Vermelho,5.9,4,1.0
+Itapeva,SP,-23.983,-48.877,19.5,1200,670,Latossolo Vermelho,5.8,3,5.0
+Itapetininga,SP,-23.592,-48.053,20.4,1195,675,Latossolo Vermelho-Amarelo,5.7,3,4.0
+Capão Bonito,SP,-24.001,-48.353,18.7,1215,650,Latossolo Vermelho-Amarelo,5.7,3,5.0
+Buri,SP,-23.796,-48.607,18.9,1180,840,Latossolo Vermelho,5.8,3,5.0
+Itararé,SP,-24.113,-49.331,19.2,1190,820,Latossolo Vermelho,5.8,3,5.0

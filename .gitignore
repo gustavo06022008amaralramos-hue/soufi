@@ -1,0 +1,33 @@
+# Credenciais — NUNCA commitar
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Logs e arquivos temporários da coleta
+checkpoint_processados.json
+coleta_log.txt
+coleta_err.txt
+log_*.txt
+*_log.txt
+*_err.txt
+*.log
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+frontend/.env
+frontend/dist/
+frontend/.vite/
+
+# Sistema
+.DS_Store
+Thumbs.db
+desktop.ini
