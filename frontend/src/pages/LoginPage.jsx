@@ -77,32 +77,60 @@ export default function LoginPage() {
       </div>
 
       {/* ── Painel esquerdo (info) — visível em telas largas ── */}
-      <div style={{
-        flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center',
-        padding: '60px 60px', position: 'relative', zIndex: 1,
-        display: 'none',
-      }}
-        className="login-left"
-      >
-        <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(134,239,172,0.8)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 24 }}>
-          Cooperativa Agrária · Sistema SOUFII
-        </p>
-        <h2 style={{ fontSize: 42, fontWeight: 800, color: '#fff', lineHeight: 1.1, marginBottom: 20 }}>
-          Zoneamento inteligente<br />para cevada cervejeira
+      <div className="login-left">
+        {/* Label topo */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 32 }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#86efac', animation: 'pulse 1.8s infinite' }} />
+          <p style={{ fontSize: 11, fontWeight: 700, color: 'rgba(134,239,172,0.9)', letterSpacing: 2.5, textTransform: 'uppercase' }}>
+            Cooperativa Agrária · SOUFII
+          </p>
+        </div>
+
+        {/* Título principal */}
+        <h2 style={{ fontSize: 44, fontWeight: 900, color: '#fff', lineHeight: 1.1, marginBottom: 18, letterSpacing: '-1px' }}>
+          Zoneamento<br />
+          <span style={{ background: 'linear-gradient(90deg,#86efac,#34d399)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>
+            inteligente
+          </span>
+          <br />para cevada
         </h2>
-        <p style={{ fontSize: 16, color: 'rgba(255,255,255,0.6)', lineHeight: 1.7, maxWidth: 400, marginBottom: 40 }}>
-          Análise agroclimática de 5.570 municípios brasileiros com dados NASA POWER, SoilGrids e critérios ZARC/EMBRAPA.
+
+        <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.62)', lineHeight: 1.75, maxWidth: 380, marginBottom: 40 }}>
+          Análise agroclimática de <strong style={{ color: '#86efac' }}>5.571 municípios brasileiros</strong> com dados
+          NASA POWER, SoilGrids e critérios ZARC/EMBRAPA — tudo em tempo real.
         </p>
-        {[
-          { n: '5.570', label: 'Municípios analisados' },
-          { n: '32',    label: 'Anos de dados climáticos' },
-          { n: '6',     label: 'Critérios ZARC' },
-        ].map(({ n, label }) => (
-          <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 16 }}>
-            <span style={{ fontSize: 32, fontWeight: 800, color: '#86efac', lineHeight: 1 }}>{n}</span>
-            <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.55)' }}>{label}</span>
-          </div>
-        ))}
+
+        {/* Stats em grid 2×2 */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 36 }}>
+          {[
+            { n: '5.571',  label: 'Municípios',   sub: 'analisados', cor: '#86efac' },
+            { n: '30+',    label: 'Anos de dados', sub: 'NASA POWER', cor: '#6ee7b7' },
+            { n: '6',      label: 'Critérios',     sub: 'ZARC/EMBRAPA',cor:'#34d399' },
+            { n: '100%',   label: 'Cobertura',     sub: 'nacional',   cor: '#10b981' },
+          ].map(s => (
+            <div key={s.n} style={{
+              background: 'rgba(255,255,255,0.07)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: 12, padding: '14px 16px',
+              backdropFilter: 'blur(8px)',
+            }}>
+              <p style={{ fontSize: 26, fontWeight: 800, color: s.cor, lineHeight: 1, marginBottom: 4 }}>{s.n}</p>
+              <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.8)', fontWeight: 600 }}>{s.label}</p>
+              <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.4)' }}>{s.sub}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Fontes */}
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {['NASA POWER', 'SoilGrids', 'Open-Meteo', 'ZARC/MAPA', 'IBGE'].map(tag => (
+            <span key={tag} style={{
+              fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.5)',
+              background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
+              borderRadius: 20, padding: '3px 10px',
+            }}>{tag}</span>
+          ))}
+        </div>
       </div>
 
       {/* ── Formulário ── */}

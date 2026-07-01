@@ -336,3 +336,65 @@ input[type=range]:disabled { opacity: 0.35; cursor: not-allowed; }
   font-size: 9px; font-weight: 700;
   display: flex; align-items: center; justify-content: center; padding: 0 4px;
 }
+
+/* ── Login split panel ──────────────────────────── */
+.login-left { display: none; }
+@media (min-width: 960px) {
+  .login-left {
+    display: flex !important;
+    flex: 1;
+    flex-direction: column;
+    justify-content: center;
+    padding: 60px 60px;
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* ── Glow pulsante (destaques) ─────────────────── */
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(45,106,79,0.4); }
+  50%       { box-shadow: 0 0 0 8px rgba(45,106,79,0); }
+}
+.glow-pulse { animation: glowPulse 2.4s ease-in-out infinite; }
+
+/* ── Float up-down (decorativo) ─────────────────── */
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-6px); }
+}
+.float-y { animation: floatY 3.5s ease-in-out infinite; }
+
+/* ── KPI card com sombra colorida ─────────────────── */
+.kpi-green  { border-color: rgba(26,122,60,0.2)  !important; box-shadow: 0 4px 16px rgba(26,122,60,0.08) !important; }
+.kpi-blue   { border-color: rgba(2,132,199,0.2)  !important; box-shadow: 0 4px 16px rgba(2,132,199,0.08) !important; }
+.kpi-amber  { border-color: rgba(212,160,23,0.2) !important; box-shadow: 0 4px 16px rgba(212,160,23,0.08) !important; }
+.kpi-red    { border-color: rgba(220,38,38,0.2)  !important; box-shadow: 0 4px 16px rgba(220,38,38,0.08) !important; }
+
+/* ── Progress bar animada ──────────────────────── */
+@keyframes progressFill { from { width: 0%; } to { width: var(--pct); } }
+.progress-bar-animated { animation: progressFill 1.2s ease-out forwards; }
+
+/* ── Tag de status avançada ─────────────────────── */
+.status-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  border-radius: 20px; padding: 3px 10px;
+  font-size: 10px; font-weight: 600;
+}
+.status-tag-dot {
+  width: 5px; height: 5px; border-radius: 50%;
+}
+
+/* ── Tooltip simples (CSS) ──────────────────────── */
+[data-tooltip] { position: relative; }
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%);
+  background: #111827; color: #fff;
+  font-size: 10px; font-weight: 500; white-space: nowrap;
+  border-radius: 6px; padding: 4px 8px;
+  pointer-events: none; opacity: 0; transition: opacity 0.18s;
+  z-index: 9999;
+}
+[data-tooltip]:hover::after { opacity: 1; }

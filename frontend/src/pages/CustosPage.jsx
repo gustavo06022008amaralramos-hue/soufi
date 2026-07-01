@@ -2,13 +2,13 @@ import { useState, useMemo } from 'react';
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend,
-  RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   LineChart, Line, ReferenceLine,
 } from 'recharts';
 import {
   DollarSign, TrendingUp, TrendingDown, AlertTriangle,
   CheckCircle, Package, Truck, Sprout, Droplets,
   BarChart2, Calculator, Download, Info,
+  Building2, CreditCard, PiggyBank, Percent,
 } from 'lucide-react';
 
 /* ── Dados regionais de custo ───────────────────────────── */
@@ -82,6 +82,37 @@ function calcular(uf, area, precoSaca, distKm, prodTha) {
   return { custo_ha, frete_ha, custo_total_ha, custo_total, receita_ha, receita, lucro, roi, margem, preco_be, prod_be, breakdown };
 }
 
+/* ── Linhas de crédito rural disponíveis ────────────── */
+const LINHAS_CREDITO = [
+  { nome:'Pronaf Custeio',   taxa:3.0,  prazo:12, publico:'Agricultor familiar',   limite:'R$ 250 mil', fonte:'BNDES/Tesouro' },
+  { nome:'Pronamp',          taxa:6.0,  prazo:12, publico:'Médio produtor',         limite:'R$ 1,5 mi',  fonte:'BNDES' },
+  { nome:'BCB Rural Custeio',taxa:7.0,  prazo:12, publico:'Produtor rural (geral)', limite:'R$ 2 mi',    fonte:'Banco do Brasil' },
+  { nome:'Programa ABC+',    taxa:8.5,  prazo:60, publico:'Sustentabilidade',       limite:'R$ 5 mi',    fonte:'BNDES' },
+  { nome:'FNO/FNE/FCO',     taxa:6.5,  prazo:36, publico:'Regiões específicas',    limite:'R$ 3 mi',    fonte:'BNB/BB/BCB' },
+];
+
+/* ── Helpers financeiros ─────────────────────────── */
+function calcPricePMT(pv, taxaAnual, meses) {
+  if (pv <= 0 || meses <= 0) return 0;
+  const i = taxaAnual / 100 / 12;
+  if (i === 0) return pv / meses;
+  return pv * (i * Math.pow(1 + i, meses)) / (Math.pow(1 + i, meses) - 1);
+}
+
+function gerarAmortizacao(pv, taxaAnual, meses, nRows = 8) {
+  const i = taxaAnual / 100 / 12;
+  const pmt = calcPricePMT(pv, taxaAnual, meses);
+  const rows = [];
+  let saldo = pv;
+  for (let m = 1; m <= Math.min(meses, nRows); m++) {
+    const juros = saldo * i;
+    const amort = pmt - juros;
+    saldo -= amort;
+    rows.push({ mes: m, pmt, juros, amort, saldo: Math.max(saldo, 0) });
+  }
+  return { pmt, rows };
+}
+
 /* ── Componentes UI ──────────────────────────────────── */
 function KpiCard({ icon: Icon, label, value, sub, cor='#1B4332', bg='#F0F7F2', border='rgba(45,106,79,0.18)' }) {
   return (
@@ -148,7 +179,24 @@ export default function CustosPage() {
   const [distKm,   setDistKm]   = useState(150);
   const [prodTha,  setProdTha]  = useState(CUSTOS_UF['PR'].prod_tha);
 
+  /* Financiamento */
+  const [taxaAnual,    setTaxaAnual]    = useState(7.0);
+  const [prazoMeses,   setPrazoMeses]   = useState(12);
+  const [entradaPct,   setEntradaPct]   = useState(20);
+  const [linhaCredito, setLinhaCredito] = useState(null);
+
   const r = useMemo(() => calcular(uf, area, preco, distKm, prodTha), [uf, area, preco, distKm, prodTha]);
+
+  /* Cálculos de financiamento */
+  const financ = useMemo(() => {
+    const valorFinanciado = r.custo_total * (1 - entradaPct / 100);
+    const entrada = r.custo_total * (entradaPct / 100);
+    const { pmt, rows } = gerarAmortizacao(valorFinanciado, taxaAnual, prazoMeses);
+    const totalPago = pmt * prazoMeses + entrada;
+    const totalJuros = totalPago - r.custo_total;
+    const custoEfetivo = r.custo_total > 0 ? ((totalJuros / r.custo_total) * 100) : 0;
+    return { valorFinanciado, entrada, pmt, rows, totalPago, totalJuros, custoEfetivo };
+  }, [r.custo_total, taxaAnual, prazoMeses, entradaPct]);
   const lucroPosi = r.lucro >= 0;
 
   const cenariosDados = useMemo(() => CENARIOS.map(c => {
@@ -368,6 +416,159 @@ export default function CustosPage() {
             </LineChart>
           </ResponsiveContainer>
         </Secao>
+      </div>
+
+      {/* ── Linhas de Crédito Rural ── */}
+      <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, padding:'20px 22px', marginBottom:16 }}>
+        <p style={{ fontSize:13, fontWeight:700, color:'#1B4332', marginBottom:4, display:'flex', alignItems:'center', gap:7 }}>
+          <span style={{ width:3, height:16, background:'linear-gradient(180deg,#7c3aed,#1B4332)', borderRadius:2, display:'inline-block' }} />
+          Linhas de Crédito Rural — Custeio Agrícola
+        </p>
+        <p style={{ fontSize:10, color:'#9CA3AF', marginBottom:16, marginLeft:10 }}>Taxas e condições vigentes para a safra 2025/26 · Fonte: BACEN/MAPA</p>
+        <div style={{ overflowX:'auto' }}>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
+            <thead>
+              <tr style={{ background:'#F9FAFB' }}>
+                {['Linha de Crédito','Taxa a.a.','Prazo','Público-alvo','Limite','Fonte','Selecionar'].map(h => (
+                  <th key={h} style={{ padding:'9px 12px', fontSize:9, fontWeight:700, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.8, textAlign:'left', borderBottom:'1px solid #E5E7EB' }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {LINHAS_CREDITO.map((l, i) => (
+                <tr key={l.nome} style={{ background: linhaCredito === i ? 'rgba(124,58,237,0.05)' : i % 2 ? '#FAFAFA' : '#fff', borderBottom:'1px solid #F3F4F6' }}>
+                  <td style={{ padding:'9px 12px', fontWeight:700, color:'#374151' }}>{l.nome}</td>
+                  <td style={{ padding:'9px 12px', fontWeight:800, color:'#7c3aed' }}>{l.taxa.toFixed(1)}%</td>
+                  <td style={{ padding:'9px 12px', color:'#374151' }}>{l.prazo} meses</td>
+                  <td style={{ padding:'9px 12px', color:'#6B7280' }}>{l.publico}</td>
+                  <td style={{ padding:'9px 12px', fontWeight:600, color:'#1B4332' }}>{l.limite}</td>
+                  <td style={{ padding:'9px 12px', color:'#9CA3AF' }}>{l.fonte}</td>
+                  <td style={{ padding:'9px 12px' }}>
+                    <button onClick={() => { setLinhaCredito(i); setTaxaAnual(l.taxa); setPrazoMeses(l.prazo); }} style={{
+                      fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:6, cursor:'pointer',
+                      background: linhaCredito === i ? '#7c3aed' : '#F3F4F6',
+                      color: linhaCredito === i ? '#fff' : '#374151',
+                      border:`1px solid ${linhaCredito === i ? '#7c3aed' : '#E5E7EB'}`,
+                    }}>
+                      {linhaCredito === i ? '✓ Selecionada' : 'Usar esta'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── Simulador de Financiamento Bancário ── */}
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1.4fr', gap:16, marginBottom:16 }}>
+
+        {/* Inputs de financiamento */}
+        <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, padding:'20px 22px' }}>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1B4332', marginBottom:4, display:'flex', alignItems:'center', gap:7 }}>
+            <span style={{ width:3, height:16, background:'linear-gradient(180deg,#7c3aed,#0284c7)', borderRadius:2, display:'inline-block' }} />
+            Simulador de Financiamento
+          </p>
+          <p style={{ fontSize:10, color:'#9CA3AF', marginBottom:18, marginLeft:10 }}>Custo total da lavoura: {fmtR(r.custo_total)}</p>
+
+          <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
+            <SliderRow label="Entrada (%)" value={entradaPct} onChange={setEntradaPct} min={0} max={60} step={5} fmt={v=>`${v}%`} cor="#7c3aed" />
+            <SliderRow label="Taxa de juros (% a.a.)" value={taxaAnual} onChange={setTaxaAnual} min={3.0} max={18.0} step={0.5} fmt={v=>`${v.toFixed(1)}%`} cor="#0284c7" />
+            <SliderRow label="Prazo (meses)" value={prazoMeses} onChange={setPrazoMeses} min={6} max={60} step={6} fmt={v=>`${v} meses`} cor="#1B4332" />
+          </div>
+
+          <div style={{ marginTop:20, display:'grid', gridTemplateColumns:'1fr 1fr', gap:10 }}>
+            {[
+              { icon:CreditCard,  label:'Entrada',         val:fmtR(financ.entrada),         cor:'#7c3aed', bg:'rgba(124,58,237,0.06)'  },
+              { icon:Building2,   label:'Valor financiado', val:fmtR(financ.valorFinanciado),  cor:'#0284c7', bg:'rgba(2,132,199,0.06)'   },
+              { icon:PiggyBank,   label:'Parcela mensal',   val:fmtR(financ.pmt),             cor:'#1B4332', bg:'rgba(27,67,50,0.06)'    },
+              { icon:Percent,     label:'Total de juros',   val:fmtR(financ.totalJuros),       cor:'#DC2626', bg:'rgba(220,38,38,0.06)'   },
+            ].map(({ icon:Ic, label, val, cor, bg }) => (
+              <div key={label} style={{ background:bg, borderRadius:10, padding:'12px 14px', display:'flex', gap:10, alignItems:'center' }}>
+                <div style={{ width:32, height:32, borderRadius:8, background:`${cor}18`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+                  <Ic size={14} color={cor} />
+                </div>
+                <div>
+                  <p style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7, marginBottom:2 }}>{label}</p>
+                  <p style={{ fontSize:14, fontWeight:800, color:cor }}>{val}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div style={{ marginTop:14, padding:'10px 12px', background:'#F9FAFB', borderRadius:8, border:'1px solid #E5E7EB' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+              <span style={{ fontSize:11, color:'#6B7280' }}>Custo efetivo do financiamento</span>
+              <span style={{ fontSize:14, fontWeight:800, color:'#DC2626' }}>{fmt(financ.custoEfetivo, 1)}%</span>
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:4 }}>
+              <span style={{ fontSize:11, color:'#6B7280' }}>Total pago ao banco</span>
+              <span style={{ fontSize:14, fontWeight:800, color:'#374151' }}>{fmtR(financ.totalPago)}</span>
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:4 }}>
+              <span style={{ fontSize:11, color:'#6B7280' }}>Lucro líquido após quitação</span>
+              <span style={{ fontSize:14, fontWeight:800, color: (r.lucro - financ.totalJuros) >= 0 ? '#1A7A3C' : '#DC2626' }}>
+                {fmtR(r.lucro - financ.totalJuros)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Tabela de amortização */}
+        <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, padding:'20px 22px' }}>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1B4332', marginBottom:4, display:'flex', alignItems:'center', gap:7 }}>
+            <span style={{ width:3, height:16, background:'linear-gradient(180deg,#0284c7,#7c3aed)', borderRadius:2, display:'inline-block' }} />
+            Tabela Price — Primeiras Parcelas
+          </p>
+          <p style={{ fontSize:10, color:'#9CA3AF', marginBottom:16, marginLeft:10 }}>
+            Taxa {taxaAnual.toFixed(1)}% a.a. · {prazoMeses} parcelas · Sistema de Amortização Constante (Price)
+          </p>
+          <div style={{ overflowX:'auto' }}>
+            <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
+              <thead>
+                <tr>
+                  {['Mês','Parcela','Juros','Amortização','Saldo'].map(h => (
+                    <th key={h} style={{ padding:'8px 10px', fontSize:9, fontWeight:700, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7, borderBottom:'1px solid #E5E7EB', textAlign:'right', background:'#F9FAFB' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {financ.rows.map((row, i) => (
+                  <tr key={row.mes} style={{ background: i % 2 ? '#FAFAFA' : '#fff', borderBottom:'1px solid #F3F4F6' }}>
+                    <td style={{ padding:'8px 10px', textAlign:'right', fontWeight:700, color:'#6B7280' }}>{row.mes}</td>
+                    <td style={{ padding:'8px 10px', textAlign:'right', fontWeight:700, color:'#1B4332' }}>{fmtR(row.pmt)}</td>
+                    <td style={{ padding:'8px 10px', textAlign:'right', color:'#DC2626' }}>{fmtR(row.juros)}</td>
+                    <td style={{ padding:'8px 10px', textAlign:'right', color:'#0284c7' }}>{fmtR(row.amort)}</td>
+                    <td style={{ padding:'8px 10px', textAlign:'right', fontWeight:600, color:'#374151' }}>{fmtR(row.saldo)}</td>
+                  </tr>
+                ))}
+                {prazoMeses > 8 && (
+                  <tr>
+                    <td colSpan={5} style={{ padding:'8px 10px', textAlign:'center', fontSize:10, color:'#9CA3AF', fontStyle:'italic' }}>
+                      ... mais {prazoMeses - 8} parcelas restantes (total {fmtR(financ.totalPago)})
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Gráfico barras: composição mensal (juros vs amort) */}
+          <div style={{ marginTop:14 }}>
+            <p style={{ fontSize:10, color:'#9CA3AF', marginBottom:8 }}>Composição das parcelas (juros × amortização)</p>
+            <ResponsiveContainer width="100%" height={120}>
+              <BarChart data={financ.rows} margin={{ top:0, right:0, left:0, bottom:0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                <XAxis dataKey="mes" tick={{ fontSize:9, fill:'#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={v=>`${v}°`} />
+                <YAxis tick={{ fontSize:9, fill:'#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}k`} width={34} />
+                <Tooltip contentStyle={{ fontSize:10, borderRadius:7, border:'1px solid #E5E7EB' }}
+                  formatter={(v, n) => [fmtR(v), n === 'juros' ? 'Juros' : 'Amortização']} labelFormatter={v=>`Parcela ${v}`} />
+                <Bar dataKey="juros" stackId="a" fill="#DC2626" radius={[0,0,0,0]} name="juros" />
+                <Bar dataKey="amort" stackId="a" fill="#0284c7" radius={[3,3,0,0]} name="amort" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       {/* ── Comparativo por Estado ── */}

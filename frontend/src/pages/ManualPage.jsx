@@ -123,7 +123,7 @@ export default function ManualPage() {
           </div>
         </div>
         <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)', lineHeight: 1.7 }}>
-          O SOUFII analisa <strong style={{ color: '#fff' }}>5.570 municípios brasileiros</strong> com base nos
+          O SOUFII analisa <strong style={{ color: '#fff' }}>5.571 municípios brasileiros</strong> com base nos
           critérios técnicos do <strong style={{ color: '#fff' }}>ZARC/EMBRAPA</strong> para identificar as
           regiões mais aptas ao cultivo de cevada cervejeira para a Cooperativa Agrária.
         </p>
@@ -138,7 +138,7 @@ export default function ManualPage() {
         </p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
           {[
-            { icon: '🌍', label: '5.570', sub: 'Municípios analisados' },
+            { icon: '🌍', label: '5.571', sub: 'Municípios analisados' },
             { icon: '📅', label: '30 anos', sub: 'Dados climáticos NASA' },
             { icon: '🎯', label: '6 critérios', sub: 'ZARC / EMBRAPA' },
           ].map(c => (
@@ -444,7 +444,7 @@ export default function ManualPage() {
             { fonte: 'NASA POWER', desc: 'Temperatura (T2M, T2M_MIN) e precipitação mensal 1993–2023 para cada município.', url: 'power.larc.nasa.gov' },
             { fonte: 'SoilGrids ISRIC v2', desc: 'Percentual de argila por camada de solo (0–5cm, 5–15cm, 15–30cm) — média ponderada.', url: 'soilgrids.org' },
             { fonte: 'Open-Meteo Geocoder', desc: 'Coordenadas geográficas dos municípios com validação por caixa delimitadora da UF.', url: 'open-meteo.com' },
-            { fonte: 'IBGE', desc: 'Lista oficial de 5.570 municípios brasileiros com código IBGE, nome e UF.', url: 'ibge.gov.br' },
+            { fonte: 'IBGE', desc: 'Lista oficial de 5.571 municípios brasileiros com código IBGE, nome e UF.', url: 'ibge.gov.br' },
             { fonte: 'ZARC / MAPA', desc: 'Critérios técnicos de aptidão climática para cevada cervejeira. Portaria MAPA 2024.', url: 'mapa.gov.br' },
           ].map(f => (
             <div key={f.fonte} style={{
@@ -464,7 +464,7 @@ export default function ManualPage() {
           ))}
         </div>
         <Destaque icon={Info} cor={VERDE} title="Atualização dos dados">
-          Os dados climáticos são a média de 30 anos (1993–2023). A coleta para todos os 5.570
+          Os dados climáticos são a média de 30 anos (1993–2023). A coleta para todos os 5.571
           municípios está em andamento — municípios cinzas no mapa ainda não foram processados.
         </Destaque>
       </Section>
