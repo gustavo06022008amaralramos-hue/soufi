@@ -60,7 +60,7 @@ export default function AppLayout({ apiOnline, onRetry }) {
               <span style={{ width:5, height:5, borderRadius:'50%', background:'#2D6A4F', animation:'pulse 1.8s infinite', display:'inline-block' }} />
               <Database size={10} color="#2D6A4F" />
               <span style={{ fontSize:10, color:'#2D6A4F', fontWeight:500 }}>
-                {processados.toLocaleString('pt-BR')} / 5.570 municípios
+                {processados.toLocaleString('pt-BR')} / 5.571 municípios
               </span>
             </div>
           )}

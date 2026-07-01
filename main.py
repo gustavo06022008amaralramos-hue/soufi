@@ -213,22 +213,29 @@ def municipios_top(limit: int = Query(default=5, ge=1, le=50)):
 
 @app.get("/municipios/estatisticas", tags=["Municípios"])
 def municipios_estatisticas():
-    """Estatísticas gerais: totais por classificação."""
+    """Estatísticas gerais rápidas: contagens por score sem carregar todos os dados."""
     try:
-        resultado = supabase.table("municipios_aptidao") \
-            .select("score_aptidao, apto_geral").execute()
-        dados = resultado.data or []
-        aptos    = sum(1 for r in dados if (r.get("score_aptidao") or 0) >= 70)
-        parciais = sum(1 for r in dados if 40 <= (r.get("score_aptidao") or 0) < 70)
-        inaptos  = sum(1 for r in dados if (r.get("score_aptidao") or 0) < 40)
-        scores   = [r["score_aptidao"] for r in dados if r.get("score_aptidao") is not None]
+        from supabase import PostgrestAPIError
+        import requests as _req
+
+        base = supabase.table("municipios_aptidao")
+
+        total    = base.select("codigo_ibge", count="exact").execute().count or 0
+        aptos    = base.select("codigo_ibge", count="exact").gte("score_aptidao", 70).execute().count or 0
+        parciais = base.select("codigo_ibge", count="exact").gte("score_aptidao", 40).lt("score_aptidao", 70).execute().count or 0
+        inaptos  = base.select("codigo_ibge", count="exact").lt("score_aptidao", 40).execute().count or 0
+
+        top = base.select("nome_municipio, uf, score_aptidao").not_.is_("score_aptidao", "null") \
+            .order("score_aptidao", desc=True).limit(1).execute()
+        melhor = top.data[0] if top.data else None
+
         return {
-            "total":       len(dados),
+            "total":       total,
             "aptos":       aptos,
             "parciais":    parciais,
             "inaptos":     inaptos,
-            "score_medio": round(sum(scores) / len(scores), 1) if scores else None,
-            "score_max":   max(scores) if scores else None,
+            "score_max":   melhor["score_aptidao"] if melhor else None,
+            "melhor_municipio": f"{melhor['nome_municipio']}/{melhor['uf']}" if melhor else None,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -36,13 +36,20 @@ export default function HomePage({ municipios = [], apiOnline }) {
   const navigate   = useNavigate();
   const [weather,  setWeather]  = useState(null);
   const [progresso,setProgresso]= useState(null);
+  const [statsApi, setStatsApi] = useState(null);
 
   useEffect(() => {
     if (apiOnline) {
       fetch(`${API}/coleta/progresso`)
         .then(r=>r.json()).then(setProgresso).catch(()=>{});
+      fetch(`${API}/municipios/estatisticas`)
+        .then(r=>r.json()).then(setStatsApi).catch(()=>{});
+      fetch(`${API}/municipios/top?limit=5`)
+        .then(r=>r.json()).then(d=>setTopApi(d.municipios??[])).catch(()=>{});
     }
   }, [apiOnline]);
+
+  const [topApi, setTopApi] = useState([]);
 
   useEffect(() => {
     const load = (lat, lon, city) =>
@@ -63,21 +70,27 @@ export default function HomePage({ municipios = [], apiOnline }) {
   const saudacao = hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite';
 
   const stats = useMemo(() => {
+    if (statsApi) return {
+      total:   statsApi.total,
+      aptos:   statsApi.aptos,
+      parciais:statsApi.parciais,
+      melhor:  statsApi.melhor_municipio
+        ? { score_aptidao: statsApi.score_max, nome_display: statsApi.melhor_municipio }
+        : null,
+    };
     const total   = municipios.length;
     const aptos   = municipios.filter(m=>(m.score_aptidao??0)>=70).length;
     const parciais= municipios.filter(m=>(m.score_aptidao??0)>=40&&(m.score_aptidao??0)<70).length;
     const melhor  = [...municipios].sort((a,b)=>(b.score_aptidao??0)-(a.score_aptidao??0))[0];
     return { total, aptos, parciais, melhor };
-  }, [municipios]);
+  }, [municipios, statsApi]);
 
-  const top5 = useMemo(() =>
+  const top5 = topApi.length > 0 ? topApi :
     [...municipios].filter(m=>m.score_aptidao!=null)
-      .sort((a,b)=>b.score_aptidao-a.score_aptidao).slice(0,5),
-    [municipios]
-  );
+      .sort((a,b)=>b.score_aptidao-a.score_aptidao).slice(0,5);
 
-  const processados = progresso?.processados ?? municipios.length;
-  const pctColeta   = ((processados/5570)*100).toFixed(1);
+  const processados = progresso?.processados ?? statsApi?.total ?? municipios.length;
+  const pctColeta   = ((processados/5571)*100).toFixed(1);
 
   const scoreCor = (s) => s>=70?'#1A7A3C':s>=40?'#D4A017':'#4A90C4';
   const scoreLabel = (s) => s>=70?'Apto':s>=40?'Parc. Apto':'Inapto';
@@ -120,7 +133,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
             Encontre as melhores regiões<br />para cevada cervejeira
           </h2>
           <p style={{ fontSize:13, color:'rgba(183,228,199,0.85)', lineHeight:1.6, marginBottom:20, maxWidth:480 }}>
-            Analise {(5570).toLocaleString('pt-BR')} municípios com critérios técnicos ZARC / EMBRAPA — temperatura, solo, altitude, geada e período seco.
+            Analise {(5571).toLocaleString('pt-BR')} municípios com critérios técnicos ZARC / EMBRAPA — temperatura, solo, altitude, geada e período seco.
           </p>
           <div style={{ display:'flex', gap:10, alignItems:'center' }}>
             <button className="stagger-1" onClick={()=>navigate('/zoneamento')} style={{
@@ -175,9 +188,9 @@ export default function HomePage({ municipios = [], apiOnline }) {
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:20 }}>
           {[
             { val:processados.toLocaleString('pt-BR'), label:'Municípios analisados', cor:'#2D6A4F', cls:'stagger-1' },
-            { val:stats.aptos>0?stats.aptos.toLocaleString('pt-BR'):'—', label:'Municípios aptos (≥70)', cor:'#1A7A3C', cls:'stagger-2' },
-            { val:stats.parciais>0?stats.parciais.toLocaleString('pt-BR'):'—', label:'Parcialmente aptos', cor:'#D4A017', cls:'stagger-3' },
-            { val:stats.melhor?`${stats.melhor.score_aptidao}/100`:'—', label:stats.melhor?`Melhor score (${stats.melhor.nome_municipio}/${stats.melhor.uf})`:'Melhor score', cor:'#1B4332', cls:'stagger-4' },
+            { val:stats.aptos>0?stats.aptos.toLocaleString('pt-BR'):'—', label:'Municípios aptos (score ≥70)', cor:'#1A7A3C', cls:'stagger-2' },
+            { val:stats.parciais>0?stats.parciais.toLocaleString('pt-BR'):'—', label:'Parcialmente aptos (40–69)', cor:'#D4A017', cls:'stagger-3' },
+            { val:stats.melhor?`${stats.melhor.score_aptidao ?? stats.melhor.score_aptidao}/100`:'—', label:stats.melhor?(stats.melhor.nome_display ?? `${stats.melhor.nome_municipio}/${stats.melhor.uf}`):'Melhor score', cor:'#1B4332', cls:'stagger-4' },
           ].map(s => (
             <div key={s.label} className={s.cls} style={{ textAlign:'center' }}>
               <p style={{ fontSize:30, fontWeight:800, color:s.cor, lineHeight:1, marginBottom:5, fontVariantNumeric:'tabular-nums' }}>{s.val}</p>
@@ -295,7 +308,8 @@ export default function HomePage({ municipios = [], apiOnline }) {
 
           {top5.length === 0 ? (
             <div style={{ textAlign:'center', padding:'24px 0' }}>
-              <p style={{ fontSize:12, color:'#9CA3AF' }}>Aguardando dados da API</p>
+              <div style={{ width:24, height:24, border:'2px solid #E5E7EB', borderTopColor:'#2D6A4F', borderRadius:'50%', animation:'spin 0.8s linear infinite', margin:'0 auto 8px' }} />
+              <p style={{ fontSize:12, color:'#9CA3AF' }}>Carregando...</p>
             </div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
@@ -370,16 +384,16 @@ export default function HomePage({ municipios = [], apiOnline }) {
       <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:12, padding:'16px 20px' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
           <div>
-            <p style={{ fontSize:13, fontWeight:700, color:'#1B4332' }}>Coleta de Dados em Andamento</p>
-            <p style={{ fontSize:11, color:'#6B7280' }}>IBGE · Open-Meteo · SoilGrids · NASA POWER</p>
+            <p style={{ fontSize:13, fontWeight:700, color:'#1B4332' }}>Cobertura Nacional — 5.571 Municípios</p>
+            <p style={{ fontSize:11, color:'#6B7280' }}>IBGE · Open-Meteo · SoilGrids · NASA POWER · 30 anos de dados climáticos</p>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:5, background:'rgba(45,106,79,0.07)', border:'1px solid rgba(45,106,79,0.18)', borderRadius:20, padding:'4px 12px' }}>
-            <span style={{ width:6, height:6, borderRadius:'50%', background:'#2D6A4F', animation:'pulse 1.5s infinite', display:'inline-block' }} />
-            <span style={{ fontSize:11, color:'#2D6A4F', fontWeight:500 }}>Em andamento</span>
+            <span style={{ width:6, height:6, borderRadius:'50%', background:'#2D6A4F', display:'inline-block' }} />
+            <span style={{ fontSize:11, color:'#2D6A4F', fontWeight:500 }}>100% Concluída</span>
           </div>
         </div>
         <div style={{ display:'flex', justifyContent:'space-between', alignItems:'baseline', marginBottom:6 }}>
-          <span style={{ fontSize:11, color:'#6B7280' }}>{processados.toLocaleString('pt-BR')} de 5.570 municípios</span>
+          <span style={{ fontSize:11, color:'#6B7280' }}>{processados.toLocaleString('pt-BR')} de 5.571 municípios</span>
           <span style={{ fontSize:20, fontWeight:800, color:'#2D6A4F' }}>{pctColeta}%</span>
         </div>
         <div style={{ height:7, background:'#F3F4F6', borderRadius:7, overflow:'hidden' }}>
