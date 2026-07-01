@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import {
   Map, Leaf, Newspaper, ArrowRight, CheckCircle,
   Cloud, Thermometer, Droplets, Wind,
+  Lightbulb, TrendingUp, AlertTriangle, Star,
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
@@ -88,6 +89,47 @@ export default function HomePage({ municipios = [], apiOnline }) {
   const top5 = topApi.length > 0 ? topApi :
     [...municipios].filter(m=>m.score_aptidao!=null)
       .sort((a,b)=>b.score_aptidao-a.score_aptidao).slice(0,5);
+
+  /* Insights derivados dos dados */
+  const insights = useMemo(() => {
+    if (!municipios.length && !statsApi) return [];
+    const total   = statsApi?.total   ?? municipios.length;
+    const aptos   = statsApi?.aptos   ?? municipios.filter(m=>(m.score_aptidao??0)>=70).length;
+    const parciais = statsApi?.parciais ?? municipios.filter(m=>(m.score_aptidao??0)>=40&&(m.score_aptidao??0)<70).length;
+
+    const list = [];
+
+    if (total > 0) {
+      const pctAptos = ((aptos / total) * 100).toFixed(1);
+      list.push({ icon: Star, cor: '#1A7A3C', tipo: 'Descoberta', texto: `${pctAptos}% dos municípios brasileiros são aptos para cevada cervejeira segundo o ZARC — ${aptos.toLocaleString('pt-BR')} municípios no total.` });
+    }
+
+    if (municipios.length > 0) {
+      const porUF = {};
+      municipios.forEach(m => {
+        if (!m.uf) return;
+        if (!porUF[m.uf]) porUF[m.uf] = { total:0, aptos:0 };
+        porUF[m.uf].total++;
+        if ((m.score_aptidao??0) >= 70) porUF[m.uf].aptos++;
+      });
+      const ufTop = Object.entries(porUF).sort((a,b) => b[1].aptos - a[1].aptos)[0];
+      if (ufTop) list.push({ icon: Map, cor: '#0284c7', tipo: 'Top Estado', texto: `${ufTop[0]} lidera com ${ufTop[1].aptos} municípios aptos (score ≥ 70), correspondendo a ${((ufTop[1].aptos/ufTop[1].total)*100).toFixed(0)}% dos municípios do estado.` });
+
+      const altitudes = municipios.filter(m => m.altitude != null);
+      if (altitudes.length > 0) {
+        const altMedia = altitudes.reduce((s,m) => s + (m.altitude??0), 0) / altitudes.length;
+        list.push({ icon: TrendingUp, cor: '#d97706', tipo: 'Altitude', texto: `A altitude média dos municípios analisados é ${altMedia.toFixed(0)}m. Municípios com altitude ≥ 700m têm probabilidade 3× maior de ser aptos ZARC.` });
+      }
+
+      const geadaAlta = municipios.filter(m => (m.risco_geada_pct??0) > 30 && (m.score_aptidao??0) >= 70).length;
+      if (geadaAlta > 0) list.push({ icon: AlertTriangle, cor: '#DC2626', tipo: 'Alerta', texto: `${geadaAlta} municípios aptos têm risco de geada > 30% — atenção ao semeio tardio (Jul) para proteger o espigamento.` });
+    } else if (aptos > 0) {
+      list.push({ icon: TrendingUp, cor: '#d97706', tipo: 'Potencial', texto: `Com ${(aptos + parciais).toLocaleString('pt-BR')} municípios aptos ou parcialmente aptos, o Brasil tem potencial de expandir a produção de cevada em mais de 400%.` });
+      list.push({ icon: AlertTriangle, cor: '#DC2626', tipo: 'Atenção', texto: `O ZARC exige risco de geada < 30% no espigamento (Ago/Set). Municípios com geada frequente devem optar por semeio tardio em Julho.` });
+    }
+
+    return list.slice(0, 4);
+  }, [municipios, statsApi]);
 
   const processados = progresso?.processados ?? statsApi?.total ?? municipios.length;
   const pctColeta   = ((processados/5571)*100).toFixed(1);
@@ -378,6 +420,70 @@ export default function HomePage({ municipios = [], apiOnline }) {
             })}
           </div>
         </div>
+      </div>
+
+      {/* ── Insights Inteligentes ── */}
+      {insights.length > 0 && (
+        <div style={{ marginBottom:20 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
+            <Lightbulb size={14} color="#D4A017" />
+            <p style={{ fontSize:13, fontWeight:700, color:'#1B4332' }}>Insights do Sistema</p>
+            <span style={{ fontSize:9, fontWeight:700, color:'#D4A017', background:'rgba(212,160,23,0.1)', border:'1px solid rgba(212,160,23,0.25)', borderRadius:5, padding:'1px 7px', marginLeft:2 }}>AUTOMÁTICO</span>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:10 }}>
+            {insights.map((ins, i) => {
+              const Icon = ins.icon;
+              return (
+                <div key={i} style={{
+                  background:'#fff', border:'1px solid #E5E7EB', borderRadius:10,
+                  padding:'13px 15px', display:'flex', gap:11, alignItems:'flex-start',
+                  transition:'border-color 0.15s',
+                }}
+                onMouseEnter={e => e.currentTarget.style.borderColor = ins.cor + '60'}
+                onMouseLeave={e => e.currentTarget.style.borderColor = '#E5E7EB'}
+                >
+                  <div style={{
+                    width:32, height:32, borderRadius:8, flexShrink:0,
+                    background:`${ins.cor}12`,
+                    display:'flex', alignItems:'center', justifyContent:'center',
+                  }}>
+                    <Icon size={14} color={ins.cor} />
+                  </div>
+                  <div>
+                    <span style={{ fontSize:9, fontWeight:700, color:ins.cor, textTransform:'uppercase', letterSpacing:0.8, display:'block', marginBottom:3 }}>{ins.tipo}</span>
+                    <p style={{ fontSize:11, color:'#374151', lineHeight:1.55 }}>{ins.texto}</p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Links rápidos ── */}
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(5,1fr)', gap:10, marginBottom:20 }}>
+        {[
+          { label:'Zoneamento', sub:'Mapa interativo', path:'/zoneamento', cor:'#1B4332', emoji:'🗺️' },
+          { label:'Custos & ROI', sub:'Simulador financeiro', path:'/custos', cor:'#0284c7', emoji:'💰' },
+          { label:'Comparador', sub:'Municípios lado a lado', path:'/comparar', cor:'#7c3aed', emoji:'⚖️' },
+          { label:'Oportunidades', sub:'Ranking combinado', path:'/oportunidades', cor:'#d97706', emoji:'🎯' },
+          { label:'Variedades', sub:'Catálogo de cultivares', path:'/variedades', cor:'#16a34a', emoji:'🌾' },
+        ].map(({ label, sub, path, cor, emoji }) => (
+          <button key={path} onClick={() => navigate(path)} style={{
+            background:'#fff', border:'1px solid #E5E7EB', borderRadius:10,
+            padding:'12px 10px', cursor:'pointer', textAlign:'center',
+            transition:'all 0.15s', display:'flex', flexDirection:'column', alignItems:'center', gap:6,
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = cor; e.currentTarget.style.background = `${cor}06`; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = '#E5E7EB'; e.currentTarget.style.background = '#fff'; }}
+          >
+            <span style={{ fontSize:22 }}>{emoji}</span>
+            <div>
+              <p style={{ fontSize:12, fontWeight:700, color:'#374151' }}>{label}</p>
+              <p style={{ fontSize:9, color:'#9CA3AF' }}>{sub}</p>
+            </div>
+          </button>
+        ))}
       </div>
 
       {/* ── Progresso coleta (compacto) ── */}

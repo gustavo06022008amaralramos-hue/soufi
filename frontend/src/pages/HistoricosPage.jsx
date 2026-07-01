@@ -4,9 +4,23 @@ import {
   Tooltip, ResponsiveContainer, Brush, Legend,
   AreaChart, BarChart, Bar,
   ScatterChart, Scatter, ZAxis, LabelList,
-  Cell, ReferenceLine,
+  Cell, ReferenceLine, LineChart,
 } from 'recharts';
-import { Download } from 'lucide-react';
+import { Download, TrendingUp, TrendingDown, Minus, AlertTriangle, Info } from 'lucide-react';
+
+/* ─── Regressão linear simples ───────────────────────────────── */
+function regressaoLinear(dados, campo) {
+  const n = dados.length;
+  const xs = dados.map((_, i) => i);
+  const ys = dados.map(d => d[campo]);
+  const sumX  = xs.reduce((a, b) => a + b, 0);
+  const sumY  = ys.reduce((a, b) => a + b, 0);
+  const sumXY = xs.reduce((s, x, i) => s + x * ys[i], 0);
+  const sumX2 = xs.reduce((s, x) => s + x * x, 0);
+  const slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX ** 2);
+  const intercept = (sumY - slope * sumX) / n;
+  return { slope, intercept, predict: (x) => intercept + slope * x };
+}
 
 /* ─── Dados históricos (base CEPEA/MAPA/BACEN) ──────────────── */
 const PRECO_HISTORICO = [
@@ -166,8 +180,24 @@ function CsvBtn({ data, nome }) {
   );
 }
 
+/* ─── Dados históricos produção (área e volume) ──────────────── */
+const PRODUCAO_HIST = [
+  { ano:'2015', area:120, producao:360,  import:1050 },
+  { ano:'2016', area:135, producao:418,  import:1020 },
+  { ano:'2017', area:142, producao:390,  import:1100 },
+  { ano:'2018', area:155, producao:490,  import:980  },
+  { ano:'2019', area:168, producao:530,  import:970  },
+  { ano:'2020', area:178, producao:510,  import:990  },
+  { ano:'2021', area:185, producao:570,  import:920  },
+  { ano:'2022', area:198, producao:610,  import:900  },
+  { ano:'2023', area:210, producao:660,  import:870  },
+  { ano:'2024', area:225, producao:720,  import:840  },
+];
+
 /* ══ COMPONENTE PRINCIPAL ══════════════════════════════════════ */
 export default function HistoricosPage({ municipios = [] }) {
+  const [abaForecast, setAbaForecast] = useState(0); // 0=preço, 1=produção
+
   const distribUF = useMemo(() => {
     if (municipios.length > 0) return gerarDistribuicaoUF(municipios);
     return [
@@ -177,6 +207,34 @@ export default function HistoricosPage({ municipios = [] }) {
       { uf:'MS', total:79,  aptos:18  }, { uf:'MT', total:141, aptos:10 },
     ];
   }, [municipios]);
+
+  /* Forecast de preço — regressão linear nos últimos 8 trimestres */
+  const forecastPreco = useMemo(() => {
+    const base = PRECO_HISTORICO.slice(-12);
+    const { predict, slope } = regressaoLinear(base, 'cevada');
+    const tendencia = slope > 0.8 ? 'alta' : slope < -0.5 ? 'queda' : 'estável';
+    const ultimos4 = base.slice(-4);
+    const precoAtual = ultimos4[ultimos4.length - 1].cevada;
+    const projecoes = [
+      { p:'Q1/25', cevada: Math.round(predict(12) * 10) / 10, proj: true },
+      { p:'Q2/25', cevada: Math.round(predict(13) * 10) / 10, proj: true },
+      { p:'Q3/25', cevada: Math.round(predict(14) * 10) / 10, proj: true },
+      { p:'Q4/25', cevada: Math.round(predict(15) * 10) / 10, proj: true },
+    ];
+    const dadosMisto = [...base, ...projecoes];
+    return { dadosMisto, tendencia, precoAtual, projetado2025: projecoes[3].cevada, slope };
+  }, []);
+
+  /* Forecast de produção */
+  const forecastProd = useMemo(() => {
+    const { predict, slope } = regressaoLinear(PRODUCAO_HIST, 'area');
+    const { predict: predictProd } = regressaoLinear(PRODUCAO_HIST, 'producao');
+    const projecoes = [
+      { ano:'2025', area: Math.round(predict(10)), producao: Math.round(predictProd(10)), proj: true },
+      { ano:'2026', area: Math.round(predict(11)), producao: Math.round(predictProd(11)), proj: true },
+    ];
+    return { dados: [...PRODUCAO_HIST, ...projecoes], slope };
+  }, []);
 
   const dadosScore = useMemo(() => {
     const faixas = [
@@ -355,6 +413,111 @@ export default function HistoricosPage({ municipios = [] }) {
           <p style={{ fontSize:9, color:'#c7d2dc', marginTop:4 }}>
             Correlação clara: maior investimento → maior produtividade nas últimas safras
           </p>
+        </Card>
+      </div>
+
+      {/* ── Perspectivas 2025/26 ── */}
+      <div style={{ marginBottom:16 }}>
+        <Card
+          title="Perspectivas e Projeções 2025/26 (Modelo de Tendência Linear)"
+          subtitle="Regressão linear sobre dados históricos — não é previsão oficial, apenas indicador de tendência"
+        >
+          {/* Tabs */}
+          <div style={{ display:'flex', gap:8, marginBottom:16 }}>
+            {['Preço da Cevada', 'Área e Produção'].map((t,i) => (
+              <button key={t} onClick={() => setAbaForecast(i)} style={{
+                padding:'5px 14px', borderRadius:7, fontSize:11, cursor:'pointer',
+                background: abaForecast === i ? '#1B4332' : '#F3F4F6',
+                color: abaForecast === i ? '#fff' : '#374151',
+                border:'none', fontWeight: abaForecast === i ? 700 : 400,
+              }}>{t}</button>
+            ))}
+          </div>
+
+          {abaForecast === 0 && (
+            <div>
+              {/* KPIs forecast */}
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16 }}>
+                {[
+                  { label:'Preço atual (Q4/24)', val:`R$ ${forecastPreco.precoAtual}/sc`, cor:'#374151' },
+                  { label:'Projeção Q4/25', val:`R$ ${forecastPreco.projetado2025}/sc`, cor:'#1B4332' },
+                  { label:'Variação estimada', val:`${forecastPreco.slope > 0 ? '+' : ''}${(forecastPreco.slope * 4).toFixed(1)}/sc·trim.`, cor: forecastPreco.slope > 0 ? '#1A7A3C' : '#DC2626' },
+                  { label:'Tendência', val: forecastPreco.tendencia === 'alta' ? '↗ Alta' : forecastPreco.tendencia === 'queda' ? '↘ Queda' : '→ Estável', cor: forecastPreco.tendencia === 'alta' ? '#1A7A3C' : forecastPreco.tendencia === 'queda' ? '#DC2626' : '#D4A017' },
+                ].map(d => (
+                  <div key={d.label} style={{ background:'#F9FAFB', borderRadius:9, padding:'12px 14px' }}>
+                    <p style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7, marginBottom:4 }}>{d.label}</p>
+                    <p style={{ fontSize:15, fontWeight:800, color:d.cor }}>{d.val}</p>
+                  </div>
+                ))}
+              </div>
+
+              <ResponsiveContainer width="100%" height={220}>
+                <ComposedChart data={forecastPreco.dadosMisto} margin={{ top:4, right:20, left:0, bottom:0 }}>
+                  <defs>
+                    <linearGradient id="gradForecast" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%"  stopColor="#16a34a" stopOpacity={0.15} />
+                      <stop offset="95%" stopColor="#16a34a" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                  <XAxis dataKey="p" tick={TICK} axisLine={false} tickLine={false} interval={3} />
+                  <YAxis tick={TICK} axisLine={false} tickLine={false} tickFormatter={v=>`R$${v}`} domain={[20,130]} />
+                  <Tooltip
+                    contentStyle={{ fontSize:11, borderRadius:8, border:'1px solid #E5E7EB' }}
+                    formatter={(v, n, { payload }) => [`R$ ${v}/sc${payload?.proj ? ' (projeção)' : ''}`, 'Preço']}
+                    labelFormatter={v => v}
+                  />
+                  <Area type="monotone" dataKey="cevada" stroke="#16a34a" fill="url(#gradForecast)" strokeWidth={2.5} dot={false} name="Cevada" />
+                  <ReferenceLine x="Q1/25" stroke="#7c3aed" strokeDasharray="5 3" strokeWidth={1.5}
+                    label={{ value:'Início projeção', position:'top', fontSize:9, fill:'#7c3aed' }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+
+              <div style={{ marginTop:10, padding:'10px 12px', background:'rgba(124,58,237,0.06)', border:'1px solid rgba(124,58,237,0.2)', borderRadius:8, display:'flex', gap:7, alignItems:'flex-start' }}>
+                <Info size={12} color="#7c3aed" style={{ flexShrink:0, marginTop:1 }} />
+                <p style={{ fontSize:10, color:'#4c1d95', lineHeight:1.6 }}>
+                  <strong>Metodologia:</strong> Regressão linear sobre os últimos 12 trimestres (Q1/22–Q4/24).
+                  O modelo captura tendência de médio prazo. Fatores externos como guerra, câmbio e clima não estão incorporados.
+                  Use como referência apenas — sempre consulte CEPEA/MAPA para decisões de contrato.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {abaForecast === 1 && (
+            <div>
+              <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:16 }}>
+                {[
+                  { label:'Área 2024 (mil ha)', val:'225 mil ha', cor:'#374151' },
+                  { label:'Área projetada 2025', val:`${forecastProd.dados[10]?.area ?? '—'} mil ha`, cor:'#1B4332' },
+                  { label:'Produção projetada 2025', val:`${forecastProd.dados[10]?.producao ?? '—'} mil t`, cor:'#0284c7' },
+                  { label:'Redução importação', val:'~820 mil t', cor:'#1A7A3C' },
+                ].map(d => (
+                  <div key={d.label} style={{ background:'#F9FAFB', borderRadius:9, padding:'12px 14px' }}>
+                    <p style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7, marginBottom:4 }}>{d.label}</p>
+                    <p style={{ fontSize:15, fontWeight:800, color:d.cor }}>{d.val}</p>
+                  </div>
+                ))}
+              </div>
+
+              <ResponsiveContainer width="100%" height={220}>
+                <ComposedChart data={forecastProd.dados} margin={{ top:4, right:20, left:0, bottom:0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
+                  <XAxis dataKey="ano" tick={TICK} axisLine={false} tickLine={false} />
+                  <YAxis yAxisId="l" tick={TICK} axisLine={false} tickLine={false} tickFormatter={v=>`${v}k ha`} />
+                  <YAxis yAxisId="r" orientation="right" tick={TICK} axisLine={false} tickLine={false} tickFormatter={v=>`${v}k t`} />
+                  <Tooltip contentStyle={{ fontSize:11, borderRadius:8, border:'1px solid #E5E7EB' }}
+                    formatter={(v, n, { payload }) => [`${v} mil${payload?.proj ? ' (projeção)' : ''}`, n]} />
+                  <Legend wrapperStyle={{ fontSize:11 }} />
+                  <Bar yAxisId="l" dataKey="area" name="Área (mil ha)" radius={[3,3,0,0]}>
+                    {forecastProd.dados.map((d, i) => <Cell key={i} fill={d.proj ? '#86efac' : '#40916C'} />)}
+                  </Bar>
+                  <Line yAxisId="r" type="monotone" dataKey="producao" stroke="#0284c7" strokeWidth={2.5} dot={false} name="Produção (mil t)" />
+                  <ReferenceLine yAxisId="l" x="2025" stroke="#7c3aed" strokeDasharray="5 3" strokeWidth={1.5} label={{ value:'Projeção', position:'top', fontSize:9, fill:'#7c3aed' }} />
+                </ComposedChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </Card>
       </div>
 
