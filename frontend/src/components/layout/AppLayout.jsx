@@ -102,7 +102,7 @@ export default function AppLayout({ apiOnline, onRetry }) {
           )}
         </div>
 
-        <main style={{ flex:1, overflow:'auto', padding:24 }}>
+        <main style={{ flex:1, overflow:'auto', padding:'28px 32px' }}>
           <Outlet />
         </main>
       </div>
