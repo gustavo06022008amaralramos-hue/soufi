@@ -12,6 +12,7 @@ import ParceirosPage      from './pages/ParceirosPage.jsx';
 import OportunidadesPage  from './pages/OportunidadesPage.jsx';
 import ManualPage         from './pages/ManualPage.jsx';
 import CustosPage         from './pages/CustosPage.jsx';
+import CompararPage       from './pages/CompararPage.jsx';
 
 const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 const RETRY_OFFLINE = 10_000; // re-tenta a cada 10s quando offline
@@ -70,6 +71,7 @@ export default function App() {
             <Route path="/oportunidades"  element={<OportunidadesPage municipios={municipios} />} />
             <Route path="/manual"         element={<ManualPage />} />
             <Route path="/custos"         element={<CustosPage />} />
+            <Route path="/comparar"       element={<CompararPage municipios={municipios} />} />
             <Route path="*"           element={<Navigate to="/home" replace />} />
           </Route>
         </Routes>

@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Map, BarChart2, Leaf,
   Newspaper, LogOut, Handshake, TrendingUp, BookOpen,
-  Calculator,
+  Calculator, GitCompare,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { SoufiiIcon, SoufiiWordmark } from '../ui/SoufiiLogo.jsx';
@@ -13,6 +13,7 @@ const NAV = [
   { to:'/zoneamento',   icon:Map,             label:'Zoneamento'   },
   { to:'/historicos',   icon:BarChart2,       label:'Históricos'   },
   { to:'/custos',       icon:Calculator,      label:'Custos & ROI', destaque: true },
+  { to:'/comparar',     icon:GitCompare,      label:'Comparador',   destaque: true },
   { to:'/variedades',   icon:Leaf,            label:'Variedades'   },
   { to:'/noticias',     icon:Newspaper,       label:'Notícias'     },
   { to:'/parceiros',    icon:Handshake,       label:'Parceiros'    },
