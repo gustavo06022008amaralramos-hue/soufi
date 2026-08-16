@@ -436,7 +436,7 @@ export default function ManualPage() {
       <Section icon={Star} title="Fontes dos dados" cor="#374151">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
           {[
-            { fonte: 'NASA POWER', desc: 'Temperatura (T2M, T2M_MIN) e precipitação mensal 1993–2023 para cada município.', url: 'power.larc.nasa.gov' },
+            { fonte: 'NASA POWER', desc: 'Temperatura (T2M, T2M_MIN) e precipitação mensal 1993–2024 para cada município.', url: 'power.larc.nasa.gov' },
             { fonte: 'SoilGrids ISRIC v2', desc: 'Percentual de argila por camada de solo (0–5cm, 5–15cm, 15–30cm) — média ponderada.', url: 'soilgrids.org' },
             { fonte: 'Open-Meteo Geocoder', desc: 'Coordenadas geográficas dos municípios com validação por caixa delimitadora da UF.', url: 'open-meteo.com' },
             { fonte: 'IBGE', desc: 'Lista oficial de 5.571 municípios brasileiros com código IBGE, nome e UF.', url: 'ibge.gov.br' },
@@ -459,8 +459,8 @@ export default function ManualPage() {
           ))}
         </div>
         <Destaque icon={Info} cor={VERDE} title="Atualização dos dados">
-          Os dados climáticos são a média de 30 anos (1993–2023). A coleta para todos os 5.571
-          municípios está em andamento — municípios cinzas no mapa ainda não foram processados.
+          Os dados climáticos são a média de 32 anos (1993–2024). A coleta para os 5.571
+          municípios brasileiros está completa.
         </Destaque>
       </Section>
 
