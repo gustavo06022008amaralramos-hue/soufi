@@ -64,7 +64,7 @@ function buildRadar(m) {
   const prec  = m.precipitacao_acumulada_anual ?? 800;
   const alt   = m.altitude ?? 300;
   const geada = m.risco_geada_pct ?? 50;
-  const argila = m.argila_pct ?? 20;
+  const argila = m.pct_argila ?? 20;
 
   return [
     { dim: 'Aptidão',     val: score },
@@ -93,7 +93,7 @@ const LINHAS = [
   { label: 'Altitude', key: 'altitude', fmt: v => `${fmt(v,0)} m`, maior: 'melhor' },
   { label: 'Risco de geada', key: 'risco_geada_pct', fmt: v => `${fmt(v,0)}%`, maior: 'pior' },
   { label: 'Tipo de solo ZARC', key: 'tipo_solo_zarc', fmt: v => `Tipo ${v ?? '—'}`, maior: 'melhor' },
-  { label: 'Argila (%)', key: 'argila_pct', fmt: v => `${fmt(v,1)}%`, maior: 'melhor' },
+  { label: 'Argila (%)', key: 'pct_argila', fmt: v => `${fmt(v,1)}%`, maior: 'melhor' },
   { label: 'Distância Agrária', key: 'dist', fmt: v => v ? `${v} km` : '—', maior: 'pior' },
   { label: 'Frete estimado', key: 'frete', fmt: v => v ? fmtR(v) + '/ton' : '—', maior: 'pior' },
   { label: 'Preço líquido/ton', key: 'liquido', fmt: v => v ? fmtR(v) : '—', maior: 'melhor' },
