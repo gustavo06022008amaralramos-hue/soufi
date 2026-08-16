@@ -4,3 +4,4 @@ supabase
 requests
 pandas
 python-dotenv
+pytest
