@@ -9,6 +9,7 @@ import {
   CheckCircle, Package, Truck, Sprout, Droplets,
   BarChart2, Calculator, Download, Info,
   Building2, CreditCard, PiggyBank, Percent,
+  PieChart as PieChartIcon, ListTree, Landmark, Scale,
 } from 'lucide-react';
 
 /* ── Dados regionais de custo ───────────────────────────────
@@ -178,8 +179,16 @@ function Secao({ titulo, children }) {
   );
 }
 
+const TABS_CUSTOS = [
+  { label: 'Resultado',    icon: PieChartIcon, desc: 'Composição do custo e pontos de equilíbrio (break-even) para o cenário atual.' },
+  { label: 'Cenários',     icon: ListTree,      desc: 'Como o resultado muda em cenário pessimista/otimista e conforme o preço da saca varia.' },
+  { label: 'Financiamento',icon: Landmark,      desc: 'Linhas de crédito rural reais (Plano Safra 2025/26) e simulador de parcelas.' },
+  { label: 'Comparativo',  icon: Scale,         desc: 'Lucro estimado nos mesmos parâmetros, comparando todos os estados de referência.' },
+];
+
 /* ══ COMPONENTE PRINCIPAL ══════════════════════════════ */
 export default function CustosPage() {
+  const [tab,      setTab]      = useState(0);
   const [uf,       setUf]       = useState('PR');
   const [area,     setArea]     = useState(50);
   const [preco,    setPreco]    = useState(90);
@@ -284,7 +293,34 @@ export default function CustosPage() {
         />
       </div>
 
-      {/* ── Linha 1: Pizza + Breakdown ── */}
+      {/* ── Tabs ── */}
+      <div style={{ display:'flex', gap:6, marginBottom:10, flexWrap:'wrap' }}>
+        {TABS_CUSTOS.map((t, i) => {
+          const Ic = t.icon;
+          const ativo = tab === i;
+          return (
+            <button key={t.label} onClick={() => setTab(i)} style={{
+              display:'flex', alignItems:'center', gap:6,
+              padding:'8px 14px', fontSize:12, cursor:'pointer', borderRadius:9,
+              background: ativo ? '#1B4332' : '#fff',
+              border: `1px solid ${ativo ? '#1B4332' : '#E5E7EB'}`,
+              fontWeight: ativo ? 700 : 500,
+              color: ativo ? '#fff' : '#6B7280',
+              boxShadow: ativo ? '0 3px 10px rgba(27,67,50,0.25)' : 'none',
+              transition:'all 0.15s',
+            }}>
+              <Ic size={13} /> {t.label}
+            </button>
+          );
+        })}
+      </div>
+      <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:16 }}>
+        <Info size={12} color="#9CA3AF" />
+        <p style={{ fontSize:11.5, color:'#6B7280' }}>{TABS_CUSTOS[tab].desc}</p>
+      </div>
+
+      {/* ══ TAB 0: Resultado (Pizza + Breakdown) ══ */}
+      {tab === 0 && (
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1.4fr', gap:16, marginBottom:16 }}>
 
         {/* Pizza */}
@@ -355,8 +391,10 @@ export default function CustosPage() {
           </div>
         </Secao>
       </div>
+      )}
 
-      {/* ── Linha 2: Cenários + Curva de Preço ── */}
+      {/* ══ TAB 1: Cenários + Curva de Preço ══ */}
+      {tab === 1 && (
       <div style={{ display:'grid', gridTemplateColumns:'1fr 1.3fr', gap:16, marginBottom:16 }}>
 
         {/* Cenários */}
@@ -425,8 +463,10 @@ export default function CustosPage() {
           </ResponsiveContainer>
         </Secao>
       </div>
+      )}
 
-      {/* ── Linhas de Crédito Rural ── */}
+      {/* ══ TAB 2: Financiamento (Crédito + Simulador) ══ */}
+      {tab === 2 && (<>
       <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, padding:'20px 22px', marginBottom:16 }}>
         <p style={{ fontSize:13, fontWeight:700, color:'#1B4332', marginBottom:4, display:'flex', alignItems:'center', gap:7 }}>
           <span style={{ width:3, height:16, background:'linear-gradient(180deg,#7c3aed,#1B4332)', borderRadius:2, display:'inline-block' }} />
@@ -578,8 +618,10 @@ export default function CustosPage() {
           </div>
         </div>
       </div>
+      </>)}
 
-      {/* ── Comparativo por Estado ── */}
+      {/* ══ TAB 3: Comparativo por Estado ══ */}
+      {tab === 3 && (
       <Secao titulo={`Comparativo Regional — Lucro Total com ${area} ha (R$)`}>
         <ResponsiveContainer width="100%" height={220}>
           <BarChart data={comparativo} margin={{ top:4, right:16, left:0, bottom:0 }}>
@@ -614,6 +656,7 @@ export default function CustosPage() {
           ))}
         </div>
       </Secao>
+      )}
 
     </div>
   );

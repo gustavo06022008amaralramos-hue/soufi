@@ -5,11 +5,13 @@ import {
   PolarGrid, PolarAngleAxis, PolarRadiusAxis,
   ComposedChart, Area, Line, ReferenceLine,
 } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 import {
   TrendingUp, Truck, Shield, Leaf, Download, Filter,
   ChevronDown, ChevronUp, Star, AlertTriangle, CheckCircle,
   DollarSign, Sprout, Package, Zap, Map, ListOrdered,
-  Wallet, CalendarClock, ShieldCheck, Wheat,
+  Wallet, CalendarClock, ShieldCheck, Wheat, SlidersHorizontal,
+  ExternalLink, Info,
 } from 'lucide-react';
 import TimelineManejo from '../components/oportunidades/TimelineManejo.jsx';
 import MapaCobertura from '../components/oportunidades/MapaCobertura.jsx';
@@ -232,21 +234,23 @@ function BreakevenChart({ custoTotal, precoLiqTon, prodEsperada, breakeven }) {
 }
 
 const TABS = [
-  { label: 'Ranking',            icon: ListOrdered },
-  { label: 'Mapa de Cobertura',  icon: Map },
-  { label: 'Custos & ROI',       icon: Wallet },
-  { label: 'Manejos',            icon: CalendarClock },
-  { label: 'Expansão de Seguro', icon: ShieldCheck },
+  { label: 'Ranking',            icon: ListOrdered,   desc: 'Municípios ordenados por prioridade de expansão (aptidão + logística + seguro + ROI).' },
+  { label: 'Mapa de Cobertura',  icon: Map,            desc: 'Mesma classificação do ranking, em mapa — veja onde os municípios prioritários se concentram.' },
+  { label: 'Break-even',         icon: Wallet,         desc: 'Quanto cada município precisa produzir pra cobrir o custo — contexto rápido, não substitui a calculadora completa.' },
+  { label: 'Manejos',            icon: CalendarClock,  desc: 'Cultivar indicada e janela de semeio para os municípios mais bem ranqueados.' },
+  { label: 'Expansão de Seguro', icon: ShieldCheck,    desc: 'Municípios aptos sem PSR/PROAGRO ativo, priorizando quem já faz fronteira com área segurada.' },
 ];
 
 /* ─── Componente principal ───────────────────────────────────── */
 export default function OportunidadesPage({ municipios = [] }) {
+  const navigate = useNavigate();
   const [tab,         setTab]         = useState(0);
   const [ufFiltro,    setUfFiltro]    = useState('Todos');
   const [distMax,     setDistMax]     = useState(1000);
   const [scoreMin,    setScoreMin]    = useState(50);
   const [precoSaca,   setPrecoSaca]   = useState(95);
   const [freteTonKm,  setFreteTonKm]  = useState(0.32);
+  const [simAberto,   setSimAberto]   = useState(false);
   const [sortKey,     setSortKey]     = useState('scoreComb');
   const [sortAsc,     setSortAsc]     = useState(false);
   const [detalhe,     setDetalhe]     = useState(null);
@@ -428,48 +432,87 @@ export default function OportunidadesPage({ municipios = [] }) {
         <KpiCard icon={Star}    label="Prioridade 1"       value={kpis.prio1}   sub="score combinado ≥ 75"  cor="#d97706" total={dados.length} />
       </div>
 
-      {/* ── Simulador ── */}
-      <div style={{
-        background:'#fff', border:'1px solid #E5E7EB', borderRadius:14,
-        padding:'16px 20px', marginBottom:16,
-        display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16,
-      }}>
-        {[
-          { label:'Preço da saca (R$)',    val:precoSaca,  set:setPrecoSaca,  min:60,  max:150, step:1,    fmt:v=>`R$ ${v}` },
-          { label:'Frete R$/ton·km',       val:freteTonKm, set:setFreteTonKm, min:0.15,max:0.80,step:0.01, fmt:v=>`R$ ${v.toFixed(2)}` },
-          { label:'Distância máx (km)',    val:distMax,    set:setDistMax,    min:100, max:2000,step:50,   fmt:v=>`${v} km` },
-          { label:'Score mín combinado',   val:scoreMin,   set:setScoreMin,   min:0,   max:90,  step:5,    fmt:v=>`${v}` },
-        ].map(({ label, val, set, min, max, step, fmt }) => (
-          <div key={label}>
-            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
-              <span style={{ fontSize:10, color:'#6B7280', fontWeight:600 }}>{label}</span>
-              <span style={{ fontSize:11, fontWeight:700, color:'#111827' }}>{fmt(val)}</span>
+      {/* ── Barra de filtros (compacta) ── */}
+      <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, marginBottom:16, overflow:'hidden' }}>
+        <div style={{ padding:'14px 18px', display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
+          {/* UF dropdown em vez de 27 botões */}
+          <div>
+            <label style={{ display:'block', fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.6, marginBottom:3 }}>Estado</label>
+            <select value={ufFiltro} onChange={e => setUfFiltro(e.target.value)} style={{
+              padding:'6px 10px', borderRadius:8, fontSize:12, border:'1px solid #E5E7EB',
+              color:'#111827', background:'#F9FAFB', cursor:'pointer', outline:'none', fontWeight:600,
+            }}>
+              {ufs.map(uf => <option key={uf} value={uf}>{uf === 'Todos' ? 'Todos os estados' : uf}</option>)}
+            </select>
+          </div>
+
+          {/* Score mínimo */}
+          <div style={{ minWidth:160 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+              <span style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.6 }}>Score mín. combinado</span>
+              <span style={{ fontSize:11, fontWeight:700, color:'#111827' }}>{scoreMin}</span>
             </div>
-            <input type="range" min={min} max={max} step={step} value={val}
-              onChange={e => set(step < 1 ? +parseFloat(e.target.value).toFixed(2) : +e.target.value)}
+            <input type="range" min={0} max={90} step={5} value={scoreMin}
+              onChange={e => setScoreMin(+e.target.value)}
               style={{ width:'100%', accentColor:'#1B4332', height:4 }} />
           </div>
-        ))}
-      </div>
 
-      {/* ── Filtro UF ── */}
-      <div style={{ display:'flex', gap:6, marginBottom:16, flexWrap:'wrap', alignItems:'center' }}>
-        <Filter size={12} color="#6B7280" />
-        {ufs.map(uf => (
-          <button key={uf} onClick={() => setUfFiltro(uf)} style={{
-            padding:'4px 11px', borderRadius:20, fontSize:11, cursor:'pointer',
-            background: ufFiltro === uf ? '#1B4332' : '#F3F4F6',
-            color:       ufFiltro === uf ? '#fff'   : '#374151',
-            border:'none', fontWeight: ufFiltro === uf ? 700 : 400,
-          }}>{uf}</button>
-        ))}
-        <span style={{ marginLeft:'auto', fontSize:11, color:'#6B7280' }}>
-          {filtrados.length} municípios
-        </span>
+          {/* Distância máxima */}
+          <div style={{ minWidth:160 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+              <span style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.6 }}>Distância máx.</span>
+              <span style={{ fontSize:11, fontWeight:700, color:'#111827' }}>{distMax} km</span>
+            </div>
+            <input type="range" min={100} max={2000} step={50} value={distMax}
+              onChange={e => setDistMax(+e.target.value)}
+              style={{ width:'100%', accentColor:'#1B4332', height:4 }} />
+          </div>
+
+          {/* Toggle simulador de preço/frete */}
+          <button onClick={() => setSimAberto(v => !v)} style={{
+            display:'flex', alignItems:'center', gap:6, marginLeft:'auto',
+            padding:'7px 12px', borderRadius:8, cursor:'pointer', fontSize:11, fontWeight:600,
+            background: simAberto ? '#F0F7F2' : '#F9FAFB', color: simAberto ? '#1B4332' : '#6B7280',
+            border:`1px solid ${simAberto ? '#1B4332' : '#E5E7EB'}`,
+          }}>
+            <SlidersHorizontal size={12} /> Preço & frete
+            {simAberto ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+          </button>
+
+          <span style={{ fontSize:11, color:'#6B7280', fontWeight:600 }}>
+            {filtrados.length.toLocaleString('pt-BR')} municípios
+          </span>
+        </div>
+
+        {/* Painel expansível: preço da saca + frete */}
+        {simAberto && (
+          <div style={{
+            padding:'14px 18px', borderTop:'1px solid #F3F4F6', background:'#FAFBFA',
+            display:'grid', gridTemplateColumns:'1fr 1fr', gap:20,
+          }}>
+            {[
+              { label:'Preço da saca simulado (R$)', val:precoSaca,  set:setPrecoSaca,  min:60,  max:150, step:1,    fmt:v=>`R$ ${v}` },
+              { label:'Frete simulado (R$/ton·km)',  val:freteTonKm, set:setFreteTonKm, min:0.15,max:0.80,step:0.01, fmt:v=>`R$ ${v.toFixed(2)}` },
+            ].map(({ label, val, set, min, max, step, fmt }) => (
+              <div key={label}>
+                <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+                  <span style={{ fontSize:10, color:'#6B7280', fontWeight:600 }}>{label}</span>
+                  <span style={{ fontSize:11, fontWeight:700, color:'#111827' }}>{fmt(val)}</span>
+                </div>
+                <input type="range" min={min} max={max} step={step} value={val}
+                  onChange={e => set(step < 1 ? +parseFloat(e.target.value).toFixed(2) : +e.target.value)}
+                  style={{ width:'100%', accentColor:'#1B4332', height:4 }} />
+              </div>
+            ))}
+            <p style={{ gridColumn:'1 / -1', fontSize:10, color:'#9CA3AF' }}>
+              Esses dois valores recalculam frete, lucro e ROI de todos os municípios em tempo real — os demais filtros só reduzem a lista exibida.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* ── Tabs ── */}
-      <div style={{ display:'flex', gap:6, marginBottom:18, flexWrap:'wrap' }}>
+      <div style={{ display:'flex', gap:6, marginBottom:10, flexWrap:'wrap' }}>
         {TABS.map((t, i) => {
           const Ic = t.icon;
           const ativo = tab === i;
@@ -488,6 +531,22 @@ export default function OportunidadesPage({ municipios = [] }) {
             </button>
           );
         })}
+      </div>
+
+      {/* ── Descrição da aba ativa ── */}
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', gap:12, marginBottom:16, flexWrap:'wrap' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+          <Info size={12} color="#9CA3AF" />
+          <p style={{ fontSize:11.5, color:'#6B7280' }}>{TABS[tab].desc}</p>
+        </div>
+        {tab === 2 && (
+          <button onClick={() => navigate('/custos')} style={{
+            display:'flex', alignItems:'center', gap:5, fontSize:11, fontWeight:600,
+            color:'#0284c7', background:'none', border:'none', cursor:'pointer', flexShrink:0,
+          }}>
+            Abrir calculadora completa <ExternalLink size={11} />
+          </button>
+        )}
       </div>
 
       {/* ══ TAB 0: Ranking ══ */}
