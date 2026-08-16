@@ -8,7 +8,8 @@ import {
 import {
   TrendingUp, Truck, Shield, Leaf, Download, Filter,
   ChevronDown, ChevronUp, Star, AlertTriangle, CheckCircle,
-  DollarSign, Sprout, Package, Zap, Map,
+  DollarSign, Sprout, Package, Zap, Map, ListOrdered,
+  Wallet, CalendarClock, ShieldCheck, Wheat,
 } from 'lucide-react';
 import TimelineManejo from '../components/oportunidades/TimelineManejo.jsx';
 import MapaCobertura from '../components/oportunidades/MapaCobertura.jsx';
@@ -33,7 +34,9 @@ const CUSTOS_UF = {
   default: { semente:185, fertilizante:1000, defensivos:480, mecanizacao:440, secagem_ton:65, prod_tha:2.8 },
 };
 
-const UFS_COM_SEGURO = new Set(['PR', 'SC', 'RS', 'GO']);
+// Estados com ZARC cevada cervejeira publicado (Portaria SPA/MAPA + Embrapa
+// Trigo 2025) — mesma lista usada na aba Seguro do painel de município.
+const UFS_COM_SEGURO = new Set(['PR', 'SC', 'RS', 'SP', 'MG', 'GO', 'DF']);
 
 /* ─── Helpers ────────────────────────────────────────────────── */
 function haversine(lat1, lon1, lat2, lon2) {
@@ -127,34 +130,58 @@ function recomendarManejo(m) {
 }
 
 /* ─── Sub-componentes ─────────────────────────────────────────── */
-function KpiCard({ icon: Icon, label, value, sub, cor }) {
+function KpiCard({ icon: Icon, label, value, sub, cor, total }) {
+  const pct = total ? Math.min(100, Math.round((Number(value) / total) * 100)) : null;
   return (
     <div style={{
-      background: '#fff', borderRadius:14, border:'1px solid #E5E7EB',
-      padding:'18px 20px', display:'flex', alignItems:'center', gap:14,
-      boxShadow:'0 1px 4px rgba(0,0,0,0.06)',
-    }}>
-      <div style={{ width:44, height:44, borderRadius:12, background:`${cor}18`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-        <Icon size={20} color={cor} />
+      position:'relative', overflow:'hidden',
+      background: '#fff', borderRadius:16, border:'1px solid #E5E7EB',
+      padding:'18px 20px', boxShadow:'0 1px 4px rgba(0,0,0,0.06)',
+      transition:'transform 0.15s, box-shadow 0.15s',
+    }}
+      onMouseEnter={e => { e.currentTarget.style.transform='translateY(-2px)'; e.currentTarget.style.boxShadow=`0 10px 28px ${cor}22`; }}
+      onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='0 1px 4px rgba(0,0,0,0.06)'; }}
+    >
+      {/* Ícone-marca d'água */}
+      <Icon size={80} color={cor} style={{ position:'absolute', top:-16, right:-16, opacity:0.06 }} />
+      <div style={{ display:'flex', alignItems:'center', gap:12, position:'relative' }}>
+        <div style={{ width:42, height:42, borderRadius:11, background:`${cor}16`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          <Icon size={19} color={cor} />
+        </div>
+        <div style={{ minWidth:0 }}>
+          <p style={{ fontSize:10.5, color:'#6B7280', fontWeight:600, marginBottom:2, textTransform:'uppercase', letterSpacing:0.4 }}>{label}</p>
+          <p style={{ fontSize:25, fontWeight:800, color:'#111827', lineHeight:1 }}>{value.toLocaleString('pt-BR')}</p>
+        </div>
       </div>
-      <div>
-        <p style={{ fontSize:11, color:'#6B7280', fontWeight:500, marginBottom:2 }}>{label}</p>
-        <p style={{ fontSize:24, fontWeight:800, color:'#111827', lineHeight:1 }}>{value}</p>
-        {sub && <p style={{ fontSize:10, color:'#9CA3AF', marginTop:3 }}>{sub}</p>}
-      </div>
+      {sub && <p style={{ fontSize:10.5, color:'#9CA3AF', marginTop:8, position:'relative' }}>{sub}</p>}
+      {pct != null && (
+        <div style={{ marginTop:8, height:4, borderRadius:99, background:'#F3F4F6', overflow:'hidden', position:'relative' }}>
+          <div style={{ width:`${pct}%`, height:'100%', background:cor, borderRadius:99, transition:'width 0.4s' }} />
+        </div>
+      )}
     </div>
   );
 }
 
-function ScoreBadge({ score }) {
+function ScoreBadge({ score, compact }) {
   const cor  = score >= 75 ? '#16a34a' : score >= 55 ? '#ca8a04' : '#dc2626';
   const bg   = score >= 75 ? '#f0fdf4' : score >= 55 ? '#fefce8' : '#fef2f2';
   const text = score >= 75 ? 'Alta'    : score >= 55 ? 'Média'   : 'Baixa';
+  if (compact) {
+    return (
+      <span style={{
+        fontSize:11, fontWeight:700, color:cor, background:bg,
+        border:`1px solid ${cor}30`, borderRadius:6, padding:'2px 8px',
+      }}>{score} · {text}</span>
+    );
+  }
   return (
-    <span style={{
-      fontSize:11, fontWeight:700, color:cor, background:bg,
-      border:`1px solid ${cor}30`, borderRadius:6, padding:'2px 8px',
-    }}>{score} · {text}</span>
+    <div style={{ display:'flex', alignItems:'center', gap:7, minWidth:96 }}>
+      <div style={{ flex:1, height:5, borderRadius:99, background:'#F3F4F6', overflow:'hidden' }}>
+        <div style={{ width:`${Math.min(100, score)}%`, height:'100%', background:cor, borderRadius:99, transition:'width 0.4s' }} />
+      </div>
+      <span style={{ fontSize:11, fontWeight:800, color:cor, minWidth:24, textAlign:'right' }}>{score}</span>
+    </div>
   );
 }
 
@@ -204,7 +231,13 @@ function BreakevenChart({ custoTotal, precoLiqTon, prodEsperada, breakeven }) {
   );
 }
 
-const TABS = ['Ranking', 'Mapa de Cobertura', 'Custos & ROI', 'Manejos', 'Expansão de Seguro'];
+const TABS = [
+  { label: 'Ranking',            icon: ListOrdered },
+  { label: 'Mapa de Cobertura',  icon: Map },
+  { label: 'Custos & ROI',       icon: Wallet },
+  { label: 'Manejos',            icon: CalendarClock },
+  { label: 'Expansão de Seguro', icon: ShieldCheck },
+];
 
 /* ─── Componente principal ───────────────────────────────────── */
 export default function OportunidadesPage({ municipios = [] }) {
@@ -325,11 +358,14 @@ export default function OportunidadesPage({ municipios = [] }) {
 
   const Th = ({ k, children }) => (
     <th onClick={() => toggleSort(k)} style={{
-      padding:'10px 12px', fontSize:10, fontWeight:700,
-      color: sortKey === k ? '#1d4ed8' : '#6B7280',
+      position:'sticky', top:0, zIndex:1,
+      padding:'11px 12px', fontSize:10, fontWeight:700,
+      color: sortKey === k ? '#1B4332' : '#6B7280',
       textTransform:'uppercase', letterSpacing:0.8,
-      cursor:'pointer', whiteSpace:'nowrap',
-      borderBottom:'1px solid #E5E7EB', textAlign:'left', background:'#F9FAFB',
+      cursor:'pointer', whiteSpace:'nowrap', userSelect:'none',
+      borderBottom:'1px solid #E5E7EB', textAlign:'left',
+      background: sortKey === k ? '#F0F7F2' : '#F9FAFB',
+      transition:'background 0.15s',
     }}>
       {children} {sortKey === k ? (sortAsc ? '↑' : '↓') : ''}
     </th>
@@ -349,31 +385,47 @@ export default function OportunidadesPage({ municipios = [] }) {
     <div style={{ maxWidth:1200, margin:'0 auto' }}>
 
       {/* ── Header ── */}
-      <div style={{ marginBottom:24, display:'flex', alignItems:'flex-end', justifyContent:'space-between', flexWrap:'wrap', gap:12 }}>
-        <div>
-          <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
-            <div style={{ width:8, height:28, borderRadius:4, background:'linear-gradient(180deg,#16a34a,#059669)' }} />
-            <h1 style={{ fontSize:22, fontWeight:800, color:'#111827' }}>Oportunidades de Expansão</h1>
+      <div style={{
+        marginBottom:22, display:'flex', alignItems:'center', justifyContent:'space-between',
+        flexWrap:'wrap', gap:14, padding:'18px 22px', borderRadius:18,
+        background:'linear-gradient(120deg,#0f2e1c 0%,#1B4332 55%,#164a33 100%)',
+        boxShadow:'0 8px 28px rgba(27,67,50,0.22)', position:'relative', overflow:'hidden',
+      }}>
+        <Wheat size={140} color="#fff" style={{ position:'absolute', top:-30, right:20, opacity:0.06, transform:'rotate(18deg)' }} />
+        <div style={{ position:'relative' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:11, marginBottom:6 }}>
+            <div style={{
+              width:38, height:38, borderRadius:11, background:'rgba(255,255,255,0.12)',
+              display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0,
+              border:'1px solid rgba(255,255,255,0.18)',
+            }}>
+              <TrendingUp size={18} color="#86efac" />
+            </div>
+            <h1 style={{ fontSize:22, fontWeight:800, color:'#fff', letterSpacing:-0.3 }}>Oportunidades de Expansão</h1>
           </div>
-          <p style={{ fontSize:12, color:'#6B7280', marginLeft:18 }}>
+          <p style={{ fontSize:12, color:'rgba(255,255,255,0.65)', marginLeft:49 }}>
             Ranking combinado — aptidão ZARC · logística Agrária · viabilidade econômica · seguro agrícola
           </p>
         </div>
         <button onClick={exportCSV} style={{
-          display:'flex', alignItems:'center', gap:6,
-          padding:'8px 16px', borderRadius:8, cursor:'pointer',
-          background:'#1B4332', color:'#fff', border:'none', fontSize:12, fontWeight:600,
-        }}>
+          display:'flex', alignItems:'center', gap:6, position:'relative',
+          padding:'9px 18px', borderRadius:9, cursor:'pointer',
+          background:'rgba(255,255,255,0.95)', color:'#1B4332', border:'none', fontSize:12, fontWeight:700,
+          boxShadow:'0 2px 10px rgba(0,0,0,0.15)', transition:'transform 0.15s',
+        }}
+          onMouseEnter={e => e.currentTarget.style.transform='translateY(-1px)'}
+          onMouseLeave={e => e.currentTarget.style.transform='none'}
+        >
           <Download size={13} /> Exportar CSV
         </button>
       </div>
 
       {/* ── KPIs ── */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
-        <KpiCard icon={Leaf}    label="Aptos ZARC"         value={kpis.aptos}   sub="score ≥ 70"            cor="#16a34a" />
-        <KpiCard icon={Shield}  label="Oport. de Seguro"   value={kpis.semSeg}  sub="aptos sem PSR ativo"   cor="#7c3aed" />
-        <KpiCard icon={Truck}   label="Logística Viável"   value={kpis.viaveis} sub="até 500 km da Agrária" cor="#2563eb" />
-        <KpiCard icon={Star}    label="Prioridade 1"       value={kpis.prio1}   sub="score combinado ≥ 75"  cor="#d97706" />
+        <KpiCard icon={Leaf}    label="Aptos ZARC"         value={kpis.aptos}   sub="score ≥ 70"            cor="#16a34a" total={dados.length} />
+        <KpiCard icon={Shield}  label="Oport. de Seguro"   value={kpis.semSeg}  sub="aptos sem PSR ativo"   cor="#7c3aed" total={dados.length} />
+        <KpiCard icon={Truck}   label="Logística Viável"   value={kpis.viaveis} sub="até 500 km da Agrária" cor="#2563eb" total={dados.length} />
+        <KpiCard icon={Star}    label="Prioridade 1"       value={kpis.prio1}   sub="score combinado ≥ 75"  cor="#d97706" total={dados.length} />
       </div>
 
       {/* ── Simulador ── */}
@@ -417,22 +469,31 @@ export default function OportunidadesPage({ municipios = [] }) {
       </div>
 
       {/* ── Tabs ── */}
-      <div style={{ display:'flex', gap:0, borderBottom:'2px solid #E5E7EB', marginBottom:16 }}>
-        {TABS.map((t, i) => (
-          <button key={t} onClick={() => setTab(i)} style={{
-            padding:'10px 16px', fontSize:12, cursor:'pointer',
-            background:'none', border:'none',
-            borderBottom: tab === i ? '2px solid #1B4332' : '2px solid transparent',
-            marginBottom:-2, fontWeight: tab === i ? 700 : 400,
-            color: tab === i ? '#1B4332' : '#6B7280',
-          }}>{t}</button>
-        ))}
+      <div style={{ display:'flex', gap:6, marginBottom:18, flexWrap:'wrap' }}>
+        {TABS.map((t, i) => {
+          const Ic = t.icon;
+          const ativo = tab === i;
+          return (
+            <button key={t.label} onClick={() => setTab(i)} style={{
+              display:'flex', alignItems:'center', gap:6,
+              padding:'8px 14px', fontSize:12, cursor:'pointer', borderRadius:9,
+              background: ativo ? '#1B4332' : '#fff',
+              border: `1px solid ${ativo ? '#1B4332' : '#E5E7EB'}`,
+              fontWeight: ativo ? 700 : 500,
+              color: ativo ? '#fff' : '#6B7280',
+              boxShadow: ativo ? '0 3px 10px rgba(27,67,50,0.25)' : 'none',
+              transition:'all 0.15s',
+            }}>
+              <Ic size={13} /> {t.label}
+            </button>
+          );
+        })}
       </div>
 
       {/* ══ TAB 0: Ranking ══ */}
       {tab === 0 && (
         <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, overflow:'hidden' }}>
-          <div style={{ overflowX:'auto' }}>
+          <div style={{ overflow:'auto', maxHeight:560 }}>
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
                 <tr>
@@ -450,12 +511,16 @@ export default function OportunidadesPage({ municipios = [] }) {
               </thead>
               <tbody>
                 {filtrados.slice(0, 80).map((m, i) => (
-                  <tr key={m.codigo_ibge} style={{
-                    background: i % 2 === 0 ? '#fff' : '#FAFAFA',
-                    borderBottom:'1px solid #F3F4F6',
-                    opacity: m.isInaptoPorClima ? 0.55 : 1,
-                  }}>
-                    <td style={{ padding:'9px 12px', fontSize:12, fontWeight:600, color:'#111827' }}>
+                  <tr key={m.codigo_ibge}
+                    onMouseEnter={e => e.currentTarget.style.background = '#F0F7F2'}
+                    onMouseLeave={e => e.currentTarget.style.background = i < 3 ? ['#fffbeb','#f9fafb','#fff7ed'][i] : (i % 2 === 0 ? '#fff' : '#FAFAFA')}
+                    style={{
+                      background: i < 3 ? ['#fffbeb','#f9fafb','#fff7ed'][i] : (i % 2 === 0 ? '#fff' : '#FAFAFA'),
+                      borderBottom:'1px solid #F3F4F6',
+                      opacity: m.isInaptoPorClima ? 0.55 : 1,
+                      transition:'background 0.1s',
+                    }}>
+                    <td style={{ padding:'10px 12px', fontSize:12, fontWeight:600, color:'#111827' }}>
                       {i < 3 && <span style={{ marginRight:6 }}>{['🥇','🥈','🥉'][i]}</span>}
                       {m.nome_municipio}
                       {m.hasHighFrostRisk && <AlertTriangle size={10} color="#ca8a04" style={{ marginLeft:5 }} />}
@@ -756,7 +821,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                       <p style={{ fontSize:13, fontWeight:700, color:'#111827' }}>{m.nome_municipio}</p>
                       <p style={{ fontSize:10, color:'#6B7280' }}>{m.uf} · {m.altitude?.toFixed(0)}m · {m.dist}km Agrária</p>
                     </div>
-                    <ScoreBadge score={m.scoreComb} />
+                    <ScoreBadge score={m.scoreComb} compact />
                   </div>
                   {[
                     { icon:Leaf,       label:'Cultivar',    val:mj.cultivar },
