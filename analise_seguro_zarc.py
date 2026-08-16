@@ -22,6 +22,9 @@ from shapely.geometry import shape
 from dotenv import load_dotenv
 from supabase import create_client
 
+if sys.platform == "win32":
+    sys.stdout.reconfigure(encoding="utf-8")
+
 warnings.filterwarnings("ignore")
 load_dotenv()
 
@@ -37,16 +40,37 @@ SCORE_ZARC_MINIMO = 40   # municípios com score < 40 não têm aptidão ZARC
 
 # ── 1. Carregar dados do SOUFII (Supabase) ───────────────────────────────────
 def carregar_dados_soufii() -> pd.DataFrame:
-    """Busca dados de aptidão do banco SOUFII."""
+    """Busca dados de aptidão do banco SOUFII (pagina para pegar todos os municípios,
+    não só os primeiros 1000 retornados pela API)."""
     sb = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
-    res = sb.table("municipios_aptidao").select(
+    cols = (
         "codigo_ibge, nome_municipio, uf, lat, lon, "
-        "score_aptidao, apto_geral, "
+        "score_aptidao, score_ponderado, apto_geral, "
         "temp_media_anual, precipitacao_acumulada_anual, "
-        "altitude, tipo_solo_zarc, risco_geada_pct, chuva_colheita_mm"
-    ).execute()
-    df = pd.DataFrame(res.data)
+        "altitude, tipo_solo_zarc, risco_geada_pct, chuva_colheita_mm, "
+        "frete_estimado_sc, zona_logistica, maltaria_referencia"
+    )
+    registros, offset = [], 0
+    while True:
+        batch = sb.table("municipios_aptidao").select(cols).range(offset, offset + 999).execute()
+        if not batch.data:
+            break
+        registros.extend(batch.data)
+        if len(batch.data) < 1000:
+            break
+        offset += 1000
+
+    df = pd.DataFrame(registros)
     df["codigo_ibge"] = df["codigo_ibge"].astype(str).str.zfill(7)
+
+    # score_ponderado (graduado por critério) é mais informativo que score_aptidao
+    # (média simples de binários) — usa ponderado quando já foi calculado, com
+    # fallback pro score simples pros municípios ainda não recalculados.
+    if "score_ponderado" in df.columns:
+        df["score_efetivo"] = df["score_ponderado"].fillna(df["score_aptidao"])
+    else:
+        df["score_efetivo"] = df["score_aptidao"]
+
     return df
 
 
@@ -68,7 +92,7 @@ def carregar_dados_seguro(caminho_csv: str | None, df_mun: pd.DataFrame) -> pd.D
     UFS_COM_SEGURO = {"PR", "SC", "RS", "GO"}
     mask = (
         df_mun["uf"].isin(UFS_COM_SEGURO) &
-        (df_mun["score_aptidao"].fillna(0) >= 70)
+        (df_mun["score_efetivo"].fillna(0) >= 70)
     )
     seg = df_mun[["codigo_ibge"]].copy()
     seg["tem_seguro"] = mask.values
@@ -88,7 +112,7 @@ def classificar(df: pd.DataFrame) -> pd.DataFrame:
       Inapto          : NOT zoneado_zarc
     """
     df = df.copy()
-    df["zoneado_zarc"] = df["score_aptidao"].fillna(0) >= SCORE_ZARC_MINIMO
+    df["zoneado_zarc"] = df["score_efetivo"].fillna(0) >= SCORE_ZARC_MINIMO
 
     def regra(row):
         if not row["zoneado_zarc"]:
@@ -109,8 +133,9 @@ def carregar_geometrias() -> gpd.GeoDataFrame | None:
     print(f"[geo] Carregando {GEOJSON_PATH} ...")
     gdf = gpd.read_file(GEOJSON_PATH)
 
-    # Normaliza coluna de código IBGE (pode variar por versão do arquivo)
-    for col in ["CD_MUN", "CD_GEOCMU", "codigo_ibge", "id", "CD_GEOCODM"]:
+    # Normaliza coluna de código IBGE (pode variar por versão do arquivo —
+    # o municipios_br.json usado pelo mapa do frontend usa "codarea")
+    for col in ["codarea", "CD_MUN", "CD_GEOCMU", "codigo_ibge", "id", "CD_GEOCODM"]:
         if col in gdf.columns:
             gdf = gdf.rename(columns={col: "codigo_ibge"})
             break
@@ -127,7 +152,8 @@ def analisar_vizinhanca(df: pd.DataFrame, gdf: gpd.GeoDataFrame) -> pd.DataFrame
     e retorna um DataFrame com oportunidades de expansão de seguro.
     """
     # Junta status ao GeoDataFrame
-    cols = ["codigo_ibge", "nome_municipio", "uf", "score_aptidao", "status_aptidao"]
+    cols = ["codigo_ibge", "nome_municipio", "uf", "score_efetivo", "status_aptidao",
+            "frete_estimado_sc", "zona_logistica", "maltaria_referencia"]
     geo = gdf.merge(df[cols], on="codigo_ibge", how="left")
     geo["status_aptidao"] = geo["status_aptidao"].fillna("Sem dados")
 
@@ -146,7 +172,8 @@ def analisar_vizinhanca(df: pd.DataFrame, gdf: gpd.GeoDataFrame) -> pd.DataFrame
 
     # Spatial join: parciais que tocam/intersectam aptos
     adjacencias = gpd.sjoin(
-        parciais[["codigo_ibge", "nome_municipio", "uf", "score_aptidao", "geometry"]],
+        parciais[["codigo_ibge", "nome_municipio", "uf", "score_efetivo",
+                  "frete_estimado_sc", "zona_logistica", "maltaria_referencia", "geometry"]],
         aptos[["codigo_ibge", "nome_municipio", "uf", "geometry"]],
         how="left",
         predicate="intersects",
@@ -159,10 +186,15 @@ def analisar_vizinhanca(df: pd.DataFrame, gdf: gpd.GeoDataFrame) -> pd.DataFrame
         adjacencias["codigo_ibge_parcial"] != adjacencias["codigo_ibge_apto"]
     ]
 
-    # Agrupa: para cada parcial, lista vizinhos aptos
+    # Agrupa: para cada parcial, lista vizinhos aptos.
+    # Só codigo_ibge/nome_municipio/uf colidem entre os dois lados do sjoin
+    # (por isso ganham sufixo _parcial); score/frete/zona são exclusivos do
+    # lado "parciais" e mantêm o nome original.
     resultado = (
         adjacencias
-        .groupby(["codigo_ibge_parcial", "nome_municipio_parcial", "uf_parcial", "score_aptidao_parcial"])
+        .groupby(["codigo_ibge_parcial", "nome_municipio_parcial", "uf_parcial",
+                  "score_efetivo", "frete_estimado_sc",
+                  "zona_logistica", "maltaria_referencia"], dropna=False)
         .agg(
             vizinhos_aptos=("nome_municipio_apto", lambda x: "; ".join(sorted(x.unique()))),
             n_vizinhos_aptos=("codigo_ibge_apto", "nunique"),
@@ -172,12 +204,31 @@ def analisar_vizinhanca(df: pd.DataFrame, gdf: gpd.GeoDataFrame) -> pd.DataFrame
             "codigo_ibge_parcial":    "codigo_ibge",
             "nome_municipio_parcial": "nome_municipio",
             "uf_parcial":             "uf",
-            "score_aptidao_parcial":  "score_aptidao",
+            "score_efetivo":          "score_aptidao",
         })
-        .sort_values(["n_vizinhos_aptos", "score_aptidao"], ascending=[False, False])
     )
 
-    return resultado
+    # ── Score de prioridade de expansão ──────────────────────────────────────
+    # Combina 3 fatores que importam pra Agrária decidir onde expandir seguro
+    # primeiro: (1) quão apto agronomicamente o município já é, (2) quantos
+    # vizinhos já aptos/segurados ele tem por perto (efeito de cluster —
+    # mais fácil levar ATER/EMATER pra uma região já em expansão), e
+    # (3) o quão barato é escoar a produção até a maltaria mais próxima
+    # (frete alto inviabiliza mesmo um município agronomicamente bom).
+    score_norm     = (resultado["score_aptidao"].fillna(0) / 100).clip(0, 1)
+    vizinhos_norm  = (resultado["n_vizinhos_aptos"] / resultado["n_vizinhos_aptos"].max()).clip(0, 1) \
+        if resultado["n_vizinhos_aptos"].max() else 0
+    # Frete ausente (município ainda sem cálculo de logística) não penaliza nem beneficia
+    frete_norm = 1 - (resultado["frete_estimado_sc"].fillna(resultado["frete_estimado_sc"].median() or 0) / 25).clip(0, 1)
+
+    resultado["prioridade_expansao"] = (
+        0.5 * score_norm + 0.3 * vizinhos_norm + 0.2 * frete_norm
+    ).round(3)
+
+    return resultado.sort_values(
+        ["prioridade_expansao", "n_vizinhos_aptos", "score_aptidao"],
+        ascending=[False, False, False],
+    )
 
 
 # ── 6. Resumo estatístico ─────────────────────────────────────────────────────
@@ -269,11 +320,15 @@ def main():
     imprimir_resumo(df)
 
     if not df_viz.empty:
-        print(f"\n  TOP 10 OPORTUNIDADES DE EXPANSÃO DE SEGURO:")
-        print(f"  {'Município':<28} {'UF':<4} {'Score':>5} {'Vizinhos Aptos':>14}")
-        print(f"  {'-'*60}")
+        print(f"\n  TOP 10 OPORTUNIDADES DE EXPANSÃO DE SEGURO "
+              f"(ordenado por prioridade = 50% aptidão + 30% cluster de vizinhos + 20% frete):")
+        print(f"  {'Município':<26} {'UF':<3} {'Score':>5} {'Vizinhos':>8} {'Frete R$/sc':>11} {'Prioridade':>10}")
+        print(f"  {'-'*68}")
         for _, r in df_viz.head(10).iterrows():
-            print(f"  {r['nome_municipio']:<28} {r['uf']:<4} {int(r['score_aptidao'] or 0):>5} {r['n_vizinhos_aptos']:>14}")
+            frete = r.get("frete_estimado_sc")
+            frete_str = f"{frete:.2f}" if pd.notna(frete) else "—"
+            print(f"  {r['nome_municipio']:<26} {r['uf']:<3} {int(r['score_aptidao'] or 0):>5} "
+                  f"{r['n_vizinhos_aptos']:>8} {frete_str:>11} {r['prioridade_expansao']:>10.3f}")
 
     exportar(df, df_viz, args.saida)
 

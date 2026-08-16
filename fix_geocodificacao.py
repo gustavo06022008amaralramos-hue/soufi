@@ -91,9 +91,18 @@ def main():
     print("  fix_geocodificacao.py  -  SOUFII")
     print("=" * 60)
 
-    todos = supabase.table("municipios_aptidao")\
-        .select("codigo_ibge, nome_municipio, uf, lat, lon")\
-        .execute().data or []
+    todos = []
+    offset = 0
+    while True:
+        batch = supabase.table("municipios_aptidao")\
+            .select("codigo_ibge, nome_municipio, uf, lat, lon")\
+            .range(offset, offset + 999).execute()
+        if not batch.data:
+            break
+        todos.extend(batch.data)
+        if len(batch.data) < 1000:
+            break
+        offset += 1000
 
     print(f"[DB] {len(todos)} municipios no banco")
 
@@ -117,8 +126,9 @@ def main():
         nome = m["nome_municipio"]
         uf   = m["uf"]
         lat_atual = m.get("lat")
+        lat_atual_str = f"{lat_atual:.3f}" if lat_atual is not None else "None"
 
-        print(f"[{i}/{len(alvo)}] {nome}/{uf}  lat_atual={lat_atual:.3f if lat_atual else 'None'} ...",
+        print(f"[{i}/{len(alvo)}] {nome}/{uf}  lat_atual={lat_atual_str} ...",
               end=" ", flush=True)
 
         new_lat, new_lon, new_alt = geocode(nome, uf)
