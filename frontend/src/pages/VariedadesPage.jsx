@@ -30,59 +30,58 @@ function recomendar(cond) {
     .sort((a, b) => b.score - a.score);
 }
 
-const FILTROS = ['Todas', 'Ciclo curto', 'Ciclo médio', 'Ciclo tardio'];
+const FILTROS = ['Todas', 'Grupo I', 'Grupo II', 'Grupo III'];
 
+// Reação a doenças/acamamento — Tabela 3.1, Embrapa Trigo (2025), ensaios
+// Passo Fundo/RS e Guarapuava/PR, 2015–2024. R=resistente, MR=moderadamente
+// resistente, MS=moderadamente suscetível, S=suscetível, AS=altamente suscetível.
 const INFO_EXTRA = {
   Princesa: {
     zonas: ['PR', 'SC', 'RS'],
-    aptidaoPor: { '≥67': '87%', '≥83': '42%' },
     img: '🌾',
     cor: '#f59e0b',
     caracteristicas: [
-      { label: 'Peso hectolítrico', val: '≥ 62 kg/hL', ok: true },
-      { label: 'Germinação', val: '≥ 95%', ok: true },
-      { label: 'Proteína', val: '9–12%', ok: true },
-      { label: 'Resistência a doenças', val: 'Moderada', ok: true },
-      { label: 'Tolerância à seca', val: 'Baixa', ok: false },
+      { label: 'Acamamento', val: 'Moderadamente suscetível', ok: false },
+      { label: 'Oídio', val: 'Resistente', ok: true },
+      { label: 'Ferrugem da folha', val: 'Moderadamente resistente', ok: true },
+      { label: 'Mancha-reticular', val: 'Moderadamente resistente', ok: true },
+      { label: 'Giberela', val: 'Moderadamente suscetível', ok: false },
     ],
   },
-  Condessa: {
-    zonas: ['PR', 'SC', 'RS', 'GO'],
-    aptidaoPor: { '≥67': '82%', '≥83': '38%' },
+  'BRS Cauê': {
+    zonas: ['RS', 'PR', 'SC'],
     img: '👑',
     cor: '#8b5cf6',
     caracteristicas: [
-      { label: 'Peso hectolítrico', val: '≥ 61 kg/hL', ok: true },
-      { label: 'Germinação', val: '≥ 95%', ok: true },
-      { label: 'Proteína', val: '10–13%', ok: true },
-      { label: 'Resistência a doenças', val: 'Alta', ok: true },
-      { label: 'Tolerância à seca', val: 'Moderada', ok: true },
+      { label: 'Altura de planta', val: '72cm (genes de nanismo)', ok: true },
+      { label: 'Acamamento', val: 'Moderadamente resistente', ok: true },
+      { label: 'Oídio', val: 'Altamente suscetível', ok: false },
+      { label: 'Giberela', val: 'Suscetível', ok: false },
+      { label: 'Mancha-reticular', val: 'Moderadamente resistente', ok: true },
     ],
   },
   Duquesa: {
     zonas: ['PR', 'SC'],
-    aptidaoPor: { '≥67': '72%', '≥83': '55%' },
     img: '💎',
     cor: '#06b6d4',
     caracteristicas: [
-      { label: 'Peso hectolítrico', val: '≥ 63 kg/hL', ok: true },
-      { label: 'Germinação', val: '≥ 97%', ok: true },
-      { label: 'Proteína', val: '9–11%', ok: true },
-      { label: 'Resistência a doenças', val: 'Muito Alta', ok: true },
-      { label: 'Tolerância à seca', val: 'Baixa', ok: false },
+      { label: 'Acamamento', val: 'Moderadamente resistente', ok: true },
+      { label: 'Oídio', val: 'Resistente', ok: true },
+      { label: 'Ferrugem da folha', val: 'Moderadamente resistente', ok: true },
+      { label: 'Mancha-marrom', val: 'Moderadamente suscetível', ok: false },
+      { label: 'Giberela', val: 'Suscetível', ok: false },
     ],
   },
   Imperatriz: {
     zonas: ['GO', 'MG', 'SP', 'MS', 'MT', 'BA', 'PR', 'RS'],
-    aptidaoPor: { '≥67': '94%', '≥83': '28%' },
     img: '🌿',
     cor: '#10b981',
     caracteristicas: [
-      { label: 'Peso hectolítrico', val: '≥ 60 kg/hL', ok: true },
-      { label: 'Germinação', val: '≥ 95%', ok: true },
-      { label: 'Proteína', val: '10–14%', ok: true },
-      { label: 'Resistência a doenças', val: 'Alta', ok: true },
-      { label: 'Tolerância à seca', val: 'Alta', ok: true },
+      { label: 'Acamamento', val: 'Moderadamente resistente', ok: true },
+      { label: 'Oídio', val: 'Moderadamente resistente', ok: true },
+      { label: 'Ferrugem da folha', val: 'Moderadamente resistente', ok: true },
+      { label: 'Mancha-marrom', val: 'Moderadamente suscetível', ok: false },
+      { label: 'Giberela', val: 'Suscetível', ok: false },
     ],
   },
 };
@@ -202,22 +201,19 @@ function Detalhe({ cultivarKey, c, extra, onClose }) {
 
         <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>{c.desc}</p>
 
-        {/* Aptidão */}
-        <div style={{ display: 'flex', gap: 10, marginBottom: 20 }}>
-          {Object.entries(extra.aptidaoPor).map(([label, pct]) => (
-            <div key={label} style={{
-              flex: 1, textAlign: 'center', padding: '12px 8px',
-              background: `${c.cor}10`, border: `1px solid ${c.cor}30`, borderRadius: 10,
-            }}>
-              <p style={{ fontSize: 22, fontWeight: 800, color: c.cor }}>{pct}</p>
-              <p style={{ fontSize: 10, color: 'var(--text-faint)', marginTop: 2 }}>municípios score {label}</p>
-            </div>
+        {/* Zonas indicadas */}
+        <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginBottom: 20 }}>
+          {extra.zonas.map(z => (
+            <span key={z} style={{
+              fontSize: 10, fontWeight: 600, padding: '3px 9px', borderRadius: 20,
+              background: `${c.cor}15`, color: c.cor, border: `1px solid ${c.cor}30`,
+            }}>{z}</span>
           ))}
         </div>
 
-        {/* Características PIQ */}
+        {/* Ciclo e reação a doenças */}
         <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
-          Padrão Industrial (PIQ)
+          Ciclo e reação a doenças — Embrapa Trigo (2025)
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
           {extra.caracteristicas.map(({ label, val, ok }) => (
@@ -276,11 +272,7 @@ export default function VariedadesPage() {
 
   const filtrados = Object.entries(CULTIVARES).filter(([key, c]) => {
     if (filtro === 'Todas') return true;
-    const ciclo = c.ciclo.toLowerCase();
-    if (filtro === 'Ciclo curto'   && ciclo.includes('precoce')) return true;
-    if (filtro === 'Ciclo médio'   && ciclo.includes('médio') && !ciclo.includes('tardio')) return true;
-    if (filtro === 'Ciclo tardio'  && ciclo.includes('tardio')) return true;
-    return false;
+    return c.ciclo.startsWith(`${filtro} ·`);
   });
 
   return (
@@ -416,7 +408,7 @@ export default function VariedadesPage() {
           </div>
           <div style={{ marginTop:14, padding:'9px 12px', background:'#F0F9FF', border:'1px solid #BAE6FD', borderRadius:8, fontSize:10, color:'#0369a1' }}>
             <strong>Fórmula:</strong> Kg/ha = (Densidade × PMG) ÷ (PG% × 1000) × 1000 —
-            Fonte: EMBRAPA Trigo, Boletim Técnico n.º 93, 2019
+            fórmula agronômica padrão de taxa de semeadura, comum a cereais de inverno
           </div>
         </div>
       )}

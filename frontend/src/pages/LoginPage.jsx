@@ -4,6 +4,30 @@ import { Mail, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext.jsx';
 import { SoufiiIcon } from '../components/ui/SoufiiLogo.jsx';
 
+/* Textura sutil de grão — mesmo padrão usado no hero da Home, para
+   consistência visual entre as duas telas com fundo escuro. */
+const GRAIN_PATTERN = `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`;
+
+/* Espiga de cevada estilizada, para reforçar a identidade "cevada
+   cervejeira" no visual — usada como marca d'água decorativa. */
+function BarleyEar({ size = 220, opacity = 0.08, rotate = 0 }) {
+  return (
+    <svg width={size} height={size * 1.6} viewBox="0 0 100 160" style={{ opacity, transform: `rotate(${rotate}deg)` }}>
+      <line x1="50" y1="10" x2="50" y2="150" stroke="#fde68a" strokeWidth="2.5" strokeLinecap="round" />
+      {Array.from({ length: 9 }, (_, i) => {
+        const y = 22 + i * 14;
+        const w = 26 - i * 0.6;
+        return (
+          <g key={i}>
+            <ellipse cx={50 - w} cy={y} rx="13" ry="6" fill="#fbbf24" transform={`rotate(-28 ${50 - w} ${y})`} />
+            <ellipse cx={50 + w} cy={y} rx="13" ry="6" fill="#fbbf24" transform={`rotate(28 ${50 + w} ${y})`} />
+          </g>
+        );
+      })}
+    </svg>
+  );
+}
+
 export default function LoginPage() {
   const { user, login } = useAuth();
   const navigate = useNavigate();
@@ -48,6 +72,7 @@ export default function LoginPage() {
         <div style={{
           position: 'absolute', inset: 0,
           background: 'linear-gradient(160deg, #071a0e 0%, #0d2b1a 40%, #071410 100%)',
+          backgroundImage: GRAIN_PATTERN,
         }} />
         <video autoPlay muted loop playsInline
           style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: 0.45 }}
@@ -59,19 +84,26 @@ export default function LoginPage() {
           position: 'absolute', inset: 0,
           background: 'linear-gradient(160deg, rgba(7,26,14,0.75) 0%, rgba(13,43,26,0.60) 50%, rgba(7,20,16,0.80) 100%)',
         }} />
-        {/* Partículas decorativas */}
-        {[...Array(6)].map((_, i) => (
+        {/* Espigas de cevada decorativas — reforço temático */}
+        <div style={{ position: 'absolute', top: '-6%', right: '4%', pointerEvents: 'none' }}>
+          <BarleyEar size={200} opacity={0.10} rotate={12} />
+        </div>
+        <div style={{ position: 'absolute', bottom: '-8%', left: '2%', pointerEvents: 'none' }}>
+          <BarleyEar size={260} opacity={0.07} rotate={-16} />
+        </div>
+        {/* Partículas decorativas — verde (aptidão) + âmbar (malte) */}
+        {[...Array(7)].map((_, i) => (
           <div key={i} style={{
             position: 'absolute',
-            width: [300,200,400,250,180,350][i],
-            height: [300,200,400,250,180,350][i],
+            width: [300,200,400,250,180,350,220][i],
+            height: [300,200,400,250,180,350,220][i],
             borderRadius: '50%',
-            background: `radial-gradient(circle, rgba(${['5,150,105','16,185,129','52,211,153','6,95,70','4,120,87','20,160,110'][i]},0.${[6,5,4,7,5,4][i]}) 0%, transparent 70%)`,
-            top: `${[10,60,20,70,35,50][i]}%`,
-            left: `${[10,70,40,20,60,80][i]}%`,
+            background: `radial-gradient(circle, rgba(${['5,150,105','16,185,129','52,211,153','6,95,70','4,120,87','20,160,110','217,165,60'][i]},0.${[6,5,4,7,5,4,5][i]}) 0%, transparent 70%)`,
+            top: `${[10,60,20,70,35,50,85][i]}%`,
+            left: `${[10,70,40,20,60,80,45][i]}%`,
             transform: 'translate(-50%,-50%)',
             pointerEvents: 'none',
-            animation: `pulse ${[4,5,6,4.5,5.5,3.5][i]}s ease-in-out infinite`,
+            animation: `pulse ${[4,5,6,4.5,5.5,3.5,6.5][i]}s ease-in-out infinite`,
           }} />
         ))}
       </div>

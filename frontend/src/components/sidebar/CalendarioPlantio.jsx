@@ -26,45 +26,16 @@ const FASES = [
   { label:'Colheita',     iCol:5, fCol:7, cor:'#065f46', aviso:'Risco de chuva na colheita', avisoCols:[5,6] },
 ];
 
-/* Cultivar recomendada por perfil */
-function cultivarRec(municipio) {
-  const score  = municipio?.score_aptidao ?? 0;
-  const geada  = municipio?.risco_geada_pct ?? 0;
-  const uf     = municipio?.uf ?? '';
-  const regiao = getRegiao(uf);
-
-  if (score >= 83) {
-    return {
-      cultivar: 'BRS Princesa',
-      semeio:   'Jun (precoce)',
-      prod:     '3,0–4,0 t/ha',
-      adubacao: 'N: 20 kg/ha base + 60 kg/ha cobertura V3',
-    };
-  }
-  if (score >= 67 && geada >= 20) {
-    return {
-      cultivar: 'BRS Cauê',
-      semeio:   'Jul (tardio — reduz risco de geada no perfilhamento)',
-      prod:     '2,8–3,5 t/ha',
-      adubacao: 'N: 15 kg/ha base + 50 kg/ha cobertura V3; atenção ao K',
-    };
-  }
-  if (score >= 67) {
-    return {
-      cultivar: regiao === 'cerrado' ? 'BRS Elis' : 'BRS Duquesa',
-      semeio:   'Jun–Jul',
-      prod:     '2,5–3,5 t/ha',
-      adubacao: 'N: 15 kg/ha base + 50 kg/ha cobertura V3',
-    };
-  }
-  if (score >= 40) {
-    return {
-      cultivar: 'BRS Elis',
-      semeio:   'Mai–Jul (preferir Jul)',
-      prod:     '2,0–3,0 t/ha',
-      adubacao: 'N: 10 kg/ha base + 40 kg/ha cobertura; irrigação complementar recomendada',
-    };
-  }
+/* Janela de semeio recomendada por score — não há tabela oficial de produtividade
+   ou adubação por cultivar (nenhuma fonte Embrapa/FAPA publica isso), então a
+   recomendação aqui se limita ao que é real e sourced: a janela de plantio. */
+function janelaSemeio(municipio) {
+  const score = municipio?.score_aptidao ?? 0;
+  const geada = municipio?.risco_geada_pct ?? 0;
+  if (score >= 83) return 'Jun (início da janela — aproveita o ciclo mais longo)';
+  if (score >= 67 && geada >= 20) return 'Jul (tardio — reduz risco de geada no espigamento)';
+  if (score >= 67) return 'Jun–Jul';
+  if (score >= 40) return 'Mai–Jul (preferir Jul, mais próximo do pico de geada)';
   return null;
 }
 
@@ -78,7 +49,7 @@ export default function CalendarioPlantio({ municipio, calendario }) {
 
   const geadaPct   = municipio.risco_geada_pct ?? 0;
   const colheitaMm = municipio.chuva_colheita_mm ?? 0;
-  const rec        = cultivarRec(municipio);
+  const semeio     = janelaSemeio(municipio);
 
   /* dados mensais indexados por mês (1–12) */
   const mapaDados = {};
@@ -202,28 +173,22 @@ export default function CalendarioPlantio({ municipio, calendario }) {
         </div>
       ))}
 
-      {/* Recomendação de cultivar */}
-      {rec && (
+      {/* Janela de semeio recomendada */}
+      {semeio && (
         <div style={{
           marginTop:10, background:'#F0FDF4', border:'1px solid #BBF7D0',
           borderRadius:9, padding:'10px 12px',
-          display:'grid', gridTemplateColumns:'1fr 1fr', gap:'6px 16px',
         }}>
-          {[
-            { label:'Cultivar recomendada', val:rec.cultivar, cor:'#15803d', bold:true },
-            { label:'Janela de semeio',      val:rec.semeio,   cor:'#15803d', bold:false },
-            { label:'Produtividade esperada',val:rec.prod,     cor:'#15803d', bold:true },
-            { label:'Adubação',              val:rec.adubacao, cor:'#374151', bold:false },
-          ].map(r => (
-            <div key={r.label}>
-              <p style={{ fontSize:8, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.7, marginBottom:2 }}>
-                {r.label}
-              </p>
-              <p style={{ fontSize:10, fontWeight: r.bold ? 700 : 400, color:r.cor, lineHeight:1.4 }}>
-                {r.val}
-              </p>
-            </div>
-          ))}
+          <p style={{ fontSize:8, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.7, marginBottom:2 }}>
+            Janela de semeio recomendada
+          </p>
+          <p style={{ fontSize:11, fontWeight:700, color:'#15803d', lineHeight:1.4 }}>
+            {semeio}
+          </p>
+          <p style={{ fontSize:9, color:'#6B7280', marginTop:4, lineHeight:1.4 }}>
+            Ver aba Variedades para cultivares indicadas (ciclo e obtentor) — produtividade e
+            adubação variam por manejo e análise de solo, consulte a FAPA/Cooperativa Agrária.
+          </p>
         </div>
       )}
     </div>

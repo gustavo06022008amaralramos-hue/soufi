@@ -8,17 +8,18 @@ import {
 } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
-const WEATHER_KEY  = 'bd5e378503939ddaee76f12ad7a97608';
+const WEATHER_KEY  = import.meta.env.VITE_WEATHER_KEY;
 
 const ICONES_CLIMA = {
   Clear:'☀️', Clouds:'☁️', Rain:'🌧️', Drizzle:'🌦️',
   Thunderstorm:'⛈️', Snow:'❄️', Mist:'🌫️', default:'🌤️',
 };
 
+// Links reais para fontes primárias — não fabrica manchetes/estatísticas.
 const NOTICIAS_HOME = [
-  { id:1, titulo:'ZARC 2025/26: MAPA amplia regiões aptas para cevada no PR e SC', fonte:'MAPA', categoria:'Zoneamento', dias:5, resumo:'47 novos municípios do Paraná e 23 de Santa Catarina incluídos no zoneamento.' },
-  { id:2, titulo:'FAPA registra produtividade recorde de 5,2 t/ha em Guarapuava', fonte:'FAPA', categoria:'Produção', dias:8, resumo:'Cultivar BRS Duquesa em solos argilosos sob condições climáticas ideais no inverno de 2025.' },
-  { id:3, titulo:'BRS Imperatriz consolida expansão para o Cerrado Goiano', fonte:'Agrária', categoria:'Mercado', dias:15, resumo:'3.800 ha plantados com média de 3,8 t/ha em lavouras irrigadas de inverno em GO.' },
+  { id:1, titulo:'Programa Nacional de ZARC — portarias vigentes por estado', fonte:'MAPA', categoria:'Zoneamento', resumo:'Consulte o zoneamento oficial de risco climático para cevada, safra vigente.', url:'https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico' },
+  { id:2, titulo:'FAPA — Fundação Agrária de Pesquisa Agropecuária', fonte:'Agrária', categoria:'Pesquisa', resumo:'Pesquisa e cultivares próprias da Cooperativa Agrária, em Guarapuava/PR.', url:'https://www.agraria.com.br/sementes/fapa' },
+  { id:3, titulo:'Embrapa Trigo — Indicações Técnicas para Cevada Cervejeira', fonte:'Embrapa', categoria:'Pesquisa', resumo:'Publicação técnica bienal com cultivares recomendadas e práticas de manejo.', url:'https://www.embrapa.br/trigo' },
 ];
 
 const BADGE_COR = {
@@ -118,13 +119,18 @@ export default function HomePage({ municipios = [], apiOnline }) {
       const altitudes = municipios.filter(m => m.altitude != null);
       if (altitudes.length > 0) {
         const altMedia = altitudes.reduce((s,m) => s + (m.altitude??0), 0) / altitudes.length;
-        list.push({ icon: TrendingUp, cor: '#d97706', tipo: 'Altitude', texto: `A altitude média dos municípios analisados é ${altMedia.toFixed(0)}m. Municípios com altitude ≥ 700m têm probabilidade 3× maior de ser aptos ZARC.` });
+        const altos  = municipios.filter(m => (m.altitude??0) >= 700);
+        const baixos = municipios.filter(m => (m.altitude??0) < 700);
+        const pctAptoAlto  = altos.length  ? (altos.filter(m=>(m.score_aptidao??0)>=70).length  / altos.length  * 100) : 0;
+        const pctAptoBaixo = baixos.length ? (baixos.filter(m=>(m.score_aptidao??0)>=70).length / baixos.length * 100) : 0;
+        const razao = pctAptoBaixo > 0 ? (pctAptoAlto / pctAptoBaixo).toFixed(1) : '—';
+        list.push({ icon: TrendingUp, cor: '#d97706', tipo: 'Altitude', texto: `A altitude média dos municípios analisados é ${altMedia.toFixed(0)}m. Municípios com altitude ≥ 700m têm ${razao}× mais chance de score ≥70 do que municípios abaixo de 700m (dados atuais da base).` });
       }
 
       const geadaAlta = municipios.filter(m => (m.risco_geada_pct??0) > 30 && (m.score_aptidao??0) >= 70).length;
       if (geadaAlta > 0) list.push({ icon: AlertTriangle, cor: '#DC2626', tipo: 'Alerta', texto: `${geadaAlta} municípios aptos têm risco de geada > 30% — atenção ao semeio tardio (Jul) para proteger o espigamento.` });
     } else if (aptos > 0) {
-      list.push({ icon: TrendingUp, cor: '#d97706', tipo: 'Potencial', texto: `Com ${(aptos + parciais).toLocaleString('pt-BR')} municípios aptos ou parcialmente aptos, o Brasil tem potencial de expandir a produção de cevada em mais de 400%.` });
+      list.push({ icon: TrendingUp, cor: '#d97706', tipo: 'Potencial', texto: `${(aptos + parciais).toLocaleString('pt-BR')} municípios são aptos ou parcialmente aptos para cevada cervejeira, segundo os critérios ZARC/EMBRAPA aplicados pelo SOUFII.` });
       list.push({ icon: AlertTriangle, cor: '#DC2626', tipo: 'Atenção', texto: `O ZARC exige risco de geada < 30% no espigamento (Ago/Set). Municípios com geada frequente devem optar por semeio tardio em Julho.` });
     }
 
@@ -403,7 +409,8 @@ export default function HomePage({ municipios = [], apiOnline }) {
             {NOTICIAS_HOME.map((n,i) => {
               const badge = BADGE_COR[n.categoria] ?? { bg:'rgba(100,100,100,0.1)', cor:'#888' };
               return (
-                <div key={n.id} style={{
+                <a key={n.id} href={n.url} target="_blank" rel="noopener noreferrer" style={{
+                  display: 'block', textDecoration: 'none',
                   padding:'12px 0',
                   borderBottom: i<NOTICIAS_HOME.length-1?'1px solid #F3F4F6':'none',
                 }}>
@@ -411,11 +418,11 @@ export default function HomePage({ municipios = [], apiOnline }) {
                     <span style={{ fontSize:9, fontWeight:600, color:badge.cor, background:badge.bg, borderRadius:4, padding:'2px 7px' }}>
                       {n.categoria}
                     </span>
-                    <span style={{ fontSize:9, color:'#9CA3AF' }}>{n.fonte} · há {n.dias} dias</span>
+                    <span style={{ fontSize:9, color:'#9CA3AF' }}>{n.fonte}</span>
                   </div>
                   <p style={{ fontSize:12, fontWeight:600, color:'#374151', lineHeight:1.45, marginBottom:4 }}>{n.titulo}</p>
                   <p style={{ fontSize:11, color:'#6B7280', lineHeight:1.5 }}>{n.resumo}</p>
-                </div>
+                </a>
               );
             })}
           </div>

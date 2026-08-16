@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react';
 import { X, MapPin, Mountain, Thermometer, CloudRain, Snowflake,
-         CheckCircle, XCircle, Truck, Layers, AlertTriangle } from 'lucide-react';
+         CheckCircle, XCircle, Truck, Layers, AlertTriangle, FileText,
+         Shield, ExternalLink } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import CalendarioPlantio from './CalendarioPlantio.jsx';
 
@@ -16,7 +17,8 @@ function classe(m) {
 }
 
 /* ─── Logística ──────────────────────────────────────────── */
-const AGRARIA = { lat:-25.530, lon:-51.491 };
+// Sede real: Rua 5 de Maio, 745, Colônia Vitória — Entre Rios, Guarapuava/PR
+const AGRARIA = { lat:-25.5630, lon:-51.4898 };
 function haversine(la1,lo1,la2,lo2) {
   const R=6371, r=Math.PI/180;
   const a = Math.sin((la2-la1)*r/2)**2 + Math.cos(la1*r)*Math.cos(la2*r)*Math.sin((lo2-lo1)*r/2)**2;
@@ -69,11 +71,114 @@ const CRITERIOS = [
   },
 ];
 
+/* ─── Seguro / ZARC oficial ──────────────────────────────── */
+// Estados com Portaria ZARC cevada cervejeira publicada pelo MAPA (sequeiro e/ou
+// irrigado), conforme "Indicações Técnicas para a Produção de Cevada Cervejeira
+// — safras 2025 e 2026" (Embrapa Trigo, 2025) e Portaria SPA/MAPA nº 358/2024 (PR).
+const ZARC_UFS = ['PR', 'SC', 'RS', 'SP', 'MG', 'GO', 'DF'];
+const MAPA_ZARC_URL = 'https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico';
+const MAPA_PAINEL_URL = 'https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/painel-de-indicacao-de-riscos-1';
+
 const SOLO_INFO = {
   1: { label:'Tipo 1 — Arenoso',      cor:'#ef4444', recom:'Não recomendado pelo ZARC' },
   2: { label:'Tipo 2 — Textura Média', cor:'#f59e0b', recom:'Aceito com manejo adequado' },
   3: { label:'Tipo 3 — Argiloso',      cor:'#10b981', recom:'Plenamente apto pelo ZARC' },
 };
+
+/* ─── Ficha PDF ──────────────────────────────────────────── */
+function printFicha(municipio, log, criterios, aprovados) {
+  const cl   = classe(municipio);
+  const cor  = COR[cl];
+  const score = municipio.score_aptidao ?? 0;
+  const now  = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric' });
+
+  const cRows = criterios.map(c => `
+    <tr>
+      <td style="padding:7px 10px;border-bottom:1px solid #f0f0f0;">
+        <span style="color:${c.pass?'#16a34a':'#dc2626'};font-weight:700;margin-right:6px;">${c.pass?'✓':'✗'}</span>${c.label}
+      </td>
+      <td style="padding:7px 10px;border-bottom:1px solid #f0f0f0;font-weight:700;color:${c.pass?'#16a34a':'#dc2626'};">${c.val}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #f0f0f0;color:#9CA3AF;font-size:11px;">${c.faixa}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Ficha — ${municipio.nome_municipio}/${municipio.uf}</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'Segoe UI',system-ui,sans-serif;color:#1a1a1a;background:#fff;padding:32px;max-width:800px;margin:0 auto;}
+.hdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:22px;padding-bottom:14px;border-bottom:3px solid ${cor};}
+.logo{font-size:10px;font-weight:700;color:#1B4332;letter-spacing:1.5px;text-transform:uppercase;margin-bottom:4px;}
+h1{font-size:22px;font-weight:800;color:#1a1a1a;}
+.sub{font-size:11px;color:#6B7280;margin-top:3px;}
+.badge{font-size:12px;font-weight:800;color:${cor};background:${cor}18;border:1.5px solid ${cor}40;border-radius:8px;padding:5px 14px;}
+.circle{width:58px;height:58px;border-radius:50%;border:3px solid ${cor};background:${cor}10;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
+.snum{font-size:19px;font-weight:800;color:${cor};line-height:1;}
+.ssub{font-size:9px;color:#9CA3AF;}
+.sec{margin-bottom:18px;}
+.stitle{font-size:10px;font-weight:800;color:#1B4332;text-transform:uppercase;letter-spacing:1.2px;padding-bottom:7px;border-bottom:1.5px solid #E5E7EB;margin-bottom:10px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:4px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.card{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:9px;padding:11px 12px;}
+.ct{font-size:9px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
+.cv{font-size:18px;font-weight:800;color:#1a1a1a;line-height:1.1;}
+.cu{font-size:10px;color:#9CA3AF;margin-top:2px;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;font-size:9px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;padding:7px 10px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;}
+.foot{margin-top:28px;padding-top:10px;border-top:1px solid #E5E7EB;display:flex;justify-content:space-between;}
+.foot p{font-size:9px;color:#9CA3AF;}
+@media print{body{padding:16px;}}
+</style></head><body>
+<div class="hdr">
+  <div>
+    <div class="logo">⬡ SOUFII · Cooperativa Agrária</div>
+    <h1>${municipio.nome_municipio}</h1>
+    <div class="sub">${municipio.uf} &nbsp;·&nbsp; IBGE ${municipio.codigo_ibge} &nbsp;·&nbsp; Ficha Técnica de Aptidão Tritícola</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div class="badge">${LABEL[cl].toUpperCase()}</div>
+    <div class="circle"><span class="snum">${score}</span><span class="ssub">/100</span></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="stitle">Dados Climáticos</div>
+  <div class="g3">
+    <div class="card"><div class="ct">Temperatura Média</div><div class="cv">${municipio.temp_media_anual?.toFixed(1)??'—'}°C</div><div class="cu">ZARC: 10–22°C</div></div>
+    <div class="card"><div class="ct">Precipitação Anual</div><div class="cv">${municipio.precipitacao_acumulada_anual?.toFixed(0)??'—'}mm</div><div class="cu">ZARC: 400–2.000mm</div></div>
+    <div class="card"><div class="ct">Altitude</div><div class="cv">${municipio.altitude?.toFixed(0)??'—'}m</div><div class="cu">ZARC: ≥ 700m</div></div>
+    <div class="card"><div class="ct">Risco de Geada</div><div class="cv">${municipio.risco_geada_pct?.toFixed(0)??'—'}%</div><div class="cu">ZARC: &lt; 30%</div></div>
+    <div class="card"><div class="ct">Solo ZARC</div><div class="cv">${municipio.tipo_solo_zarc?`Tipo ${municipio.tipo_solo_zarc}`:'—'}</div><div class="cu">ZARC: Tipo 2 ou 3</div></div>
+    <div class="card"><div class="ct">Chuva na Colheita</div><div class="cv">${municipio.chuva_colheita_mm?.toFixed(0)??'—'}mm</div><div class="cu">ZARC: 120–400mm</div></div>
+  </div>
+</div>
+
+<div class="sec">
+  <div class="stitle">Critérios de Aptidão ZARC / EMBRAPA &mdash; ${aprovados}/6 atendidos</div>
+  <table><thead><tr><th>Critério</th><th>Valor medido</th><th>Faixa ideal</th></tr></thead><tbody>${cRows}</tbody></table>
+</div>
+
+${log ? `<div class="sec">
+  <div class="stitle">Análise Logística</div>
+  <div class="g2">
+    <div class="card"><div class="ct">Distância até Cooperativa Agrária</div><div class="cv">${log.dist} km</div><div class="cu">Entre Rios, Guarapuava / PR</div></div>
+    <div class="card" style="border-color:${log.viab.cor}50;"><div class="ct">Viabilidade</div><div class="cv" style="color:${log.viab.cor};">${log.viab.label}</div><div class="cu">Líquido/saca: R$ ${log.liqSaca.toFixed(2)}</div></div>
+    <div class="card"><div class="ct">Preço bruto / ton</div><div class="cv">R$ ${Math.round(log.pTon)}</div><div class="cu">≈ R$ ${(log.pTon*60/1000).toFixed(0)}/saca</div></div>
+    <div class="card"><div class="ct">Frete estimado</div><div class="cv">R$ ${Math.round(log.frete)}/ton</div><div class="cu">Líquido: R$ ${Math.round(log.liq)}/ton</div></div>
+  </div>
+</div>` : ''}
+
+<div class="foot">
+  <p>Gerado em ${now} · SOUFII — Sistema de Oportunidades Agrárias</p>
+  <p>Fontes: WorldClim · SoilGrids ISRIC · IBGE · ZARC/EMBRAPA</p>
+</div>
+<script>window.onload=()=>{window.print();}</script>
+</body></html>`;
+
+  const w = window.open('', '_blank', 'width=860,height=700');
+  if (!w) return;
+  w.document.write(html);
+  w.document.close();
+}
 
 /* ─── Estado vazio ───────────────────────────────────────── */
 function EmptyState() {
@@ -133,7 +238,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
   }));
   const aprovados = criterios.filter(c => c.pass).length;
 
-  const TABS = ['Aptidão', 'Logística', 'Solo & Clima'];
+  const TABS = ['Aptidão', 'Seguro', 'Logística', 'Solo & Clima'];
 
   return (
     <div style={{ width:340, flexShrink:0, height:'100%', background:'#fff',
@@ -158,6 +263,14 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
               borderRadius:6,padding:'3px 9px' }}>
               {LABEL[cl].toUpperCase()}
             </span>
+            <button
+              onClick={() => printFicha(municipio, log, criterios, aprovados)}
+              title="Gerar ficha técnica (PDF / impressão)"
+              style={{ background:'rgba(255,255,255,0.8)',
+                border:'1px solid #E5E7EB',cursor:'pointer',color:'#2D6A4F',
+                padding:5,borderRadius:7,display:'flex',alignItems:'center' }}>
+              <FileText size={13} />
+            </button>
             <button onClick={onClose} style={{ background:'rgba(255,255,255,0.8)',
               border:'1px solid #E5E7EB',cursor:'pointer',color:'#6B7280',
               padding:5,borderRadius:7,display:'flex',alignItems:'center' }}>
@@ -282,8 +395,8 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 </p>
                 <div style={{ display:'flex', gap:7 }}>
                   {(cl==='apto'
-                    ? [{ nome:'BRS Princesa', cor:'#16a34a' },{ nome:'BRS Duquesa', cor:'#15803d' }]
-                    : [{ nome:'BRS Condessa', cor:'#d97706' },{ nome:'BRS Imperatriz', cor:'#16a34a' }]
+                    ? [{ nome:'Princesa', cor:'#16a34a' },{ nome:'Duquesa', cor:'#15803d' }]
+                    : [{ nome:'BRS Cauê', cor:'#d97706' },{ nome:'Imperatriz', cor:'#16a34a' }]
                   ).map(cv => (
                     <div key={cv.nome} style={{ flex:1, background:'#fff',
                       border:`1px solid ${cv.cor}30`,borderRadius:8,
@@ -298,8 +411,67 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
           </>
         )}
 
-        {/* ── Tab 1: LOGÍSTICA ────────────────────────────── */}
-        {tab === 1 && log && (
+        {/* ── Tab 1: SEGURO ───────────────────────────────── */}
+        {tab === 1 && (() => {
+          const temZarc = ZARC_UFS.includes(municipio.uf);
+          const corSeg = temZarc ? '#16a34a' : '#dc2626';
+          const bgSeg  = temZarc ? '#f0fdf4' : '#fef2f2';
+          return (
+            <>
+              <div style={{ background: bgSeg, border:`1.5px solid ${corSeg}40`,
+                borderRadius:10, padding:'12px 14px', display:'flex', gap:10, alignItems:'flex-start' }}>
+                <Shield size={18} color={corSeg} style={{ flexShrink:0, marginTop:1 }} />
+                <div>
+                  <p style={{ fontSize:12, fontWeight:800, color:corSeg, marginBottom:4 }}>
+                    {temZarc ? `${municipio.uf} tem ZARC cevada publicado` : `${municipio.uf} está fora do ZARC cevada`}
+                  </p>
+                  <p style={{ fontSize:11, color:'#4B5563', lineHeight:1.5 }}>
+                    {temZarc
+                      ? 'O estado tem portaria MAPA de zoneamento para cevada cervejeira. A elegibilidade exata deste município (época de plantio, classe de solo, grupo de cultivar) precisa ser confirmada no Painel oficial abaixo — o SOUFII ainda não ingere a tabela completa por município.'
+                      : 'Produtores neste estado não têm, hoje, portaria ZARC para cevada cervejeira — o que normalmente significa sem acesso automático a PROAGRO/PSR para essa cultura. Consulte a EMATER/ATER local ou a agência bancária para alternativas.'}
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:10, padding:'11px 14px' }}>
+                <p style={{ fontSize:9,fontWeight:700,color:'#6B7280',textTransform:'uppercase',
+                  letterSpacing:1.2,marginBottom:8 }}>
+                  Estados com ZARC cevada publicado
+                </p>
+                <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
+                  {ZARC_UFS.map(uf => (
+                    <span key={uf} style={{
+                      fontSize:10, fontWeight: uf===municipio.uf ? 800 : 500,
+                      padding:'3px 9px', borderRadius:20,
+                      background: uf===municipio.uf ? `${corSeg}20` : '#F9FAFB',
+                      color: uf===municipio.uf ? corSeg : '#6B7280',
+                      border: `1px solid ${uf===municipio.uf ? corSeg+'50' : '#E5E7EB'}`,
+                    }}>{uf}</span>
+                  ))}
+                </div>
+              </div>
+
+              <a href={MAPA_PAINEL_URL} target="_blank" rel="noopener noreferrer" style={{
+                display:'flex', alignItems:'center', gap:8, textDecoration:'none',
+                background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:10,
+                padding:'10px 14px',
+              }}>
+                <ExternalLink size={13} color="#374151" style={{ flexShrink:0 }} />
+                <div style={{ flex:1 }}>
+                  <p style={{ fontSize:11, fontWeight:600, color:'#374151' }}>Painel de Indicação de Riscos — MAPA</p>
+                  <p style={{ fontSize:9, color:'#9CA3AF' }}>Consulta oficial de elegibilidade PROAGRO/PSR por município</p>
+                </div>
+              </a>
+
+              <p style={{ fontSize:9, color:'#9CA3AF', lineHeight:1.5 }}>
+                Fonte: Portarias MAPA/ZARC, safra vigente · gov.br/agricultura
+              </p>
+            </>
+          );
+        })()}
+
+        {/* ── Tab 2: LOGÍSTICA ────────────────────────────── */}
+        {tab === 2 && log && (
           <>
             {/* Destino */}
             <div style={{ background:'#F9FAFB',border:'1px solid #E5E7EB',
@@ -375,8 +547,8 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
           </>
         )}
 
-        {/* ── Tab 2: SOLO & CLIMA ─────────────────────────── */}
-        {tab === 2 && (
+        {/* ── Tab 3: SOLO & CLIMA ─────────────────────────── */}
+        {tab === 3 && (
           <>
             {/* Solo */}
             {municipio.tipo_solo_zarc && municipio.pct_argila ? (() => {

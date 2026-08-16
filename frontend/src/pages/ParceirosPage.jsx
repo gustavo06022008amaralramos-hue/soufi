@@ -59,7 +59,7 @@ const PARCEIROS = [
     nome: 'IBGE',
     categoria: 'Dados Territoriais',
     descricao: 'Instituto Brasileiro de Geografia e Estatística — fonte oficial da lista de municípios brasileiros com códigos IBGE utilizados como base de geolocalização.',
-    papel: 'Lista de 5.570 municípios e códigos oficiais',
+    papel: 'Lista de 5.571 municípios e códigos oficiais',
     logo: '/logos/ibge.png',
     cor: '#1a4f8c',
     bg: 'rgba(26,79,140,0.07)',

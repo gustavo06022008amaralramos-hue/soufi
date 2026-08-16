@@ -60,7 +60,7 @@ export default function PIQCard({ municipio, calendario }) {
       alertas.push({
         icon: FlaskConical,
         titulo: 'Proteína bruta: faixa ideal',
-        detalhe: `Temperatura média de ${temp.toFixed(1)}°C favorece proteína entre 9–13%, dentro da faixa de qualidade malteira exigida pela Agrária.`,
+        detalhe: `Temperatura média de ${temp.toFixed(1)}°C favorece proteína entre 9–13%, dentro da faixa de qualidade malteira usual da indústria (verificar especificação exata com a maltaria compradora).`,
         status: 'ok',
         indicador: `${temp.toFixed(1)}°C anual`,
       });

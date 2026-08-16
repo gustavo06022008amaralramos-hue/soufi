@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react';
 import { Truck, MapPin, TrendingDown, DollarSign } from 'lucide-react';
 
 // Cooperativa Agrária — Colônia Entre Rios, Guarapuava/PR
-const AGRARIA = { lat: -25.530, lon: -51.491 };
+// Sede real: Rua 5 de Maio, 745, Colônia Vitória — Entre Rios, Guarapuava/PR
+const AGRARIA = { lat: -25.5630, lon: -51.4898 };
 const FATOR_ESTRADA = 1.35; // coeficiente reta→rodovia
 
 function haversine(lat1, lon1, lat2, lon2) {

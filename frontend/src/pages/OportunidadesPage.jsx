@@ -14,8 +14,12 @@ import TimelineManejo from '../components/oportunidades/TimelineManejo.jsx';
 import MapaCobertura from '../components/oportunidades/MapaCobertura.jsx';
 
 /* ─── Constantes ─────────────────────────────────────────────── */
-const AGRARIA = { lat: -25.530, lon: -51.491 };
+// Sede real: Rua 5 de Maio, 745, Colônia Vitória — Entre Rios, Guarapuava/PR
+const AGRARIA = { lat: -25.5630, lon: -51.4898 };
 
+// Estimativas internas de referência (não há tabela pública de custo de
+// produção por hectare específica para cevada cervejeira) — usadas apenas
+// para simulação comparativa, ajuste conforme dados reais da sua região.
 const CUSTOS_UF = {
   PR: { semente:180, fertilizante:950,  defensivos:450, mecanizacao:420, secagem_ton:65, prod_tha:3.5 },
   SC: { semente:180, fertilizante:980,  defensivos:470, mecanizacao:440, secagem_ton:65, prod_tha:3.2 },
@@ -87,6 +91,10 @@ function calcViabilidade(m, precoSaca, freteTonKm) {
   };
 }
 
+// Janela de semeio e cultivar indicada — não há tabela oficial de
+// produtividade ou adubação por cultivar (nenhuma fonte Embrapa/FAPA publica
+// isso), então a recomendação se limita ao que é real e sourced: cultivar
+// (Tabela 3.1, Embrapa Trigo 2025) e janela de semeio (ZARC).
 function recomendarManejo(m) {
   const g   = m.risco_geada_pct ?? 0;
   const t   = m.temp_media_anual ?? 17;
@@ -94,34 +102,26 @@ function recomendarManejo(m) {
   const uf  = m.uf ?? '';
 
   if (['GO','MG','SP','MS','MT','BA'].includes(uf)) return {
-    cultivar:    'BRS Imperatriz',
+    cultivar:    'Imperatriz',
     semeio:      'Maio–Jun (ciclo inverno seco)',
-    adubacao:    'N parcelado: 20 kg/ha base + 40 kg/ha cobertura V3',
-    expectativa: '2,5–3,0 t/ha',
     alerta:      'Irrigação complementar pode ser necessária em jun/jul',
   };
 
   if (g > 30 || t < 13) return {
     cultivar:    'BRS Cauê',
     semeio:      'Jul (tardio — reduz risco de geada no perfilhamento)',
-    adubacao:    'N: 15 kg/ha base + 50 kg/ha cobertura V3; atenção ao K',
-    expectativa: '2,8–3,5 t/ha',
     alerta:      `Geada ${g.toFixed(0)}% — semeio tardio protege espigamento`,
   };
 
   if (alt >= 900 && t >= 14 && t <= 18) return {
-    cultivar:    'BRS Duquesa',
+    cultivar:    'Duquesa',
     semeio:      'Jun–Jul (janela ótima em altitude)',
-    adubacao:    'N: 20 kg/ha base + 60 kg/ha cobertura V3; P e K por análise',
-    expectativa: '3,5–4,5 t/ha',
     alerta:      'Condições ideais — monitorar ferrugem em ago/set',
   };
 
   return {
-    cultivar:    'BRS Princesa',
+    cultivar:    'Princesa',
     semeio:      'Jun (janela padrão PR/SC)',
-    adubacao:    'N: 20 kg/ha base + 50 kg/ha cobertura V3',
-    expectativa: '3,0–4,0 t/ha',
     alerta:      'Verificar previsão de chuva em out/nov para antecipar colheita',
   };
 }
@@ -549,8 +549,6 @@ export default function OportunidadesPage({ municipios = [] }) {
                   {[
                     { icon:Leaf,       label:'Cultivar',    val:manejo.cultivar },
                     { icon:Sprout,     label:'Semeio',      val:manejo.semeio },
-                    { icon:Package,    label:'Adubação',    val:manejo.adubacao },
-                    { icon:Zap,        label:'Expectativa', val:manejo.expectativa },
                   ].map(({ icon:Ic, label, val }) => (
                     <div key={label} style={{ display:'flex', gap:8, marginBottom:10, alignItems:'flex-start' }}>
                       <div style={{ width:24, height:24, borderRadius:6, background:'#F0FDF4', display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
@@ -626,7 +624,6 @@ export default function OportunidadesPage({ municipios = [] }) {
                   <p style={{ fontSize:11, fontWeight:700, color:'#374151', marginBottom:12, textTransform:'uppercase', letterSpacing:0.8 }}>Manejo</p>
                   <p style={{ fontSize:12, fontWeight:600, color:'#15803d', marginBottom:6 }}>{mj.cultivar}</p>
                   <p style={{ fontSize:11, color:'#374151', marginBottom:6 }}>{mj.semeio}</p>
-                  <p style={{ fontSize:11, color:'#374151', marginBottom:6 }}>{mj.expectativa}</p>
                   <div style={{ background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:7, padding:'6px 9px', marginTop:8 }}>
                     <p style={{ fontSize:10, color:'#92400e' }}>⚠ {mj.alerta}</p>
                   </div>
@@ -764,7 +761,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                   {[
                     { icon:Leaf,       label:'Cultivar',    val:mj.cultivar },
                     { icon:Sprout,     label:'Semeio',      val:mj.semeio },
-                    { icon:Zap,        label:'Produtividade',val:mj.expectativa },
+                    { icon:Zap,        label:'Prod. estimada (ref.)',val:`${m.prod_tha} t/ha` },
                     { icon:DollarSign, label:'Lucro est.',  val:`R$ ${Math.round(m.lucro_ha)}/ha` },
                   ].map(({ icon:Ic, label, val }) => (
                     <div key={label} style={{ display:'flex', gap:8, marginBottom:7, alignItems:'flex-start' }}>

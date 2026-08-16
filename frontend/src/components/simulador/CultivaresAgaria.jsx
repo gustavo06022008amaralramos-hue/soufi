@@ -1,75 +1,59 @@
 import { Sprout, Crown, Star, Gem } from 'lucide-react';
 
-// Perfis reais das cultivares Agrária/Embrapa para cevada cervejeira.
-// Fontes: Portarias MAPA ZARC, boletins Embrapa Trigo e FAPA.
+// Perfis reais das cultivares de cevada cervejeira indicadas pela Portaria
+// SPA/MAPA ZARC do Paraná (nº 358/2024) e pela publicação "Indicações
+// Técnicas para a Produção de Cevada Cervejeira — safras 2025 e 2026"
+// (Embrapa Trigo, 2025, Tabela 3.1 — ensaios Passo Fundo/RS e Guarapuava/PR).
+//
+// IMPORTANTE: não existe, em nenhuma fonte oficial, uma tabela de "faixa
+// climática ideal por cultivar" (temperatura/chuva/altitude diferentes por
+// cultivar). O que diferencia as cultivares oficialmente é o CICLO (dias até
+// espigamento/maturação) e a resistência a doenças — por isso todas usam os
+// mesmos critérios agronômicos gerais (os mesmos do restante do app); a
+// seleção de cultivar aqui serve para mostrar as características reais de
+// cada uma, não para simular uma aptidão climática diferente por cultivar.
+const ZARC_PADRAO = {
+  argila: 15, tempMin: 10, tempMax: 22,
+  chuvaMin: 400, chuvaMax: 1200, altitude: 800,
+  maxGeada: 30, maxChuvaColheita: 250,
+};
+
 export const CULTIVARES = {
   Princesa: {
-    nome:  'BRS Princesa',
+    nome:  'Princesa',
+    obtentor: 'Cooperativa Agrária Agroindustrial',
     icon:  Star,
     cor:   '#f59e0b',
-    ciclo: 'Ciclo médio (90–95 dias)',
-    desc:  'Indicada para regiões tradicionais do Sul. Alta produtividade em solos de textura média a argilosa.',
-    zarc: {
-      argila:          15,
-      tempMin:         10,
-      tempMax:         22,
-      chuvaMin:        400,
-      chuvaMax:        1200,
-      altitude:        750,
-      maxGeada:        35,
-      maxChuvaColheita:270,
-    },
-  },
-  Condessa: {
-    nome:  'BRS Condessa',
-    icon:  Crown,
-    cor:   '#8b5cf6',
-    ciclo: 'Ciclo médio-tardio (95–100 dias)',
-    desc:  'Maior tolerância a variações climáticas. Boa estabilidade de produção entre safras e regiões.',
-    zarc: {
-      argila:          15,
-      tempMin:         10,
-      tempMax:         22,
-      chuvaMin:        350,
-      chuvaMax:        1300,
-      altitude:        700,
-      maxGeada:        38,
-      maxChuvaColheita:280,
-    },
+    ciclo: 'Grupo II · 80 dias até espigamento, 122 dias até maturação',
+    desc:  'Cultivar própria da Agrária. Altura de planta 70cm; resistente a ferrugem, moderadamente resistente a mancha-reticular e mancha-marrom.',
+    zarc: ZARC_PADRAO,
   },
   Duquesa: {
-    nome:  'BRS Duquesa',
+    nome:  'Duquesa',
+    obtentor: 'Cooperativa Agrária Agroindustrial',
     icon:  Gem,
     cor:   '#06b6d4',
-    ciclo: 'Ciclo precoce (85–90 dias)',
-    desc:  'Alta qualidade malteável, stricta exigência de solo. Recomendada para altitudes ≥ 850m com solos argilosos.',
-    zarc: {
-      argila:          22,
-      tempMin:         10,
-      tempMax:         21,
-      chuvaMin:        450,
-      chuvaMax:        1100,
-      altitude:        850,
-      maxGeada:        25,
-      maxChuvaColheita:250,
-    },
+    ciclo: 'Grupo II · 77 dias até espigamento, 120 dias até maturação',
+    desc:  'Cultivar própria da Agrária, ciclo mais precoce do portfólio. Altura de planta 72cm; resistente a ferrugem, suscetível a giberela.',
+    zarc: ZARC_PADRAO,
   },
   Imperatriz: {
-    nome:  'BRS Imperatriz',
+    nome:  'Imperatriz',
+    obtentor: 'FAPA (Fundação Agrária de Pesquisa Agropecuária)',
     icon:  Crown,
     cor:   '#10b981',
-    ciclo: 'Ciclo curto–médio (85–92 dias)',
-    desc:  'Adaptada ao Cerrado. Tolerante a temperaturas mais altas e menor altitude. Acende as regiões do Cerrado no mapa.',
-    zarc: {
-      argila:          15,
-      tempMin:         13,
-      tempMax:         27,
-      chuvaMin:        250,
-      chuvaMax:        1500,
-      altitude:        400,
-      maxGeada:        60,
-      maxChuvaColheita:320,
-    },
+    ciclo: 'Grupo II · 82 dias até espigamento, 127 dias até maturação',
+    desc:  'Cultivar da FAPA (Guarapuava/PR). Altura de planta 73cm; moderadamente resistente à maioria das doenças foliares, suscetível a giberela.',
+    zarc: ZARC_PADRAO,
+  },
+  'BRS Cauê': {
+    nome:  'BRS Cauê',
+    obtentor: 'Embrapa Trigo',
+    icon:  Crown,
+    cor:   '#8b5cf6',
+    ciclo: 'Grupo II · 90 dias até espigamento, 132 dias até maturação',
+    desc:  'Única cultivar Embrapa (Passo Fundo/RS) com genes de nanismo — porte baixo (72cm) reduz acamamento. Altamente suscetível a oídio.',
+    zarc: ZARC_PADRAO,
   },
 };
 
@@ -77,7 +61,7 @@ export default function CultivaresAgaria({ ativo, onSelect }) {
   return (
     <div style={{ padding: '14px 16px', borderBottom: '1px solid var(--border)' }}>
       <p style={{ fontSize: 9, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
-        Perfil de Cultivar — Agrária / Embrapa
+        Cultivares — Portaria ZARC PR nº 358/2024 e Embrapa Trigo (2025)
       </p>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
         {Object.entries(CULTIVARES).map(([key, c]) => {
@@ -119,10 +103,11 @@ export default function CultivaresAgaria({ ativo, onSelect }) {
             background: `${c.cor}10`, border: `1px solid ${c.cor}35`,
             borderRadius: 8,
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 5 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 3 }}>
               <Icon size={13} color={c.cor} />
               <span style={{ fontSize: 12, fontWeight: 600, color: c.cor }}>{c.nome}</span>
             </div>
+            <p style={{ fontSize: 9, color: 'var(--text-faint)', marginBottom: 5 }}>{c.obtentor} · {c.ciclo}</p>
             <p style={{ fontSize: 11, color: 'var(--text-muted)', lineHeight: 1.5 }}>{c.desc}</p>
           </div>
         );

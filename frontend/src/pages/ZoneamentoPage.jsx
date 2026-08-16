@@ -1,6 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import { MapContainer, TileLayer, GeoJSON, ZoomControl, useMap } from 'react-leaflet';
-import { Search, X, MapPin, SlidersHorizontal, Map as MapIcon, Layers } from 'lucide-react';
+import { Search, X, MapPin, SlidersHorizontal, Map as MapIcon, Layers, Check } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
 import MunicipioSidebar from '../components/sidebar/MunicipioSidebar.jsx';
 
@@ -162,11 +162,45 @@ function Panel({ children, style={} }) {
   );
 }
 
+/* ── Cards de métrica (Bloco 4.2) ── */
+function MetricCard({ label, value, cor, bg }) {
+  return (
+    <div style={{ flex:1, background:bg, border:`1px solid ${cor}30`, borderRadius:9, padding:'8px 10px' }}>
+      <p style={{ fontSize:18, fontWeight:800, color:cor, lineHeight:1 }}>{value.toLocaleString('pt-BR')}</p>
+      <p style={{ fontSize:9, color:'#6B7280', marginTop:2 }}>{label}</p>
+    </div>
+  );
+}
+
+/* ── Chip de classificação (Bloco 4.3) ── */
+function ClasseChip({ ativo, cor, label, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      display:'flex', alignItems:'center', gap:5, cursor:'pointer',
+      padding:'5px 10px', borderRadius:99, fontSize:10.5, fontWeight: ativo?700:500,
+      border:`1px solid ${ativo?cor:'#E5E7EB'}`,
+      background: ativo ? `${cor}16` : '#F9FAFB',
+      color: ativo ? cor : '#9CA3AF',
+      transition:'all 0.15s',
+    }}>
+      {ativo && <Check size={10} />}
+      <span style={{ width:7, height:7, borderRadius:2, background:cor, flexShrink:0, opacity:ativo?1:0.4 }} />
+      {label}
+    </button>
+  );
+}
+
 /* ── Painel de controles ── */
-function ControlPanel({ tipoMapa, setTipoMapa, filtroUF, setFiltroUF, filtroClasse, setFiltroClasse, filtroScoreMin, setFiltroScoreMin }) {
+function ControlPanel({ tipoMapa, setTipoMapa, filtroUF, setFiltroUF, filtroClasse, setFiltroClasse, filtroScoreMin, setFiltroScoreMin, counts }) {
   const lbl = { display:'block', fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:1.2, marginBottom:7 };
   return (
-    <Panel style={{ padding:'13px 13px', width:214, display:'flex', flexDirection:'column', gap:13 }}>
+    <Panel style={{ padding:'13px 13px', width:230, display:'flex', flexDirection:'column', gap:13 }}>
+
+      {/* Métricas rápidas */}
+      <div style={{ display:'flex', gap:6 }}>
+        <MetricCard label="aptos"               value={counts.apto}    cor="#1A7A3C" bg="#f0fdf4" />
+        <MetricCard label="parcialmente aptos"   value={counts.parcial} cor="#D4A017" bg="#fffbeb" />
+      </div>
 
       {/* Mapa base */}
       <div>
@@ -193,16 +227,10 @@ function ControlPanel({ tipoMapa, setTipoMapa, filtroUF, setFiltroUF, filtroClas
       {/* Classificação */}
       <div>
         <label style={lbl}>Classificação ZARC</label>
-        <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
           {Object.entries(CORES).map(([k, cor]) => (
-            <label key={k} style={{ display:'flex', alignItems:'center', gap:7, cursor:'pointer', userSelect:'none' }}>
-              <input type="checkbox" checked={filtroClasse[k]??true}
-                onChange={() => setFiltroClasse(f => ({...f,[k]:!f[k]}))}
-                style={{ accentColor:cor, width:13, height:13, cursor:'pointer', flexShrink:0 }}
-              />
-              <span style={{ width:10, height:10, borderRadius:3, background:cor, flexShrink:0, display:'inline-block' }} />
-              <span style={{ fontSize:11, color:'#374151' }}>{LABEL_CLASS[k]}</span>
-            </label>
+            <ClasseChip key={k} ativo={filtroClasse[k]??true} cor={cor} label={LABEL_CLASS[k]}
+              onClick={() => setFiltroClasse(f => ({...f,[k]:!f[k]}))} />
           ))}
         </div>
       </div>
@@ -225,35 +253,57 @@ function ControlPanel({ tipoMapa, setTipoMapa, filtroUF, setFiltroUF, filtroClas
           <label style={lbl}>
             <SlidersHorizontal size={9} style={{ display:'inline', marginRight:4 }} />Score Mínimo
           </label>
-          <span style={{ fontSize:14, fontWeight:800, color:'#2D6A4F' }}>{filtroScoreMin}</span>
         </div>
-        <input type="range" min={0} max={100} step={1} value={filtroScoreMin}
-          onChange={e => setFiltroScoreMin(+e.target.value)}
-        />
+        <div style={{ display:'flex', alignItems:'center', gap:7 }}>
+          <span style={{ fontSize:9, color:'#9CA3AF' }}>0</span>
+          <input type="range" min={0} max={100} step={1} value={filtroScoreMin}
+            onChange={e => setFiltroScoreMin(+e.target.value)}
+            style={{ flex:1 }}
+          />
+          <span style={{ fontSize:9, color:'#9CA3AF' }}>100</span>
+          <span style={{
+            fontSize:10, fontWeight:800, color:'#fff', background:'#1A7A3C',
+            borderRadius:20, padding:'2px 8px', minWidth:22, textAlign:'center',
+          }}>{filtroScoreMin}</span>
+        </div>
+        <div style={{ display:'flex', justifyContent:'space-between', fontSize:9, color:'#9CA3AF', marginTop:3 }}>
+          <span>todos</span><span>apenas aptos</span>
+        </div>
       </div>
     </Panel>
   );
 }
 
-/* ── Legenda ── */
+/* ── Legenda (Bloco 4.5 — barra proporcional + percentual) ── */
 function Legend({ counts }) {
-  const total = Object.values(counts).reduce((a,b)=>a+b,0);
+  const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
   return (
-    <Panel style={{ padding:'10px 12px' }}>
+    <Panel style={{ padding:'10px 12px', width:230 }}>
       <p style={{ fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:1.2, marginBottom:8 }}>
         Legenda · Aptidão ZARC
       </p>
-      {Object.entries(CORES).map(([k,cor]) => (
-        <div key={k} style={{ display:'flex', alignItems:'center', gap:7, marginBottom:4 }}>
-          <div style={{ width:11, height:11, borderRadius:3, background:cor, flexShrink:0 }} />
-          <span style={{ flex:1, fontSize:10, color:'#374151' }}>{LABEL_CLASS[k]}</span>
-          <span style={{ fontSize:10, fontWeight:600, color:'#6B7280', minWidth:28, textAlign:'right' }}>
-            {(counts[k]??0).toLocaleString('pt-BR')}
-          </span>
-        </div>
-      ))}
-      <div style={{ borderTop:'1px solid #E5E7EB', marginTop:6, paddingTop:6 }}>
-        <span style={{ fontSize:9, color:'#6B7280' }}>{total.toLocaleString('pt-BR')} exibidos</span>
+      {Object.entries(CORES).map(([k,cor]) => {
+        const n   = counts[k] ?? 0;
+        const pct = Math.round(n / total * 100);
+        return (
+          <div key={k} style={{ display:'flex', alignItems:'center', gap:7, padding:'4px 0',
+            borderBottom:'1px solid #F3F4F6' }}>
+            <div style={{ width:9, height:9, borderRadius:2, background:cor, flexShrink:0 }} />
+            <span style={{ fontSize:10, color:'#374151', width:78, flexShrink:0 }}>{LABEL_CLASS[k]}</span>
+            <div style={{ flex:1, height:5, borderRadius:99, background:'#F3F4F6', overflow:'hidden' }}>
+              <div style={{ width:`${pct}%`, height:'100%', borderRadius:99, background:cor, transition:'width 0.3s' }} />
+            </div>
+            <span style={{ fontSize:9, fontFamily:'monospace', color:'#6B7280', minWidth:26, textAlign:'right' }}>
+              {n.toLocaleString('pt-BR')}
+            </span>
+            <span style={{ fontSize:9, fontWeight:700, color:'#374151', minWidth:26, textAlign:'right' }}>
+              {pct}%
+            </span>
+          </div>
+        );
+      })}
+      <div style={{ marginTop:6, paddingTop:2 }}>
+        <span style={{ fontSize:9, color:'#9CA3AF' }}>{total.toLocaleString('pt-BR')} exibidos</span>
       </div>
     </Panel>
   );
@@ -637,6 +687,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
               filtroUF={filtroUF}         setFiltroUF={setFiltroUF}
               filtroClasse={filtroClasse} setFiltroClasse={setFiltroClasse}
               filtroScoreMin={filtroScoreMin} setFiltroScoreMin={setFiltroScoreMin}
+              counts={counts}
             />
           </div>
 

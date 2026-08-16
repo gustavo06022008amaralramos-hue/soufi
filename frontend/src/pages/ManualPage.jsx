@@ -386,30 +386,28 @@ export default function ManualPage() {
       {/* 9. Cultivares */}
       <Section icon={Leaf} title="Cultivares recomendadas" cor="#16a34a">
         <p style={{ fontSize: 12, color: '#6B7280', lineHeight: 1.6 }}>
-          As cultivares indicadas pelo SOUFII são desenvolvidas pela <strong>Cooperativa Agrária</strong> em
-          parceria com a <strong>EMBRAPA Trigo</strong>, homologadas pelo MAPA e otimizadas para o Sul do Brasil:
+          Cultivares indicadas pela Portaria SPA/MAPA ZARC do Paraná nº 358/2024 e pelas
+          "Indicações Técnicas para a Produção de Cevada Cervejeira — safras 2025 e 2026"
+          (Embrapa Trigo, 2025). Nem todas são da Embrapa — Princesa e Duquesa são cultivares
+          próprias da Cooperativa Agrária, Imperatriz é da FAPA:
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
             {
-              nome: 'BRS Princesa', tipo: 'Ciclo médio', cor: '#16a34a', para: 'Aptos',
-              desc: 'Alta produtividade, tolerância a geada moderada. Janela: Jun–Jul. Ideal para altitude > 800m.',
-              prod: '3,0–4,0 t/ha',
+              nome: 'Princesa', tipo: 'Agrária · Grupo II', cor: '#16a34a',
+              desc: '80 dias até espigamento, 122 dias até maturação. Altura 70cm. Resistente a ferrugem, moderadamente resistente a mancha-reticular.',
             },
             {
-              nome: 'BRS Duquesa', tipo: 'Ciclo longo', cor: '#15803d', para: 'Aptos',
-              desc: 'Excelente qualidade malteável, maior ciclo reduz riscos de GPH. Janela: Jun. Altitude > 700m.',
-              prod: '2,8–3,8 t/ha',
+              nome: 'Duquesa', tipo: 'Agrária · Grupo II', cor: '#15803d',
+              desc: '77 dias até espigamento, 120 dias até maturação — a mais precoce do portfólio. Altura 72cm. Resistente a ferrugem, suscetível a giberela.',
             },
             {
-              nome: 'BRS Cauê', tipo: 'Tardio / resistente', cor: '#d97706', para: 'Parc. Aptos',
-              desc: 'Tolerante a geada leve, ciclo tardio (semeio Jul). Indicado onde geada < 30%.',
-              prod: '2,5–3,5 t/ha',
+              nome: 'Imperatriz', tipo: 'FAPA · Grupo II', cor: '#0891b2',
+              desc: '82 dias até espigamento, 127 dias até maturação. Altura 73cm. Moderadamente resistente à maioria das doenças foliares.',
             },
             {
-              nome: 'BRS Elis', tipo: 'Adaptada / tolerante', cor: '#d97706', para: 'Parc. Aptos',
-              desc: 'Maior plasticidade de altitude (500–800m). Aceita solo Tipo 2. Janela ampla: Mai–Jul.',
-              prod: '2,3–3,2 t/ha',
+              nome: 'BRS Cauê', tipo: 'Embrapa · Grupo II', cor: '#d97706',
+              desc: '90 dias até espigamento, 132 dias até maturação. Porte baixo (72cm, genes de nanismo) reduz acamamento. Altamente suscetível a oídio.',
             },
           ].map(cv => (
             <div key={cv.nome} style={{
@@ -423,18 +421,15 @@ export default function ManualPage() {
                   <span style={{ fontSize: 13, fontWeight: 800, color: cv.cor }}>{cv.nome}</span>
                   <span style={{ fontSize: 10, color: '#9CA3AF', marginLeft: 8 }}>{cv.tipo}</span>
                 </div>
-                <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <span style={{
-                    fontSize: 9, fontWeight: 700, color: cv.cor,
-                    background: `${cv.cor}15`, borderRadius: 5, padding: '2px 7px',
-                  }}>{cv.para}</span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: '#374151' }}>{cv.prod}</span>
-                </div>
               </div>
               <p style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.5, padding: '8px 12px' }}>{cv.desc}</p>
             </div>
           ))}
         </div>
+        <p style={{ fontSize: 10, color: '#9CA3AF', lineHeight: 1.5, marginTop: 4 }}>
+          Produtividade (t/ha) varia por manejo, ano-safra e região — não há tabela oficial por
+          cultivar; consulte a FAPA/Cooperativa Agrária para dados de campo atualizados.
+        </p>
       </Section>
 
       {/* 10. Fontes de dados */}

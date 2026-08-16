@@ -13,7 +13,8 @@ import {
 /* ── Constantes ─────────────────────────────────── */
 const CORES_SLOT = ['#1B4332', '#0284c7', '#d97706'];
 const CORES_SLOT_LIGHT = ['rgba(27,67,50,0.08)', 'rgba(2,132,199,0.08)', 'rgba(217,119,6,0.08)'];
-const AGRARIA = { lat: -25.530, lon: -51.491 };
+// Sede real: Rua 5 de Maio, 745, Colônia Vitória — Entre Rios, Guarapuava/PR
+const AGRARIA = { lat: -25.5630, lon: -51.4898 };
 
 function haversine(lat1, lon1, lat2, lon2) {
   const R = 6371, toR = Math.PI / 180;
@@ -28,6 +29,9 @@ function fmt(v, dec = 0) {
 }
 function fmtR(v) { return `R$ ${fmt(v, 0)}`; }
 
+// Estimativas internas de referência (não há tabela pública de custo de
+// produção por hectare específica para cevada cervejeira) — usadas apenas
+// para simulação comparativa, ajuste conforme dados reais da sua região.
 const CUSTOS_UF = {
   PR: { semente:180, fertilizante:950,  defensivos:450, mecanizacao:420, secagem:195, admin:120, prod_tha:3.5 },
   SC: { semente:180, fertilizante:980,  defensivos:470, mecanizacao:440, secagem:192, admin:120, prod_tha:3.2 },

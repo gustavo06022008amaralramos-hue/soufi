@@ -11,7 +11,11 @@ import {
   Building2, CreditCard, PiggyBank, Percent,
 } from 'lucide-react';
 
-/* ── Dados regionais de custo ───────────────────────────── */
+/* ── Dados regionais de custo ───────────────────────────────
+   Estimativas internas de referência (editáveis na simulação) — não há
+   tabela pública de custo de produção por hectare específica para cevada
+   cervejeira (CONAB/CEPEA acompanham commodities como soja/milho/trigo, não
+   cevada). Ajuste os valores conforme dados reais da sua região. */
 const CUSTOS_UF = {
   PR: { semente:180, fertilizante:950,  defensivos:450, mecanizacao:420, secagem:195, admin:120, prod_tha:3.5, label:'Paraná' },
   SC: { semente:180, fertilizante:980,  defensivos:470, mecanizacao:440, secagem:192, admin:120, prod_tha:3.2, label:'Santa Catarina' },
@@ -82,13 +86,16 @@ function calcular(uf, area, precoSaca, distKm, prodTha) {
   return { custo_ha, frete_ha, custo_total_ha, custo_total, receita_ha, receita, lucro, roi, margem, preco_be, prod_be, breakdown };
 }
 
-/* ── Linhas de crédito rural disponíveis ────────────── */
+/* ── Linhas de crédito rural disponíveis ──────────────
+   Taxas do Plano Safra 2025/2026 (recursos controlados/BNDES).
+   Fonte: gov.br/mda (Plano Safra 2025/2026) e Agência BNDES de Notícias.
+   Como as taxas mudam a cada Plano Safra, confira o valor vigente antes
+   de fechar operação — aqui usamos o piso de cada faixa divulgada. */
 const LINHAS_CREDITO = [
-  { nome:'Pronaf Custeio',   taxa:3.0,  prazo:12, publico:'Agricultor familiar',   limite:'R$ 250 mil', fonte:'BNDES/Tesouro' },
-  { nome:'Pronamp',          taxa:6.0,  prazo:12, publico:'Médio produtor',         limite:'R$ 1,5 mi',  fonte:'BNDES' },
-  { nome:'BCB Rural Custeio',taxa:7.0,  prazo:12, publico:'Produtor rural (geral)', limite:'R$ 2 mi',    fonte:'Banco do Brasil' },
-  { nome:'Programa ABC+',    taxa:8.5,  prazo:60, publico:'Sustentabilidade',       limite:'R$ 5 mi',    fonte:'BNDES' },
-  { nome:'FNO/FNE/FCO',     taxa:6.5,  prazo:36, publico:'Regiões específicas',    limite:'R$ 3 mi',    fonte:'BNB/BB/BCB' },
+  { nome:'Pronaf Custeio',        taxa:3.0,  prazo:12, publico:'Agricultura familiar', limite:'R$ 250 mil', fonte:'MDA — Plano Safra 25/26' },
+  { nome:'Pronamp',               taxa:8.5,  prazo:12, publico:'Médio produtor',       limite:'R$ 1,5 mi',  fonte:'BNDES — Plano Safra 25/26' },
+  { nome:'BNDES Custeio (médios/grandes)', taxa:8.5, prazo:12, publico:'Produtor rural (geral)', limite:'R$ 2 mi', fonte:'BNDES — Plano Safra 25/26' },
+  { nome:'Programa ABC+',         taxa:8.5,  prazo:60, publico:'Sustentabilidade',     limite:'R$ 5 mi',    fonte:'BNDES — Plano Safra 25/26' },
 ];
 
 /* ── Helpers financeiros ─────────────────────────── */
@@ -230,7 +237,8 @@ export default function CustosPage() {
             <h1 style={{ fontSize:20, fontWeight:800, color:'#111827' }}>Análise de Custos & Viabilidade</h1>
           </div>
           <p style={{ fontSize:11, color:'#9CA3AF', marginLeft:16 }}>
-            Simulação completa de custo/receita por estado · Baseado em dados CEPEA/EMBRAPA/CONAB 2024
+            Simulação de custo/receita por estado · valores de referência internos (ajustáveis) — não há
+            tabela pública de custo de produção por hectare para cevada cervejeira; ajuste conforme sua realidade
           </p>
         </div>
         <select value={uf} onChange={e => { setUf(e.target.value); setProdTha(CUSTOS_UF[e.target.value].prod_tha); }}
