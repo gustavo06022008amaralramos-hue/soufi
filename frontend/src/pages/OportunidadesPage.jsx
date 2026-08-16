@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, RadarChart, Radar,
@@ -552,62 +553,52 @@ export default function OportunidadesPage({ municipios = [] }) {
       {/* ══ TAB 0: Ranking ══ */}
       {tab === 0 && (
         <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, overflow:'hidden' }}>
-          <div style={{ overflow:'auto', maxHeight:560 }}>
+          <div style={{ overflow:'auto', maxHeight:620 }}>
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
                 <tr>
                   <Th k="nome_municipio">Município</Th>
-                  <Th k="uf">UF</Th>
                   <Th k="score_aptidao">ZARC</Th>
                   <Th k="dist">Distância</Th>
-                  <Th k="frete">Frete/ton</Th>
-                  <Th k="liquido">Líq/ton</Th>
                   <Th k="lucro_ha">Lucro/ha</Th>
-                  <Th k="roi">ROI</Th>
-                  <Th k="scoreComb">Oport.</Th>
-                  <th style={{ padding:'10px 12px', background:'#F9FAFB', borderBottom:'1px solid #E5E7EB' }} />
+                  <Th k="scoreComb">Prioridade</Th>
+                  <th style={{ padding:'10px 12px', background:'#F9FAFB', borderBottom:'1px solid #E5E7EB', position:'sticky', top:0 }} />
                 </tr>
               </thead>
               <tbody>
                 {filtrados.slice(0, 80).map((m, i) => (
                   <tr key={m.codigo_ibge}
+                    onClick={() => setDetalhe(m)}
                     onMouseEnter={e => e.currentTarget.style.background = '#F0F7F2'}
                     onMouseLeave={e => e.currentTarget.style.background = i < 3 ? ['#fffbeb','#f9fafb','#fff7ed'][i] : (i % 2 === 0 ? '#fff' : '#FAFAFA')}
                     style={{
                       background: i < 3 ? ['#fffbeb','#f9fafb','#fff7ed'][i] : (i % 2 === 0 ? '#fff' : '#FAFAFA'),
                       borderBottom:'1px solid #F3F4F6',
                       opacity: m.isInaptoPorClima ? 0.55 : 1,
-                      transition:'background 0.1s',
+                      transition:'background 0.1s', cursor:'pointer',
                     }}>
-                    <td style={{ padding:'10px 12px', fontSize:12, fontWeight:600, color:'#111827' }}>
+                    <td style={{ padding:'11px 12px', fontSize:12, fontWeight:600, color:'#111827' }}>
                       {i < 3 && <span style={{ marginRight:6 }}>{['🥇','🥈','🥉'][i]}</span>}
                       {m.nome_municipio}
+                      <span style={{ fontSize:10, fontWeight:600, color:'#9CA3AF', marginLeft:6 }}>{m.uf}</span>
                       {m.hasHighFrostRisk && <AlertTriangle size={10} color="#ca8a04" style={{ marginLeft:5 }} />}
                     </td>
-                    <td style={{ padding:'9px 12px' }}>
-                      <span style={{ fontSize:10, fontWeight:700, background:'#EFF6FF', color:'#1d4ed8', borderRadius:4, padding:'2px 6px' }}>{m.uf}</span>
-                    </td>
-                    <td style={{ padding:'9px 12px', fontSize:12, fontWeight:700, color: m.score_aptidao >= 70 ? '#16a34a' : '#ca8a04' }}>
+                    <td style={{ padding:'11px 12px', fontSize:12, fontWeight:700, color: m.score_aptidao >= 70 ? '#16a34a' : '#ca8a04' }}>
                       {m.score_aptidao ?? '—'}
                     </td>
-                    <td style={{ padding:'9px 12px', fontSize:12, color:'#374151' }}>{m.dist} km</td>
-                    <td style={{ padding:'9px 12px', fontSize:12, color:'#DC2626' }}>R$ {Math.round(m.frete)}</td>
-                    <td style={{ padding:'9px 12px', fontSize:12, fontWeight:600, color:'#059669' }}>R$ {Math.round(m.liquido)}</td>
-                    <td style={{ padding:'9px 12px', fontSize:12, fontWeight:700, color: m.lucro_ha > 0 ? '#16a34a' : '#DC2626' }}>
-                      R$ {Math.round(m.lucro_ha)}
+                    <td style={{ padding:'11px 12px', fontSize:12, color:'#374151' }}>{m.dist} km</td>
+                    <td style={{ padding:'11px 12px', fontSize:12, fontWeight:700, color: m.lucro_ha > 0 ? '#16a34a' : '#DC2626' }}>
+                      R$ {Math.round(m.lucro_ha).toLocaleString('pt-BR')}
                     </td>
-                    <td style={{ padding:'9px 12px', fontSize:12, color: m.roi > 0 ? '#059669' : '#DC2626', fontWeight:600 }}>
-                      {m.roi.toFixed(0)}%
-                    </td>
-                    <td style={{ padding:'9px 12px' }}>
+                    <td style={{ padding:'11px 12px' }}>
                       <ScoreBadge score={m.scoreComb} />
                     </td>
-                    <td style={{ padding:'9px 12px' }}>
-                      <button onClick={() => setDetalhe(detalhe?.codigo_ibge === m.codigo_ibge ? null : m)} style={{
+                    <td style={{ padding:'11px 12px' }}>
+                      <button onClick={e => { e.stopPropagation(); setDetalhe(m); }} style={{
                         fontSize:10, padding:'3px 8px', borderRadius:5, cursor:'pointer',
                         background:'#F3F4F6', border:'1px solid #E5E7EB', color:'#374151',
                       }}>
-                        {detalhe?.codigo_ibge === m.codigo_ibge ? 'Fechar' : 'Detalhe'}
+                        Detalhe
                       </button>
                     </td>
                   </tr>
@@ -616,19 +607,46 @@ export default function OportunidadesPage({ municipios = [] }) {
             </table>
           </div>
 
-          {/* Painel de detalhe */}
+          {/* Painel de detalhe — modal, não expande a tabela */}
           {detalhe && (() => {
             const manejo = recomendarManejo(detalhe);
-            return (
-              <div style={{
-                borderTop:'2px solid #E5E7EB', padding:'20px 24px',
-                background:'linear-gradient(135deg,#f0fdf4,#eff6ff)',
-                display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:20,
+            return createPortal(
+            <div onClick={() => setDetalhe(null)} style={{
+              position:'fixed', inset:0, zIndex:2000,
+              background:'rgba(15,23,17,0.55)', backdropFilter:'blur(3px)',
+              display:'flex', alignItems:'center', justifyContent:'center', padding:24,
+            }}>
+              <div onClick={e => e.stopPropagation()} style={{
+                background:'#fff', borderRadius:18, maxWidth:820, width:'100%',
+                maxHeight:'85vh', overflow:'auto',
+                boxShadow:'0 24px 70px rgba(0,0,0,0.35)',
               }}>
+                {/* Header sticky do modal */}
+                <div style={{
+                  position:'sticky', top:0, zIndex:1, background:'#fff',
+                  padding:'18px 22px', borderBottom:'1px solid #E5E7EB',
+                  display:'flex', alignItems:'center', justifyContent:'space-between',
+                }}>
+                  <div>
+                    <p style={{ fontSize:16, fontWeight:800, color:'#111827' }}>
+                      {detalhe.nome_municipio} <span style={{ color:'#9CA3AF', fontWeight:500 }}>· {detalhe.uf}</span>
+                    </p>
+                    <p style={{ fontSize:11, color:'#6B7280', marginTop:2 }}>IBGE {detalhe.codigo_ibge} · {detalhe.dist} km da Agrária</p>
+                  </div>
+                  <button onClick={() => setDetalhe(null)} style={{
+                    background:'#F3F4F6', border:'1px solid #E5E7EB', borderRadius:8,
+                    padding:7, cursor:'pointer', color:'#6B7280', display:'flex',
+                  }}>✕</button>
+                </div>
+
+                <div style={{
+                  padding:'20px 22px',
+                  display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:20,
+                }}>
                 {/* Radar */}
                 <div>
                   <p style={{ fontSize:11, fontWeight:700, color:'#374151', marginBottom:10, textTransform:'uppercase', letterSpacing:0.8 }}>
-                    Perfil — {detalhe.nome_municipio}/{detalhe.uf}
+                    Perfil de Aptidão
                   </p>
                   {detalhe.isInaptoPorClima && (
                     <div style={{ display:'flex', gap:6, alignItems:'center', background:'#fef2f2', border:'1px solid #fecaca', borderRadius:8, padding:'6px 10px', marginBottom:10 }}>
@@ -644,6 +662,10 @@ export default function OportunidadesPage({ municipios = [] }) {
                       <Radar dataKey="val" stroke="#16a34a" fill="#16a34a" fillOpacity={0.25} strokeWidth={2} />
                     </RadarChart>
                   </ResponsiveContainer>
+                  <div style={{ display:'flex', justifyContent:'space-between', fontSize:10, color:'#6B7280', marginTop:6, padding:'0 4px' }}>
+                    <span>Frete: R$ {Math.round(detalhe.frete)}/ton</span>
+                    <span>ROI: {detalhe.roi.toFixed(0)}%</span>
+                  </div>
                 </div>
                 {/* Custos */}
                 <div>
@@ -691,7 +713,10 @@ export default function OportunidadesPage({ municipios = [] }) {
                     </div>
                   </div>
                 </div>
+                </div>
               </div>
+            </div>,
+            document.body
             );
           })()}
         </div>

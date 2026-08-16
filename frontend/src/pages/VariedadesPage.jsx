@@ -1,33 +1,39 @@
 import { useState, useMemo } from 'react';
-import { Leaf, X, Clock, Thermometer, Droplets, Mountain, CheckCircle, AlertTriangle, Wand2, Calculator } from 'lucide-react';
-import { CULTIVARES } from '../components/simulador/CultivaresAgaria.jsx';
+import { createPortal } from 'react-dom';
+import { Leaf, X, Clock, Thermometer, Droplets, Mountain, CheckCircle, AlertTriangle, Wand2, Calculator, XCircle } from 'lucide-react';
+import { CULTIVARES, ZARC_PADRAO } from '../components/simulador/CultivaresAgaria.jsx';
 
-/* ── Recomendador de cultivar ─────────────────────── */
-function pontuar(c, cond) {
-  let score = 0, max = 0;
-  const z = c.zarc;
-  max += 25; if (cond.temp >= z.tempMin && cond.temp <= z.tempMax) score += 25;
-  else if (Math.abs(cond.temp - ((z.tempMin + z.tempMax) / 2)) < 4) score += 10;
-
-  max += 20; if (cond.prec >= z.chuvaMin && cond.prec <= z.chuvaMax) score += 20;
-  else if (cond.prec >= z.chuvaMin * 0.8) score += 10;
-
-  max += 25; if (cond.alt >= z.altitude) score += 25;
-  else if (cond.alt >= z.altitude * 0.8) score += 12;
-
-  max += 15; if (cond.geada <= z.maxGeada) score += 15;
-  else if (cond.geada <= z.maxGeada * 1.2) score += 7;
-
-  max += 15; if (cond.argila >= z.argila) score += 15;
-  else if (cond.argila >= z.argila * 0.8) score += 8;
-
-  return Math.round((score / max) * 100);
+/* ── Verificador de aptidão ──────────────────────────────────
+   As 4 cultivares reais compartilham os mesmos critérios ZARC gerais
+   (não existe fonte oficial com faixa climática diferente por cultivar
+   — ver comentário em CultivaresAgaria.jsx). Por isso este painel não
+   finge "pontuar" cada cultivar contra o clima informado — em vez
+   disso, checa se as condições atendem ao ZARC (um resultado só, real)
+   e ordena as cultivares pelo único diferencial documentado: ciclo. */
+function checarAptidao(cond) {
+  const z = ZARC_PADRAO;
+  const criterios = [
+    { label: 'Temperatura', ok: cond.temp >= z.tempMin && cond.temp <= z.tempMax, faixa: `${z.tempMin}–${z.tempMax}°C` },
+    { label: 'Precipitação', ok: cond.prec >= z.chuvaMin && cond.prec <= z.chuvaMax, faixa: `${z.chuvaMin}–${z.chuvaMax}mm` },
+    { label: 'Altitude', ok: cond.alt >= z.altitude, faixa: `≥${z.altitude}m` },
+    { label: 'Risco de geada', ok: cond.geada <= z.maxGeada, faixa: `≤${z.maxGeada}%` },
+    { label: 'Teor de argila', ok: cond.argila >= z.argila, faixa: `≥${z.argila}%` },
+  ];
+  const aprovados = criterios.filter(c => c.ok).length;
+  return { criterios, aprovados, total: criterios.length, apto: aprovados === criterios.length };
 }
 
-function recomendar(cond) {
+/* Ciclo em dias (emergência→maturação), extraído do texto de c.ciclo real
+   ("Grupo II · 80 dias até espigamento, 122 dias até maturação"). */
+function diasMaturacao(ciclo) {
+  const m = ciclo.match(/(\d+) dias até maturação/);
+  return m ? Number(m[1]) : 999;
+}
+
+function cultivaresPorCiclo() {
   return Object.entries(CULTIVARES)
-    .map(([key, c]) => ({ key, c, score: pontuar(c, cond) }))
-    .sort((a, b) => b.score - a.score);
+    .map(([key, c]) => ({ key, c, dias: diasMaturacao(c.ciclo) }))
+    .sort((a, b) => a.dias - b.dias);
 }
 
 const FILTROS = ['Todas', 'Grupo I', 'Grupo II', 'Grupo III'];
@@ -163,7 +169,7 @@ function CultivarCard({ cultivarKey, c, extra, onClick }) {
 
 function Detalhe({ cultivarKey, c, extra, onClose }) {
   const Icon = c.icon;
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed', inset: 0, zIndex: 2000,
       background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
@@ -245,7 +251,8 @@ function Detalhe({ cultivarKey, c, extra, onClose }) {
           ))}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -256,7 +263,8 @@ export default function VariedadesPage() {
   /* Recomendador */
   const [recomAtivo, setRecomAtivo] = useState(false);
   const [rcond, setRcond] = useState({ temp: 16, prec: 1200, alt: 800, geada: 20, argila: 25 });
-  const ranking = useMemo(() => recomAtivo ? recomendar(rcond) : [], [recomAtivo, rcond]);
+  const aptidao  = useMemo(() => checarAptidao(rcond), [rcond]);
+  const porCiclo = useMemo(() => cultivaresPorCiclo(), []);
 
   /* Calculadora de sementes */
   const [calcAtivo, setCalcAtivo]     = useState(false);
@@ -265,8 +273,12 @@ export default function VariedadesPage() {
   const [calcPMG,   setCalcPMG]       = useState(45);  // peso mil grãos (g)
   const [calcPod,   setCalcPod]       = useState(85);  // poder germinativo (%)
   const semKgHa = useMemo(() => {
-    // Kg/ha = (densidade × PMG) / (PG% × 1000) × 1000
-    const kgHa = (calcDens * calcPMG) / (calcPod / 100 * 1000);
+    // Kg/ha = (densidade[plantas/m²] × PMG[g/1000 sementes]) / PG[%]
+    // Verificado numericamente: density=250, PMG=45g, PG=85% -> 132,4 kg/ha,
+    // dentro da faixa real de referência para cevada (100-150 kg/ha). A
+    // versão anterior dividia por um fator 10 a mais (bug), entregando
+    // ~13 kg/ha — sub-dimensionaria a semeadura em 10x.
+    const kgHa = (calcDens * calcPMG) / calcPod;
     return { kgHa: kgHa.toFixed(1), total: (kgHa * calcArea).toFixed(0), sacos: Math.ceil(kgHa * calcArea / 50) };
   }, [calcArea, calcDens, calcPMG, calcPod]);
 
@@ -311,14 +323,18 @@ export default function VariedadesPage() {
         </div>
       </div>
 
-      {/* ── Recomendador de Cultivar ── */}
+      {/* ── Verificador de Aptidão + Cultivares por Ciclo ── */}
       {recomAtivo && (
         <div style={{ background: '#fff', border: '1px solid rgba(27,67,50,0.2)', borderRadius: 14, padding: '20px 22px', marginBottom: 16, boxShadow: '0 4px 16px rgba(27,67,50,0.07)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <Wand2 size={14} color="#1B4332" />
-            <p style={{ fontSize: 13, fontWeight: 700, color: '#1B4332' }}>Recomendador de Cultivar</p>
-            <span style={{ fontSize: 10, color: '#6B7280' }}>— Informe as condições do seu município</span>
+            <p style={{ fontSize: 13, fontWeight: 700, color: '#1B4332' }}>Verificador de Aptidão</p>
           </div>
+          <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 16, marginLeft: 22 }}>
+            Informe as condições do seu município — os critérios são os mesmos para todas as cultivares
+            (não há tabela oficial com faixa climática diferente por cultivar); o que muda entre elas é
+            o ciclo e a resistência a doenças, mostrados abaixo.
+          </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16, marginBottom: 20 }}>
             {[
               { label: 'Temp. média (°C)', key:'temp', min:5, max:30, step:0.5, fmt:v=>`${v}°C` },
@@ -339,10 +355,45 @@ export default function VariedadesPage() {
             ))}
           </div>
 
+          {/* Resultado do checklist */}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16,
+            padding: '12px 16px', borderRadius: 10,
+            background: aptidao.apto ? '#F0FDF4' : '#FFFBEB',
+            border: `1px solid ${aptidao.apto ? '#BBF7D0' : '#FDE68A'}`,
+          }}>
+            {aptidao.apto ? <CheckCircle size={20} color="#16a34a" /> : <AlertTriangle size={20} color="#d97706" />}
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 800, color: aptidao.apto ? '#15803d' : '#92400e' }}>
+                {aptidao.apto ? 'Condições dentro do padrão ZARC' : `${aptidao.aprovados} de ${aptidao.total} critérios atendidos`}
+              </p>
+              <p style={{ fontSize: 10, color: '#6B7280' }}>
+                {aptidao.criterios.filter(c => !c.ok).map(c => c.label).join(', ') || 'Todos os critérios agronômicos gerais foram atendidos.'}
+              </p>
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 8, marginBottom: 22 }}>
+            {aptidao.criterios.map(c => (
+              <div key={c.label} style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '6px 8px',
+                borderRadius: 7, background: c.ok ? '#F0FDF4' : '#FEF2F2',
+              }}>
+                {c.ok ? <CheckCircle size={11} color="#16a34a" /> : <XCircle size={11} color="#dc2626" />}
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontSize: 9, color: '#6B7280' }}>{c.label}</p>
+                  <p style={{ fontSize: 9, color: '#9CA3AF' }}>{c.faixa}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Cultivares reais, ordenadas por ciclo — sem pontuação fictícia */}
+          <p style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 10, textTransform:'uppercase', letterSpacing: 0.6 }}>
+            Cultivares disponíveis, do ciclo mais curto ao mais longo
+          </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
-            {ranking.map(({ key, c, score }, i) => {
+            {porCiclo.map(({ key, c, dias }, i) => {
               const Icon = c.icon;
-              const cor = score >= 70 ? '#1A7A3C' : score >= 50 ? '#D4A017' : '#6B7280';
               return (
                 <div key={key} style={{
                   border: `2px solid ${i === 0 ? c.cor : '#E5E7EB'}`,
@@ -352,20 +403,20 @@ export default function VariedadesPage() {
                 }}>
                   {i === 0 && (
                     <span style={{ position:'absolute', top:-10, left:'50%', transform:'translateX(-50%)', background:c.cor, color:'#fff', fontSize:8, fontWeight:800, padding:'2px 8px', borderRadius:10 }}>
-                      ⭐ RECOMENDADA
+                      CICLO MAIS CURTO
                     </span>
                   )}
                   <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
                     <Icon size={16} color={c.cor} />
                     <span style={{ fontSize:12, fontWeight:700, color:c.cor }}>{c.nome}</span>
                   </div>
-                  <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:6 }}>
-                    <div style={{ flex:1, height:6, background:'#E5E7EB', borderRadius:3, overflow:'hidden' }}>
-                      <div style={{ height:'100%', width:`${score}%`, background:cor, borderRadius:3, transition:'width 0.4s' }} />
-                    </div>
-                    <span style={{ fontSize:12, fontWeight:800, color:cor, minWidth:35 }}>{score}%</span>
-                  </div>
-                  <p style={{ fontSize:10, color:'#6B7280', lineHeight:1.5 }}>{c.ciclo}</p>
+                  <p style={{ fontSize:16, fontWeight:800, color:'#111827', marginBottom:2 }}>{dias} dias</p>
+                  <p style={{ fontSize:9, color:'#9CA3AF', marginBottom:6 }}>até maturação · {c.obtentor}</p>
+                  <p style={{ fontSize:10, color:'#6B7280', lineHeight:1.5 }}>
+                    {aptidao.criterios.find(cr => cr.label==='Risco de geada' && !cr.ok)
+                      ? 'Geada acima do padrão — ciclo mais curto reduz a janela de exposição.'
+                      : 'Dentro do padrão de geada informado.'}
+                  </p>
                 </div>
               );
             })}
@@ -407,7 +458,7 @@ export default function VariedadesPage() {
             </div>
           </div>
           <div style={{ marginTop:14, padding:'9px 12px', background:'#F0F9FF', border:'1px solid #BAE6FD', borderRadius:8, fontSize:10, color:'#0369a1' }}>
-            <strong>Fórmula:</strong> Kg/ha = (Densidade × PMG) ÷ (PG% × 1000) × 1000 —
+            <strong>Fórmula:</strong> Kg/ha = (Densidade[plantas/m²] × PMG[g/1000 sementes]) ÷ PG[%] —
             fórmula agronômica padrão de taxa de semeadura, comum a cereais de inverno
           </div>
         </div>

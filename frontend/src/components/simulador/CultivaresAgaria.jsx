@@ -12,7 +12,7 @@ import { Sprout, Crown, Star, Gem } from 'lucide-react';
 // mesmos critérios agronômicos gerais (os mesmos do restante do app); a
 // seleção de cultivar aqui serve para mostrar as características reais de
 // cada uma, não para simular uma aptidão climática diferente por cultivar.
-const ZARC_PADRAO = {
+export const ZARC_PADRAO = {
   argila: 15, tempMin: 10, tempMax: 22,
   chuvaMin: 400, chuvaMax: 1200, altitude: 800,
   maxGeada: 30, maxChuvaColheita: 250,
