@@ -199,12 +199,22 @@ export default function CompararPage({ municipios = [] }) {
     return obj;
   });
 
+  /* Vencedor = município com mais critérios "em verde" na tabela — não a
+     média sintética de 8 dimensões (scoreGeral), que podia recomendar um
+     município com ZARC pior só por ganhar em dimensões econômicas como ROI
+     ou logística. Aqui contamos literalmente quantas linhas comparáveis
+     (as que têm "maior: melhor/pior" — 13 das 15 linhas) cada município
+     venceu, igual ao que já fica destacado em verde na tabela abaixo. */
+  const criteriosComparaveis = LINHAS.filter(l => l.maior).length;
   const vencedor = useMemo(() => {
     if (!preenchidos.length) return null;
-    const scores = enriched.map(m => m ? scoreGeral(m) : -1);
-    const maxScore = Math.max(...scores);
-    const idx = scores.indexOf(maxScore);
-    return { idx, m: enriched[idx], score: maxScore };
+    const contagem = enriched.map(() => 0);
+    LINHAS.forEach(linha => {
+      vencedores(enriched, linha.key).forEach(i => { contagem[i]++; });
+    });
+    const maxWins = Math.max(...contagem);
+    const idx = contagem.indexOf(maxWins);
+    return { idx, m: enriched[idx], criterios: maxWins };
   }, [enriched, preenchidos]);
 
   return (
@@ -415,13 +425,13 @@ export default function CompararPage({ municipios = [] }) {
               </div>
               <div>
                 <p style={{ fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>
-                  Melhor Município (Score Combinado)
+                  Melhor Município ({vencedor.criterios} de {criteriosComparaveis} critérios)
                 </p>
                 <p style={{ fontSize: 18, fontWeight: 800, color: CORES_SLOT[vencedor.idx] }}>
                   {vencedor.m?.nome_municipio} / {vencedor.m?.uf}
                 </p>
                 <p style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
-                  Score combinado: <strong>{vencedor.score}/100</strong> ·
+                  Venceu em <strong>{vencedor.criterios}</strong> dos {criteriosComparaveis} critérios comparados ·
                   ZARC: {vencedor.m?.score_aptidao ?? '—'}/100 ·
                   Lucro est.: {fmtR(vencedor.m?.lucro ?? 0)}/ha ·
                   ROI: {fmt(vencedor.m?.roi, 1)}%
