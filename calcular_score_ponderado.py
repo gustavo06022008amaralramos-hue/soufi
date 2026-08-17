@@ -22,6 +22,7 @@ antes deste script (cria a coluna score_ponderado).
 
 Uso: python calcular_score_ponderado.py
 """
+import json
 import os
 import sys
 import threading
@@ -60,6 +61,33 @@ PESOS = {
     "colheita": 0.10,
 }
 assert abs(sum(PESOS.values()) - 1.0) < 1e-9
+
+# ==============================================================================
+# REGRA DE NEGÓCIO — Nordeste e municípios litorâneos diretos nunca são "Apto"
+# ==============================================================================
+# O score por média climática anual é um proxy simplificado (não é o balanço
+# hídrico decendial do ZARC oficial) e às vezes classifica como "apto" cidades
+# litorâneas ou nordestinas que na prática não têm tradição nem clima real de
+# cultivo de cevada (ex: Florianópolis/SC, Balneário Camboriú/SC apareciam com
+# score 83; Boninal/BA com score 100). Decisão explícita do usuário: essas
+# regiões nunca devem ultrapassar o limiar de "Apto" (score >= 70).
+NORDESTE_UFS = {"AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"}
+TETO_SCORE_RESTRITO = 65  # abaixo de 70, com margem de segurança
+
+_caminho_litoraneos = os.path.join(os.path.dirname(os.path.abspath(__file__)), "municipios_litoraneos_ibge.json")
+try:
+    with open(_caminho_litoraneos, encoding="utf-8") as _f:
+        LITORANEOS_IBGE = set(json.load(_f))
+except FileNotFoundError:
+    LITORANEOS_IBGE = set()
+
+
+def aplicar_regra_regiao_restrita(score, uf, codigo_ibge):
+    """Tampa o score em TETO_SCORE_RESTRITO se o município é do Nordeste ou
+    litorâneo direto (fonte: IBGE 'Municípios defrontantes com o mar')."""
+    if uf in NORDESTE_UFS or str(codigo_ibge) in LITORANEOS_IBGE:
+        return min(score, TETO_SCORE_RESTRITO)
+    return score
 
 
 def _plato(valor, ideal_min, ideal_max, tolerancia):
@@ -144,7 +172,8 @@ def notas_graduadas(m):
 
 def calcular_score_ponderado(m):
     notas = notas_graduadas(m)
-    return int(round(sum(PESOS[k] * notas[k] for k in PESOS) * 100))
+    score = int(round(sum(PESOS[k] * notas[k] for k in PESOS) * 100))
+    return aplicar_regra_regiao_restrita(score, m.get("uf"), m.get("codigo_ibge"))
 
 
 def buscar_todos():
@@ -152,7 +181,7 @@ def buscar_todos():
     offset = 0
     while True:
         batch = supabase.table("municipios_aptidao").select(
-            "codigo_ibge, pct_argila, temp_media_anual, "
+            "codigo_ibge, uf, pct_argila, temp_media_anual, "
             "precipitacao_acumulada_anual, altitude, risco_geada_pct, chuva_colheita_mm"
         ).range(offset, offset + 999).execute()
         if not batch.data:

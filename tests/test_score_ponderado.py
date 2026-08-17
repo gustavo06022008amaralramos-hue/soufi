@@ -101,3 +101,29 @@ def test_score_e_monotono_em_relacao_a_geada():
     base = sp.calcular_score_ponderado({**municipio_ideal(), "risco_geada_pct": 5.0})
     pior = sp.calcular_score_ponderado({**municipio_ideal(), "risco_geada_pct": 25.0})
     assert pior <= base
+
+
+def test_municipio_nordeste_nunca_e_apto_mesmo_com_clima_ideal():
+    """Regra de negócio: Nordeste nunca deve ultrapassar o limiar de Apto (70),
+    mesmo que os critérios climáticos brutos deem nota máxima."""
+    m = {**municipio_ideal(), "uf": "BA", "codigo_ibge": "2900108"}
+    score = sp.calcular_score_ponderado(m)
+    assert score < 70
+    assert score <= sp.TETO_SCORE_RESTRITO
+
+
+def test_municipio_litoraneo_direto_nunca_e_apto():
+    """Regra de negócio: município litorâneo direto (lista IBGE) nunca deve
+    ultrapassar o limiar de Apto, mesmo fora do Nordeste."""
+    # Florianópolis/SC, código IBGE real, está na lista de litorâneos diretos.
+    m = {**municipio_ideal(), "uf": "SC", "codigo_ibge": "4205407"}
+    score = sp.calcular_score_ponderado(m)
+    assert score < 70
+
+
+def test_municipio_fora_da_regiao_restrita_nao_e_afetado():
+    """Município fora do Nordeste e não litorâneo direto (ex: Guarapuava/PR)
+    não deve ter o score alterado pela regra regional."""
+    m = {**municipio_ideal(), "uf": "PR", "codigo_ibge": "4109401"}
+    score = sp.calcular_score_ponderado(m)
+    assert score == 100
