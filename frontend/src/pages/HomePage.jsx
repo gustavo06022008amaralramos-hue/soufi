@@ -46,8 +46,13 @@ export default function HomePage({ municipios = [], apiOnline }) {
         .then(r=>r.json()).then(setProgresso).catch(()=>{});
       fetch(`${API}/municipios/estatisticas`)
         .then(r=>r.json()).then(setStatsApi).catch(()=>{});
-      fetch(`${API}/municipios/top?limit=5&uf=PR`)
-        .then(r=>r.json()).then(d=>setTopApi(d.municipios??[])).catch(()=>{});
+      // Pede uf=PR ao backend, mas tambem filtra no cliente como salvaguarda —
+      // se o backend ainda nao tiver o filtro em producao (deploy defasado),
+      // o dashboard nao deve mostrar municipio de outro estado de qualquer forma.
+      fetch(`${API}/municipios/top?limit=50&uf=PR`)
+        .then(r=>r.json())
+        .then(d=>setTopApi((d.municipios??[]).filter(m=>m.uf==='PR').slice(0,5)))
+        .catch(()=>{});
     }
   }, [apiOnline]);
 
