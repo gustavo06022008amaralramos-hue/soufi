@@ -31,6 +31,35 @@ function viabLabel(d) {
   return              { label:'Distante',      cor:'#dc2626' };
 }
 
+/* ─── Notas graduadas ────────────────────────────────────────
+   Mesma lógica de calcular_score_ponderado.py (Bloco 1.5): cada critério
+   vira uma nota 0.0–1.0 por proximidade do ideal, não só passou/não passou.
+   Isso alimenta o indicador de 3 níveis (ideal / parcial / fora) nas linhas
+   abaixo — sem essa gradação, um valor a 0,5°C do limite aparecia com o
+   mesmo "X vermelho" de um valor 10°C fora da faixa. */
+function plato(v, idealMin, idealMax, tolerancia) {
+  if (v == null) return 0;
+  if (v >= idealMin && v <= idealMax) return 1;
+  if (v < idealMin) {
+    const limite = idealMin - tolerancia;
+    return v <= limite ? 0 : (v - limite) / tolerancia;
+  }
+  const limite = idealMax + tolerancia;
+  return v >= limite ? 0 : (limite - v) / tolerancia;
+}
+function rampaAlta(v, minimo, tolerancia) {
+  if (v == null) return 0;
+  if (v >= minimo) return 1;
+  const limite = minimo - tolerancia;
+  return v <= limite ? 0 : (v - limite) / tolerancia;
+}
+function rampaBaixa(v, maximo, tolerancia) {
+  if (v == null) return 0;
+  if (v <= maximo) return 1;
+  const limite = maximo + tolerancia;
+  return v >= limite ? 0 : (limite - v) / tolerancia;
+}
+
 /* ─── Critérios ZARC ─────────────────────────────────────── */
 const CRITERIOS = [
   {
@@ -38,36 +67,42 @@ const CRITERIOS = [
     faixa: '10–22°C',
     valor: m => m.temp_media_anual != null ? `${m.temp_media_anual.toFixed(1)}°C` : '—',
     ok:    m => m.temp_media_anual >= 10 && m.temp_media_anual <= 22,
+    nota:  m => plato(m.temp_media_anual, 10, 22, 3),
   },
   {
     label: 'Precipitação', icon: CloudRain, cor:'#2563eb',
     faixa: '400–2000mm',
     valor: m => m.precipitacao_acumulada_anual != null ? `${Math.round(m.precipitacao_acumulada_anual)}mm` : '—',
     ok:    m => m.precipitacao_acumulada_anual >= 400 && m.precipitacao_acumulada_anual <= 2000,
+    nota:  m => plato(m.precipitacao_acumulada_anual, 700, 1400, 300),
   },
   {
     label: 'Altitude', icon: Mountain, cor:'#374151',
     faixa: '≥ 700m',
     valor: m => m.altitude != null ? `${Math.round(m.altitude)}m` : '—',
     ok:    m => m.altitude >= 700,
+    nota:  m => rampaAlta(m.altitude, 700, 200),
   },
   {
     label: 'Risco de Geada', icon: Snowflake, cor:'#7c3aed',
     faixa: '< 30%',
     valor: m => m.risco_geada_pct != null ? `${m.risco_geada_pct.toFixed(0)}%` : '—',
     ok:    m => m.risco_geada_pct != null && m.risco_geada_pct < 30,
+    nota:  m => rampaBaixa(m.risco_geada_pct, 0, 30),
   },
   {
     label: 'Solo (ZARC)', icon: Layers, cor:'#92400e',
     faixa: 'Tipo 2 ou 3',
     valor: m => m.tipo_solo_zarc != null ? `Tipo ${m.tipo_solo_zarc}` : '—',
     ok:    m => m.tipo_solo_zarc != null && m.tipo_solo_zarc >= 2,
+    nota:  m => m.tipo_solo_zarc == null ? 0 : (m.tipo_solo_zarc >= 2 ? 1 : 0),
   },
   {
     label: 'Chuva Colheita', icon: CloudRain, cor:'#0e7490',
     faixa: '120–400mm',
     valor: m => m.chuva_colheita_mm != null ? `${Math.round(m.chuva_colheita_mm)}mm` : '—',
     ok:    m => m.chuva_colheita_mm != null && m.chuva_colheita_mm >= 120 && m.chuva_colheita_mm <= 400,
+    nota:  m => rampaBaixa(m.chuva_colheita_mm, 120, 280),
   },
 ];
 
@@ -235,6 +270,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
     ...c,
     val: c.valor(municipio),
     pass: c.ok(municipio),
+    nota: c.nota(municipio),
   }));
   const aprovados = criterios.filter(c => c.pass).length;
 
@@ -366,23 +402,39 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 letterSpacing:1.2,padding:'10px 14px 8px',borderBottom:'1px solid #F3F4F6' }}>
                 Critérios ZARC / EMBRAPA
               </p>
-              {criterios.map((c, i) => (
-                <div key={c.label} style={{
-                  display:'flex', alignItems:'center', gap:9,
-                  padding:'9px 14px',
-                  borderBottom: i < criterios.length-1 ? '1px solid #F9FAFB' : 'none',
-                  background: c.pass ? '#f0fdf420' : '#fff',
-                }}>
-                  {c.pass
-                    ? <CheckCircle size={14} color="#16a34a" style={{ flexShrink:0 }} />
-                    : <XCircle     size={14} color="#dc2626" style={{ flexShrink:0 }} />}
-                  <c.icon size={11} color={c.cor} style={{ flexShrink:0 }} />
-                  <span style={{ flex:1, fontSize:11, color:'#374151', fontWeight:500 }}>{c.label}</span>
-                  <span style={{ fontSize:11, fontWeight:700,
-                    color: c.pass ? '#16a34a' : '#dc2626' }}>{c.val}</span>
-                  <span style={{ fontSize:9, color:'#9CA3AF', minWidth:52, textAlign:'right' }}>{c.faixa}</span>
-                </div>
-              ))}
+              {criterios.map((c, i) => {
+                // 3 níveis a partir da nota graduada (0-1): ideal / parcial (perto do
+                // limite, ainda ganha crédito) / fora (sem crédito nenhum). Sem isso,
+                // um valor a poucos décimos do limite parecia igual a um valor bem fora.
+                const tier = c.nota >= 0.999 ? 'ideal' : c.nota > 0 ? 'parcial' : 'fora';
+                const corTier = tier === 'ideal' ? '#16a34a' : tier === 'parcial' ? '#d97706' : '#dc2626';
+                const Icone = tier === 'ideal' ? CheckCircle : tier === 'parcial' ? AlertTriangle : XCircle;
+                return (
+                  <div key={c.label} style={{
+                    padding:'8px 14px 10px',
+                    borderBottom: i < criterios.length-1 ? '1px solid #F9FAFB' : 'none',
+                    background: tier === 'ideal' ? '#f0fdf420' : '#fff',
+                  }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:9 }}>
+                      <Icone size={14} color={corTier} style={{ flexShrink:0 }} />
+                      <c.icon size={11} color={c.cor} style={{ flexShrink:0 }} />
+                      <span style={{ flex:1, fontSize:11, color:'#374151', fontWeight:500 }}>{c.label}</span>
+                      <span style={{ fontSize:11, fontWeight:700, color:corTier }}>{c.val}</span>
+                      <span style={{ fontSize:9, color:'#9CA3AF', minWidth:52, textAlign:'right' }}>{c.faixa}</span>
+                    </div>
+                    {tier === 'parcial' && (
+                      <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:4, paddingLeft:23 }}>
+                        <div style={{ flex:1, height:4, background:'#F3F4F6', borderRadius:2, overflow:'hidden' }}>
+                          <div style={{ width:`${Math.round(c.nota*100)}%`, height:'100%', background:corTier, borderRadius:2 }} />
+                        </div>
+                        <span style={{ fontSize:8, color:corTier, fontWeight:700, flexShrink:0 }}>
+                          {Math.round(c.nota*100)}% do critério — perto do ideal, não é reprovação total
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </div>
 
             {/* Cultivares */}
