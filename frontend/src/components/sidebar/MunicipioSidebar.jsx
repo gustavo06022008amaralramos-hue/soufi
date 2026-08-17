@@ -369,7 +369,11 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
       </div>
 
       {/* ── CONTEÚDO POR TAB ──────────────────────────────── */}
-      <div style={{ flex:1, overflowY:'auto', padding:'14px 16px', display:'flex', flexDirection:'column', gap:10 }}>
+      {/* minHeight:0 é necessário aqui — sem isso, um filho flex com
+          overflowY:auto não encolhe (o padrão do flexbox é min-height:auto),
+          então em telas mais baixas o conteúdo (ex: Chuva Colheita, Cultivares
+          Recomendadas) fica cortado sem scroll em vez de rolar. */}
+      <div style={{ flex:1, minHeight:0, overflowY:'auto', padding:'14px 16px', display:'flex', flexDirection:'column', gap:10 }}>
 
         {/* ── Tab 0: APTIDÃO ──────────────────────────────── */}
         {tab === 0 && (

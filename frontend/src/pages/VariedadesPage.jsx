@@ -1,7 +1,28 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Leaf, X, Clock, Thermometer, Droplets, Mountain, CheckCircle, AlertTriangle, Wand2, Calculator, XCircle } from 'lucide-react';
+import { Leaf, X, Clock, Thermometer, Droplets, Mountain, CheckCircle, AlertTriangle, Wand2, Calculator, XCircle, Plus, Trash2, Info, MapPin } from 'lucide-react';
 import { CULTIVARES, ZARC_PADRAO } from '../components/simulador/CultivaresAgaria.jsx';
+
+/* ── Cadastro de cultivares — armazenamento local ─────────────
+   Guardado neste navegador (localStorage), separado do catálogo oficial
+   (CULTIVARES, fonte: Portaria SPA/MAPA + Embrapa Trigo 2025). Nunca é
+   misturado com o catálogo oficial — cada cultivar cadastrada aqui aparece
+   com uma etiqueta clara de "cadastro próprio, não verificado", e entra no
+   cálculo de recomendação como qualquer outra cultivar. */
+const LOCAL_KEY = 'soufii_cultivares_customizadas';
+const UFS_ZONA = ['PR', 'SC', 'RS', 'SP', 'MG', 'GO', 'MS', 'MT', 'BA', 'DF'];
+const NIVEIS_RESISTENCIA = ['Não avaliado', 'Resistente', 'Moderadamente resistente', 'Moderadamente suscetível', 'Suscetível', 'Altamente suscetível'];
+const DOENCAS_PADRAO = ['Acamamento', 'Oídio', 'Ferrugem da folha', 'Mancha foliar', 'Giberela'];
+const CORES_CUSTOM = ['#64748b', '#ec4899', '#f97316', '#0ea5e9', '#84cc16', '#a855f7'];
+
+function carregarCustomizadas() {
+  try {
+    const raw = localStorage.getItem(LOCAL_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
 
 /* ── Verificador de aptidão ──────────────────────────────────
    As 4 cultivares reais compartilham os mesmos critérios ZARC gerais
@@ -30,10 +51,40 @@ function diasMaturacao(ciclo) {
   return m ? Number(m[1]) : 999;
 }
 
-function cultivaresPorCiclo() {
-  return Object.entries(CULTIVARES)
-    .map(([key, c]) => ({ key, c, dias: diasMaturacao(c.ciclo) }))
-    .sort((a, b) => a.dias - b.dias);
+/* Junta o catálogo oficial com as cultivares cadastradas pelo usuário numa
+   lista única, no mesmo formato { key, c, extra, oficial } usado pelos
+   cards e pelo modal de detalhe. */
+function unificarCultivares(customizadas) {
+  const oficiais = Object.entries(CULTIVARES).map(([key, c]) => ({
+    key, c, extra: INFO_EXTRA[key], oficial: true,
+  }));
+  const custom = customizadas.map(c => ({
+    key: c.id,
+    c: {
+      nome: c.nome, obtentor: c.obtentor || 'Cadastro próprio', icon: Leaf, cor: c.cor,
+      ciclo: `${c.grupo} · ${c.diasEsp} dias até espigamento, ${c.diasMat} dias até maturação`,
+      desc: c.desc || 'Cultivar cadastrada localmente — sem fonte oficial verificada ainda.',
+      zarc: ZARC_PADRAO,
+    },
+    extra: { zonas: c.zonas ?? [], img: '📝', caracteristicas: c.caracteristicas ?? [] },
+    oficial: false,
+  }));
+  return [...oficiais, ...custom];
+}
+
+/* Recomendador reativo: reordena a lista conforme os inputs mudam.
+   1º critério — zona real documentada (extra.zonas) bate com o estado
+   selecionado, quando informado; 2º critério — ciclo mais curto primeiro,
+   que é o que reduz janela de exposição quando o risco de geada é alto.
+   Os dois são diferenciais REAIS (zona e ciclo são documentados por
+   cultivar); não inventa nota climática por cultivar. */
+function recomendarCultivares(lista, uf) {
+  return lista
+    .map(item => ({ ...item, dias: diasMaturacao(item.c.ciclo), zonaOk: !uf || uf === 'Todos' || (item.extra.zonas ?? []).includes(uf) }))
+    .sort((a, b) => {
+      if (a.zonaOk !== b.zonaOk) return a.zonaOk ? -1 : 1;
+      return a.dias - b.dias;
+    });
 }
 
 const FILTROS = ['Todas', 'Grupo I', 'Grupo II', 'Grupo III'];
@@ -92,14 +143,14 @@ const INFO_EXTRA = {
   },
 };
 
-function CultivarCard({ cultivarKey, c, extra, onClick }) {
+function CultivarCard({ cultivarKey, c, extra, oficial, onClick }) {
   const Icon = c.icon;
   return (
     <div
       onClick={() => onClick(cultivarKey)}
       style={{
         background: 'var(--bg-card)', border: `1px solid var(--border)`,
-        borderRadius: 16, padding: 20, cursor: 'pointer',
+        borderRadius: 16, padding: 20, cursor: 'pointer', position: 'relative',
         transition: 'all 0.2s',
       }}
       onMouseEnter={e => {
@@ -113,6 +164,13 @@ function CultivarCard({ cultivarKey, c, extra, onClick }) {
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
+      {!oficial && (
+        <span style={{
+          position: 'absolute', top: 12, right: 12, fontSize: 8, fontWeight: 800,
+          padding: '2px 7px', borderRadius: 20, background: '#F3F4F6', color: '#6B7280',
+          border: '1px solid #E5E7EB', textTransform: 'uppercase', letterSpacing: 0.5,
+        }}>Cadastro próprio</span>
+      )}
       {/* Header */}
       <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, marginBottom: 14 }}>
         <div style={{
@@ -167,7 +225,7 @@ function CultivarCard({ cultivarKey, c, extra, onClick }) {
   );
 }
 
-function Detalhe({ cultivarKey, c, extra, onClose }) {
+function Detalhe({ cultivarKey, c, extra, oficial, onClose, onDelete }) {
   const Icon = c.icon;
   return createPortal(
     <div style={{
@@ -198,11 +256,20 @@ function Detalhe({ cultivarKey, c, extra, onClose }) {
               <p style={{ fontSize: 12, color: 'var(--text-faint)', marginTop: 2 }}>{c.ciclo}</p>
             </div>
           </div>
-          <button onClick={onClose} style={{
-            background: 'var(--bg-card2)', border: '1px solid var(--border2)',
-            borderRadius: 8, padding: 7, cursor: 'pointer', color: 'var(--text-faint)',
-            display: 'flex',
-          }}><X size={14} /></button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            {!oficial && (
+              <button onClick={() => { onDelete(cultivarKey); onClose(); }} title="Excluir cadastro" style={{
+                background: 'var(--bg-card2)', border: '1px solid #fecaca',
+                borderRadius: 8, padding: 7, cursor: 'pointer', color: '#dc2626',
+                display: 'flex',
+              }}><Trash2 size={14} /></button>
+            )}
+            <button onClick={onClose} style={{
+              background: 'var(--bg-card2)', border: '1px solid var(--border2)',
+              borderRadius: 8, padding: 7, cursor: 'pointer', color: 'var(--text-faint)',
+              display: 'flex',
+            }}><X size={14} /></button>
+          </div>
         </div>
 
         <p style={{ fontSize: 13, color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: 20 }}>{c.desc}</p>
@@ -217,10 +284,20 @@ function Detalhe({ cultivarKey, c, extra, onClose }) {
           ))}
         </div>
 
+        {!oficial && (
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', background: '#FFFBEB', border: '1px solid #FDE68A', borderRadius: 8, padding: '8px 12px', marginBottom: 18 }}>
+            <Info size={13} color="#92400e" style={{ flexShrink: 0 }} />
+            <p style={{ fontSize: 11, color: '#92400e' }}>Cadastro próprio, salvo neste navegador — não é dado verificado em fonte oficial (Embrapa/MAPA/FAPA).</p>
+          </div>
+        )}
+
         {/* Ciclo e reação a doenças */}
         <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
-          Ciclo e reação a doenças — Embrapa Trigo (2025)
+          Ciclo e reação a doenças {oficial ? '— Embrapa Trigo (2025)' : '— informado no cadastro'}
         </p>
+        {extra.caracteristicas.length === 0 ? (
+          <p style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 20 }}>Nenhuma característica de doença informada no cadastro.</p>
+        ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
           {extra.caracteristicas.map(({ label, val, ok }) => (
             <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -230,6 +307,7 @@ function Detalhe({ cultivarKey, c, extra, onClose }) {
             </div>
           ))}
         </div>
+        )}
 
         {/* Parâmetros ZARC */}
         <p style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-faint)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 10 }}>
@@ -256,6 +334,143 @@ function Detalhe({ cultivarKey, c, extra, onClose }) {
   );
 }
 
+/* ── Formulário de cadastro de cultivar ───────────────────────
+   Salva localmente (localStorage) — não sobrescreve nem se mistura com o
+   catálogo oficial. O objetivo é permitir registrar cultivares que a
+   FAPA/Agrária conhece mas que ainda não estão no catálogo verificado
+   deste app, pra já entrarem no recomendador enquanto isso não é validado. */
+function CadastroCultivar({ onClose, onSave }) {
+  const [form, setForm] = useState({
+    nome: '', obtentor: '', grupo: 'Grupo II', diasEsp: 80, diasMat: 125,
+    desc: '', zonas: [], cor: CORES_CUSTOM[Math.floor(Math.random() * CORES_CUSTOM.length)],
+    caracteristicas: DOENCAS_PADRAO.map(d => ({ label: d, val: 'Não avaliado' })),
+  });
+  const [erro, setErro] = useState('');
+
+  function toggleZona(uf) {
+    setForm(f => ({ ...f, zonas: f.zonas.includes(uf) ? f.zonas.filter(z => z !== uf) : [...f.zonas, uf] }));
+  }
+  function setCaracteristica(idx, val) {
+    setForm(f => {
+      const c = [...f.caracteristicas];
+      c[idx] = { ...c[idx], val };
+      return { ...f, caracteristicas: c };
+    });
+  }
+  function submit() {
+    if (!form.nome.trim()) { setErro('Informe o nome da cultivar.'); return; }
+    onSave({
+      ...form,
+      nome: form.nome.trim(),
+      id: `custom-${Date.now()}`,
+      caracteristicas: form.caracteristicas.map(c => ({
+        ...c, ok: ['Resistente', 'Moderadamente resistente'].includes(c.val),
+      })),
+    });
+  }
+
+  const inputStyle = {
+    width: '100%', padding: '8px 10px', borderRadius: 8, border: '1px solid #E5E7EB',
+    fontSize: 12, color: '#374151', outline: 'none',
+  };
+  const labelStyle = { display: 'block', fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 5 };
+
+  return createPortal(
+    <div style={{
+      position: 'fixed', inset: 0, zIndex: 2100,
+      background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)',
+      display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24,
+    }} onClick={onClose}>
+      <div onClick={e => e.stopPropagation()} style={{
+        background: '#fff', borderRadius: 20, padding: 26, maxWidth: 620, width: '100%',
+        maxHeight: '88vh', overflowY: 'auto',
+        boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+          <p style={{ fontSize: 17, fontWeight: 800, color: '#1B4332' }}>Cadastrar cultivar</p>
+          <button onClick={onClose} style={{ background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 8, padding: 7, cursor: 'pointer', color: '#6B7280', display: 'flex' }}><X size={14} /></button>
+        </div>
+        <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 18 }}>
+          Salvo só neste navegador, separado do catálogo oficial verificado — aparece marcado como "cadastro próprio" e já entra no recomendador de cultivares.
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 2fr', gap: 12, marginBottom: 12 }}>
+          <div>
+            <label style={labelStyle}>Nome da cultivar *</label>
+            <input style={inputStyle} value={form.nome} onChange={e => setForm(f => ({ ...f, nome: e.target.value }))} placeholder="Ex: Condessa" />
+          </div>
+          <div>
+            <label style={labelStyle}>Obtentor</label>
+            <input style={inputStyle} value={form.obtentor} onChange={e => setForm(f => ({ ...f, obtentor: e.target.value }))} placeholder="Ex: FAPA" />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div>
+            <label style={labelStyle}>Grupo ZARC</label>
+            <select style={inputStyle} value={form.grupo} onChange={e => setForm(f => ({ ...f, grupo: e.target.value }))}>
+              <option>Grupo I</option><option>Grupo II</option><option>Grupo III</option>
+            </select>
+          </div>
+          <div>
+            <label style={labelStyle}>Dias até espigamento</label>
+            <input style={inputStyle} type="number" min={1} value={form.diasEsp} onChange={e => setForm(f => ({ ...f, diasEsp: +e.target.value }))} />
+          </div>
+          <div>
+            <label style={labelStyle}>Dias até maturação</label>
+            <input style={inputStyle} type="number" min={1} value={form.diasMat} onChange={e => setForm(f => ({ ...f, diasMat: +e.target.value }))} />
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 12 }}>
+          <label style={labelStyle}>Descrição</label>
+          <textarea style={{ ...inputStyle, minHeight: 56, resize: 'vertical', fontFamily: 'inherit' }}
+            value={form.desc} onChange={e => setForm(f => ({ ...f, desc: e.target.value }))}
+            placeholder="Características gerais, altura de planta, observações de campo..." />
+        </div>
+
+        <div style={{ marginBottom: 14 }}>
+          <label style={labelStyle}>Zonas indicadas (estados)</label>
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+            {UFS_ZONA.map(uf => (
+              <button key={uf} type="button" onClick={() => toggleZona(uf)} style={{
+                fontSize: 11, fontWeight: 600, padding: '4px 11px', borderRadius: 20, cursor: 'pointer',
+                background: form.zonas.includes(uf) ? '#1B433218' : '#F9FAFB',
+                color: form.zonas.includes(uf) ? '#1B4332' : '#6B7280',
+                border: `1px solid ${form.zonas.includes(uf) ? '#1B433250' : '#E5E7EB'}`,
+              }}>{uf}</button>
+            ))}
+          </div>
+        </div>
+
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>Reação a doenças (opcional)</label>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+            {form.caracteristicas.map((c, i) => (
+              <div key={c.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{ fontSize: 11, color: '#374151', flex: 1 }}>{c.label}</span>
+                <select style={{ ...inputStyle, width: 210 }} value={c.val} onChange={e => setCaracteristica(i, e.target.value)}>
+                  {NIVEIS_RESISTENCIA.map(n => <option key={n}>{n}</option>)}
+                </select>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {erro && <p style={{ fontSize: 11, color: '#dc2626', marginBottom: 10 }}>{erro}</p>}
+
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          <button onClick={onClose} style={{ padding: '9px 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, cursor: 'pointer', background: '#F3F4F6', border: '1px solid #E5E7EB', color: '#374151' }}>Cancelar</button>
+          <button onClick={submit} style={{ padding: '9px 16px', borderRadius: 8, fontSize: 12, fontWeight: 700, cursor: 'pointer', background: '#1B4332', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', gap: 6 }}>
+            <Plus size={13} /> Salvar cultivar
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+}
+
 export default function VariedadesPage() {
   const [filtro, setFiltro]     = useState('Todas');
   const [detalhe, setDetalhe]   = useState(null);
@@ -263,8 +478,25 @@ export default function VariedadesPage() {
   /* Recomendador */
   const [recomAtivo, setRecomAtivo] = useState(false);
   const [rcond, setRcond] = useState({ temp: 16, prec: 1200, alt: 800, geada: 20, argila: 25 });
+  const [rUf, setRUf] = useState('Todos');
   const aptidao  = useMemo(() => checarAptidao(rcond), [rcond]);
-  const porCiclo = useMemo(() => cultivaresPorCiclo(), []);
+
+  /* Cultivares cadastradas pelo usuário — vivem só neste navegador */
+  const [customCultivares, setCustomCultivares] = useState(carregarCustomizadas);
+  const [cadastroAberto, setCadastroAberto] = useState(false);
+  useEffect(() => {
+    localStorage.setItem(LOCAL_KEY, JSON.stringify(customCultivares));
+  }, [customCultivares]);
+  function salvarCultivar(nova) {
+    setCustomCultivares(prev => [...prev, nova]);
+    setCadastroAberto(false);
+  }
+  function excluirCultivar(id) {
+    setCustomCultivares(prev => prev.filter(c => c.id !== id));
+  }
+
+  const todasCultivares = useMemo(() => unificarCultivares(customCultivares), [customCultivares]);
+  const recomendados = useMemo(() => recomendarCultivares(todasCultivares, rUf), [todasCultivares, rUf]);
 
   /* Calculadora de sementes */
   const [calcAtivo, setCalcAtivo]     = useState(false);
@@ -282,7 +514,7 @@ export default function VariedadesPage() {
     return { kgHa: kgHa.toFixed(1), total: (kgHa * calcArea).toFixed(0), sacos: Math.ceil(kgHa * calcArea / 50) };
   }, [calcArea, calcDens, calcPMG, calcPod]);
 
-  const filtrados = Object.entries(CULTIVARES).filter(([key, c]) => {
+  const filtrados = todasCultivares.filter(({ c }) => {
     if (filtro === 'Todas') return true;
     return c.ciclo.startsWith(`${filtro} ·`);
   });
@@ -320,6 +552,13 @@ export default function VariedadesPage() {
               transition: 'all 0.15s',
             }}>{f}</button>
           ))}
+          <div style={{ width: 1, height: 20, background: '#E5E7EB' }} />
+          <button onClick={() => setCadastroAberto(true)} style={{
+            display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
+            fontSize: 11, fontWeight: 600, background: '#fff', color: '#374151', border: '1px dashed #9CA3AF',
+          }}>
+            <Plus size={12} /> Cadastrar cultivar
+          </button>
         </div>
       </div>
 
@@ -331,10 +570,23 @@ export default function VariedadesPage() {
             <p style={{ fontSize: 13, fontWeight: 700, color: '#1B4332' }}>Verificador de Aptidão</p>
           </div>
           <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 16, marginLeft: 22 }}>
-            Informe as condições do seu município — os critérios são os mesmos para todas as cultivares
-            (não há tabela oficial com faixa climática diferente por cultivar); o que muda entre elas é
-            o ciclo e a resistência a doenças, mostrados abaixo.
+            Informe as condições do seu município e, se quiser, o estado — os critérios climáticos são os
+            mesmos para todas as cultivares (não há tabela oficial com faixa climática diferente por
+            cultivar); o que muda entre elas, e o que a recomendação abaixo usa de verdade, é a zona
+            indicada e o ciclo (mais curto reduz a exposição quando o risco de geada é alto).
           </p>
+          <div style={{ marginBottom: 16, marginLeft: 22 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 11, color: '#374151', fontWeight: 600, marginBottom: 5 }}>
+              <MapPin size={11} color="#1B4332" /> Estado (opcional, refina por zona indicada)
+            </span>
+            <select value={rUf} onChange={e => setRUf(e.target.value)} style={{
+              padding: '6px 10px', borderRadius: 8, fontSize: 12, border: '1px solid #E5E7EB',
+              color: '#374151', background: '#fff', cursor: 'pointer', outline: 'none',
+            }}>
+              <option value="Todos">Todos os estados</option>
+              {UFS_ZONA.map(uf => <option key={uf} value={uf}>{uf}</option>)}
+            </select>
+          </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 16, marginBottom: 20 }}>
             {[
               { label: 'Temp. média (°C)', key:'temp', min:5, max:30, step:0.5, fmt:v=>`${v}°C` },
@@ -387,13 +639,15 @@ export default function VariedadesPage() {
             ))}
           </div>
 
-          {/* Cultivares reais, ordenadas por ciclo — sem pontuação fictícia */}
+          {/* Cultivares reais + cadastradas, ranqueadas por zona indicada e ciclo —
+              recalcula sempre que rcond ou rUf mudam, sem pontuação fictícia */}
           <p style={{ fontSize: 11, fontWeight: 700, color: '#374151', marginBottom: 10, textTransform:'uppercase', letterSpacing: 0.6 }}>
-            Cultivares disponíveis, do ciclo mais curto ao mais longo
+            Recomendação {rUf !== 'Todos' ? `para ${rUf}` : ''} — zona indicada, depois ciclo mais curto primeiro
           </p>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 10 }}>
-            {porCiclo.map(({ key, c, dias }, i) => {
+            {recomendados.map(({ key, c, extra, dias, zonaOk, oficial }, i) => {
               const Icon = c.icon;
+              const geadaAlta = !!aptidao.criterios.find(cr => cr.label==='Risco de geada' && !cr.ok);
               return (
                 <div key={key} style={{
                   border: `2px solid ${i === 0 ? c.cor : '#E5E7EB'}`,
@@ -403,19 +657,20 @@ export default function VariedadesPage() {
                 }}>
                   {i === 0 && (
                     <span style={{ position:'absolute', top:-10, left:'50%', transform:'translateX(-50%)', background:c.cor, color:'#fff', fontSize:8, fontWeight:800, padding:'2px 8px', borderRadius:10 }}>
-                      CICLO MAIS CURTO
+                      RECOMENDADA
                     </span>
                   )}
                   <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
                     <Icon size={16} color={c.cor} />
                     <span style={{ fontSize:12, fontWeight:700, color:c.cor }}>{c.nome}</span>
+                    {!oficial && <span style={{ fontSize:7, fontWeight:800, color:'#6B7280', background:'#F3F4F6', border:'1px solid #E5E7EB', borderRadius:20, padding:'1px 5px' }}>PRÓPRIA</span>}
                   </div>
                   <p style={{ fontSize:16, fontWeight:800, color:'#111827', marginBottom:2 }}>{dias} dias</p>
                   <p style={{ fontSize:9, color:'#9CA3AF', marginBottom:6 }}>até maturação · {c.obtentor}</p>
                   <p style={{ fontSize:10, color:'#6B7280', lineHeight:1.5 }}>
-                    {aptidao.criterios.find(cr => cr.label==='Risco de geada' && !cr.ok)
-                      ? 'Geada acima do padrão — ciclo mais curto reduz a janela de exposição.'
-                      : 'Dentro do padrão de geada informado.'}
+                    {rUf !== 'Todos' && zonaOk && `Zona indicada pra ${rUf}. `}
+                    {rUf !== 'Todos' && !zonaOk && `Sem indicação documentada pra ${rUf}. `}
+                    {geadaAlta ? 'Geada acima do padrão — ciclo mais curto reduz a janela de exposição.' : 'Dentro do padrão de geada informado.'}
                   </p>
                 </div>
               );
@@ -465,12 +720,13 @@ export default function VariedadesPage() {
       )}
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 16 }}>
-        {filtrados.map(([key, c]) => (
+        {filtrados.map(({ key, c, extra, oficial }) => (
           <CultivarCard
             key={key}
             cultivarKey={key}
             c={c}
-            extra={INFO_EXTRA[key]}
+            extra={extra}
+            oficial={oficial}
             onClick={setDetalhe}
           />
         ))}
@@ -479,16 +735,36 @@ export default function VariedadesPage() {
       {filtrados.length === 0 && (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-faint)' }}>
           <Leaf size={40} style={{ margin: '0 auto 12px', display: 'block', opacity: 0.3 }} />
-          <p>Nenhuma cultivar encontrada com este filtro.</p>
+          {(filtro === 'Grupo I' || filtro === 'Grupo III') ? (
+            <>
+              <p style={{ fontWeight: 600, marginBottom: 6 }}>Ainda não temos cultivares verificadas do {filtro}</p>
+              <p style={{ fontSize: 12, maxWidth: 420, margin: '0 auto', lineHeight: 1.6 }}>
+                O catálogo oficial (Portaria SPA/MAPA + Embrapa Trigo 2025) só documenta cultivares
+                de <strong>Grupo II</strong> pra cevada cervejeira nas fontes que verificamos até agora —
+                não encontramos dado confiável de {filtro} pra não arriscar inventar. Se vocês souberem de
+                uma cultivar real desse grupo, dá pra cadastrar no botão "+ Cadastrar cultivar" acima.
+              </p>
+            </>
+          ) : (
+            <p>Nenhuma cultivar encontrada com este filtro.</p>
+          )}
         </div>
       )}
 
       {detalhe && (() => {
-        const c    = CULTIVARES[detalhe];
-        const extra = INFO_EXTRA[detalhe];
-        if (!c || !extra) return null;
-        return <Detalhe cultivarKey={detalhe} c={c} extra={extra} onClose={() => setDetalhe(null)} />;
+        const item = todasCultivares.find(t => t.key === detalhe);
+        if (!item) return null;
+        return (
+          <Detalhe
+            cultivarKey={item.key} c={item.c} extra={item.extra} oficial={item.oficial}
+            onClose={() => setDetalhe(null)} onDelete={excluirCultivar}
+          />
+        );
       })()}
+
+      {cadastroAberto && (
+        <CadastroCultivar onClose={() => setCadastroAberto(false)} onSave={salvarCultivar} />
+      )}
     </div>
   );
 }
