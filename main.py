@@ -200,17 +200,17 @@ def sazonalidade(codigo_ibge: str):
 
 
 @app.get("/municipios/top", tags=["Municípios"])
-def municipios_top(limit: int = Query(default=5, ge=1, le=50)):
-    """Retorna os municípios com maior score de aptidão."""
+def municipios_top(limit: int = Query(default=5, ge=1, le=50), uf: str | None = Query(default=None)):
+    """Retorna os municípios com maior score de aptidão. Opcionalmente filtra por UF."""
     try:
-        resultado = (
+        query = (
             supabase.table("municipios_aptidao")
             .select("codigo_ibge, nome_municipio, uf, score_aptidao, apto_geral, temp_media_anual, precipitacao_acumulada_anual, altitude")
             .not_.is_("score_aptidao", "null")
-            .order("score_aptidao", desc=True)
-            .limit(limit)
-            .execute()
         )
+        if uf:
+            query = query.eq("uf", uf.upper())
+        resultado = query.order("score_aptidao", desc=True).limit(limit).execute()
         return {"municipios": resultado.data}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

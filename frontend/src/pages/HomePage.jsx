@@ -46,7 +46,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
         .then(r=>r.json()).then(setProgresso).catch(()=>{});
       fetch(`${API}/municipios/estatisticas`)
         .then(r=>r.json()).then(setStatsApi).catch(()=>{});
-      fetch(`${API}/municipios/top?limit=5`)
+      fetch(`${API}/municipios/top?limit=5&uf=PR`)
         .then(r=>r.json()).then(d=>setTopApi(d.municipios??[])).catch(()=>{});
     }
   }, [apiOnline]);
@@ -72,23 +72,24 @@ export default function HomePage({ municipios = [], apiOnline }) {
   const saudacao = hora<12?'Bom dia':hora<18?'Boa tarde':'Boa noite';
 
   const stats = useMemo(() => {
+    const melhorPR = topApi.length > 0
+      ? { score_aptidao: topApi[0].score_aptidao, nome_display: `${topApi[0].nome_municipio}/${topApi[0].uf}` }
+      : null;
     if (statsApi) return {
       total:   statsApi.total,
       aptos:   statsApi.aptos,
       parciais:statsApi.parciais,
-      melhor:  statsApi.melhor_municipio
-        ? { score_aptidao: statsApi.score_max, nome_display: statsApi.melhor_municipio }
-        : null,
+      melhor:  melhorPR,
     };
     const total   = municipios.length;
     const aptos   = municipios.filter(m=>(m.score_aptidao??0)>=70).length;
     const parciais= municipios.filter(m=>(m.score_aptidao??0)>=40&&(m.score_aptidao??0)<70).length;
-    const melhor  = [...municipios].sort((a,b)=>(b.score_aptidao??0)-(a.score_aptidao??0))[0];
+    const melhor  = melhorPR ?? [...municipios].filter(m=>m.uf==='PR').sort((a,b)=>(b.score_aptidao??0)-(a.score_aptidao??0))[0];
     return { total, aptos, parciais, melhor };
-  }, [municipios, statsApi]);
+  }, [municipios, statsApi, topApi]);
 
   const top5 = topApi.length > 0 ? topApi :
-    [...municipios].filter(m=>m.score_aptidao!=null)
+    [...municipios].filter(m=>m.score_aptidao!=null && m.uf==='PR')
       .sort((a,b)=>b.score_aptidao-a.score_aptidao).slice(0,5);
 
   /* Insights derivados dos dados */
@@ -106,15 +107,11 @@ export default function HomePage({ municipios = [], apiOnline }) {
     }
 
     if (municipios.length > 0) {
-      const porUF = {};
-      municipios.forEach(m => {
-        if (!m.uf) return;
-        if (!porUF[m.uf]) porUF[m.uf] = { total:0, aptos:0 };
-        porUF[m.uf].total++;
-        if ((m.score_aptidao??0) >= 70) porUF[m.uf].aptos++;
-      });
-      const ufTop = Object.entries(porUF).sort((a,b) => b[1].aptos - a[1].aptos)[0];
-      if (ufTop) list.push({ icon: Map, cor: '#0284c7', tipo: 'Top Estado', texto: `${ufTop[0]} lidera com ${ufTop[1].aptos} municípios aptos (score ≥ 70), correspondendo a ${((ufTop[1].aptos/ufTop[1].total)*100).toFixed(0)}% dos municípios do estado.` });
+      const municipiosPR = municipios.filter(m => m.uf === 'PR');
+      if (municipiosPR.length > 0) {
+        const aptosPR = municipiosPR.filter(m => (m.score_aptidao??0) >= 70).length;
+        list.push({ icon: Map, cor: '#0284c7', tipo: 'Paraná', texto: `No Paraná, ${aptosPR} dos ${municipiosPR.length} municípios (${((aptosPR/municipiosPR.length)*100).toFixed(0)}%) são aptos para cevada cervejeira — nossa área de atuação principal, junto da Cooperativa Agrária.` });
+      }
 
       const altitudes = municipios.filter(m => m.altitude != null);
       if (altitudes.length > 0) {
@@ -345,7 +342,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
         {/* Top 5 */}
         <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:12, padding:'18px 20px' }}>
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
-            <p style={{ fontSize:13, fontWeight:700, color:'#1B4332' }}>Top Municípios</p>
+            <p style={{ fontSize:13, fontWeight:700, color:'#1B4332' }}>Top Municípios — Paraná</p>
             <button onClick={()=>navigate('/zoneamento')} style={{
               background:'none', border:'none', fontSize:11, color:'#2D6A4F',
               cursor:'pointer', display:'flex', alignItems:'center', gap:4, fontWeight:500,
