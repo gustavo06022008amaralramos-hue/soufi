@@ -12,7 +12,7 @@ import {
   ChevronDown, ChevronUp, Star, AlertTriangle, CheckCircle,
   DollarSign, Sprout, Package, Zap, Map, ListOrdered,
   Wallet, CalendarClock, ShieldCheck, Wheat, SlidersHorizontal,
-  ExternalLink, Info,
+  ExternalLink, Info, Search, X,
 } from 'lucide-react';
 import TimelineManejo from '../components/oportunidades/TimelineManejo.jsx';
 import MapaCobertura from '../components/oportunidades/MapaCobertura.jsx';
@@ -257,6 +257,8 @@ export default function OportunidadesPage({ municipios = [] }) {
   const [detalhe,     setDetalhe]     = useState(null);
   const [manejoSel,   setManejoSel]   = useState(null);
   const [mapaSelected,setMapaSelected]= useState(null);
+  const [buscaManejo, setBuscaManejo] = useState('');
+  const [manejoAberto,setManejoAberto]= useState(false);
 
   const ufs = useMemo(() => {
     const s = new Set(municipios.map(m => m.uf).filter(Boolean));
@@ -288,6 +290,23 @@ export default function OportunidadesPage({ municipios = [] }) {
         return sortAsc ? va - vb : vb - va;
       });
   }, [dados, ufFiltro, distMax, scoreMin, sortKey, sortAsc]);
+
+  /* Sugestões de busca pro seletor de município da aba Manejos — filtra por
+     nome/UF dentro do que já está filtrado no topo (estado/score/distância),
+     sem query mostra os melhores ranqueados primeiro. */
+  const sugestoesManejo = useMemo(() => {
+    const q = buscaManejo.trim().toLowerCase();
+    const base = q.length === 0
+      ? filtrados
+      : filtrados.filter(m => m.nome_municipio?.toLowerCase().includes(q) || m.uf?.toLowerCase() === q);
+    return base.slice(0, 8);
+  }, [buscaManejo, filtrados]);
+
+  function selecionarManejo(m) {
+    setManejoSel(m);
+    setBuscaManejo('');
+    setManejoAberto(false);
+  }
 
   /* Município é a base de comparação pros KPIs e pra aba de Expansão de
      Seguro — assim os dois acompanham o filtro de Estado do topo da página,
@@ -889,25 +908,72 @@ export default function OportunidadesPage({ municipios = [] }) {
               <p style={{ fontSize:11, color:'#9CA3AF' }}>Ajuste o estado, score mínimo ou distância máxima no topo da página.</p>
             </div>
           )}
-          {/* Seletor de município */}
+          {/* Seletor de município — busca por nome, não lista tudo de uma vez */}
           {filtrados.length > 0 && (
-            <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:16 }}>
-              <span style={{ fontSize:11, color:'#6B7280', fontWeight:600 }}>Calendário para:</span>
-              <select
-                value={manejoSel?.codigo_ibge ?? ''}
-                onChange={e => setManejoSel(filtrados.find(m => String(m.codigo_ibge) === e.target.value) ?? null)}
-                style={{
-                  padding:'6px 12px', borderRadius:8, fontSize:12, border:'1px solid #E5E7EB',
-                  color:'#374151', background:'#fff', cursor:'pointer', outline:'none',
-                }}
-              >
-                <option value="">— {filtrados[0]?.nome_municipio} (melhor ranqueado) —</option>
-                {filtrados.slice(0, 50).map(m => (
-                  <option key={m.codigo_ibge} value={m.codigo_ibge}>
-                    {m.nome_municipio} / {m.uf} (score {m.scoreComb})
-                  </option>
-                ))}
-              </select>
+            <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:16, flexWrap:'wrap' }}>
+              <span style={{ fontSize:11, color:'#6B7280', fontWeight:600, flexShrink:0 }}>Calendário para:</span>
+              <div style={{ position:'relative', width:300 }}>
+                <Search size={12} color="#9CA3AF" style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)' }} />
+                <input
+                  value={buscaManejo}
+                  onChange={e => { setBuscaManejo(e.target.value); setManejoAberto(true); }}
+                  onFocus={() => setManejoAberto(true)}
+                  onBlur={() => setTimeout(() => setManejoAberto(false), 150)}
+                  placeholder={manejoSel ? `${manejoSel.nome_municipio} / ${manejoSel.uf}` : `${filtrados[0]?.nome_municipio} (melhor ranqueado)`}
+                  style={{
+                    width:'100%', padding:'7px 28px 7px 28px', borderRadius:8, fontSize:12,
+                    border:'1px solid #E5E7EB', color:'#374151', background:'#fff', outline:'none',
+                  }}
+                />
+                {manejoSel && !manejoAberto && (
+                  <button
+                    onMouseDown={e => e.preventDefault()}
+                    onClick={() => { setManejoSel(null); setBuscaManejo(''); }}
+                    title="Limpar seleção"
+                    style={{
+                      position:'absolute', right:6, top:'50%', transform:'translateY(-50%)',
+                      background:'none', border:'none', cursor:'pointer', color:'#9CA3AF',
+                      padding:4, display:'flex',
+                    }}>
+                    <X size={12} />
+                  </button>
+                )}
+                {manejoAberto && (
+                  <div style={{
+                    position:'absolute', top:'100%', left:0, right:0, zIndex:50,
+                    background:'#fff', border:'1px solid #E5E7EB', borderRadius:8,
+                    boxShadow:'0 4px 20px rgba(0,0,0,0.12)', marginTop:3,
+                    maxHeight:280, overflowY:'auto',
+                  }}>
+                    {sugestoesManejo.length === 0 ? (
+                      <p style={{ fontSize:11, color:'#9CA3AF', padding:'10px 12px' }}>Nenhum município encontrado com esses filtros.</p>
+                    ) : sugestoesManejo.map(m => (
+                      <button key={m.codigo_ibge}
+                        onClick={() => selecionarManejo(m)}
+                        style={{
+                          width:'100%', display:'flex', alignItems:'center', justifyContent:'space-between', gap:10,
+                          padding:'8px 12px', border:'none', borderBottom:'1px solid #F3F4F6',
+                          background: manejoSel?.codigo_ibge === m.codigo_ibge ? '#F0F7F2' : 'transparent',
+                          cursor:'pointer', textAlign:'left',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#F9FAFB'}
+                        onMouseLeave={e => e.currentTarget.style.background = manejoSel?.codigo_ibge === m.codigo_ibge ? '#F0F7F2' : 'transparent'}
+                      >
+                        <div style={{ minWidth:0 }}>
+                          <p style={{ fontSize:12, fontWeight:600, color:'#374151' }}>
+                            {m.nome_municipio} <span style={{ color:'#9CA3AF', fontWeight:500 }}>/ {m.uf}</span>
+                          </p>
+                          <p style={{ fontSize:10, color:'#9CA3AF' }}>{m.dist} km da Agrária · R$ {Math.round(m.lucro_ha).toLocaleString('pt-BR')}/ha</p>
+                        </div>
+                        <ScoreBadge score={m.scoreComb} compact />
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {buscaManejo.length === 0 && (
+                <span style={{ fontSize:10, color:'#9CA3AF' }}>{filtrados.length.toLocaleString('pt-BR')} municípios disponíveis — digite pra buscar</span>
+              )}
             </div>
           )}
 
