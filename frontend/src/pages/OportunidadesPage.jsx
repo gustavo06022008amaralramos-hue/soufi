@@ -289,18 +289,28 @@ export default function OportunidadesPage({ municipios = [] }) {
       });
   }, [dados, ufFiltro, distMax, scoreMin, sortKey, sortAsc]);
 
+  /* Município é a base de comparação pros KPIs e pra aba de Expansão de
+     Seguro — assim os dois acompanham o filtro de Estado do topo da página,
+     igual a tabela de Ranking já fazia. */
+  const dadosUF = useMemo(() => (
+    ufFiltro === 'Todos' ? dados : dados.filter(m => m.uf === ufFiltro)
+  ), [dados, ufFiltro]);
+
   /* KPIs */
   const kpis = useMemo(() => ({
-    aptos:   dados.filter(m => (m.score_aptidao ?? 0) >= 70).length,
-    semSeg:  dados.filter(m => !m.temSeguro && (m.score_aptidao ?? 0) >= 40).length,
-    viaveis: dados.filter(m => m.dist <= 500 && !m.isInaptoPorClima).length,
-    prio1:   dados.filter(m => m.scoreComb >= 75).length,
-  }), [dados]);
+    aptos:   dadosUF.filter(m => (m.score_aptidao ?? 0) >= 70).length,
+    semSeg:  dadosUF.filter(m => !m.temSeguro && (m.score_aptidao ?? 0) >= 40).length,
+    viaveis: dadosUF.filter(m => m.dist <= 500 && !m.isInaptoPorClima).length,
+    prio1:   dadosUF.filter(m => m.scoreComb >= 75).length,
+  }), [dadosUF]);
 
-  /* Análise de vizinhança para expansão de seguro */
+  /* Análise de vizinhança para expansão de seguro. O candidato respeita o
+     filtro de Estado (dadosUF); o conjunto "já tem seguro" fica nacional de
+     propósito — o vizinho segurado mais próximo pode estar do outro lado da
+     divisa estadual, e isso não deveria sumir só porque o filtro é outro. */
   const expansao = useMemo(() => {
     const comSeguro = dados.filter(m => m.temSeguro);
-    return dados
+    return dadosUF
       .filter(m => !m.temSeguro && (m.score_aptidao ?? 0) >= 40)
       .map(m => {
         let minDist = Infinity;
@@ -317,7 +327,7 @@ export default function OportunidadesPage({ municipios = [] }) {
         return b.scoreComb - a.scoreComb;
       })
       .slice(0, 60);
-  }, [dados]);
+  }, [dados, dadosUF]);
 
   /* Dados para aba Custos */
   const dadosCusto = useMemo(() => {
@@ -427,10 +437,10 @@ export default function OportunidadesPage({ municipios = [] }) {
 
       {/* ── KPIs ── */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
-        <KpiCard icon={Leaf}    label="Aptos ZARC"         value={kpis.aptos}   sub="score ≥ 70"            cor="#16a34a" total={dados.length} />
-        <KpiCard icon={Shield}  label="Oport. de Seguro"   value={kpis.semSeg}  sub="aptos sem PSR ativo"   cor="#7c3aed" total={dados.length} />
-        <KpiCard icon={Truck}   label="Logística Viável"   value={kpis.viaveis} sub="até 500 km da Agrária" cor="#2563eb" total={dados.length} />
-        <KpiCard icon={Star}    label="Prioridade 1"       value={kpis.prio1}   sub="score combinado ≥ 75"  cor="#d97706" total={dados.length} />
+        <KpiCard icon={Leaf}    label="Aptos ZARC"         value={kpis.aptos}   sub={ufFiltro==='Todos' ? 'score ≥ 70' : `score ≥ 70 em ${ufFiltro}`}            cor="#16a34a" total={dadosUF.length} />
+        <KpiCard icon={Shield}  label="Oport. de Seguro"   value={kpis.semSeg}  sub={ufFiltro==='Todos' ? 'aptos sem PSR ativo' : `sem PSR em ${ufFiltro}`}   cor="#7c3aed" total={dadosUF.length} />
+        <KpiCard icon={Truck}   label="Logística Viável"   value={kpis.viaveis} sub="até 500 km da Agrária" cor="#2563eb" total={dadosUF.length} />
+        <KpiCard icon={Star}    label="Prioridade 1"       value={kpis.prio1}   sub="score combinado ≥ 75"  cor="#d97706" total={dadosUF.length} />
       </div>
 
       {/* ── Barra de filtros (compacta) ── */}
@@ -553,6 +563,16 @@ export default function OportunidadesPage({ municipios = [] }) {
       {/* ══ TAB 0: Ranking ══ */}
       {tab === 0 && (
         <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, overflow:'hidden' }}>
+          {filtrados.length === 0 && (
+            <div style={{ padding:'32px 20px', textAlign:'center' }}>
+              <AlertTriangle size={20} color="#9CA3AF" style={{ marginBottom:8 }} />
+              <p style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4 }}>Nenhum município encontrado com esses filtros</p>
+              <p style={{ fontSize:11, color:'#9CA3AF' }}>
+                {ufFiltro !== 'Todos' ? `Nenhum município em ${ufFiltro} atende score mínimo ${scoreMin} e distância até ${distMax}km — ` : ''}
+                tente reduzir o score mínimo ou aumentar a distância máxima.
+              </p>
+            </div>
+          )}
           <div style={{ overflow:'auto', maxHeight:620 }}>
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
@@ -862,6 +882,13 @@ export default function OportunidadesPage({ municipios = [] }) {
       {/* ══ TAB 3: Manejos ══ */}
       {tab === 3 && (
         <div>
+          {filtrados.length === 0 && (
+            <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, padding:'32px 20px', textAlign:'center' }}>
+              <AlertTriangle size={20} color="#9CA3AF" style={{ marginBottom:8 }} />
+              <p style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4 }}>Nenhum município para recomendar manejo</p>
+              <p style={{ fontSize:11, color:'#9CA3AF' }}>Ajuste o estado, score mínimo ou distância máxima no topo da página.</p>
+            </div>
+          )}
           {/* Seletor de município */}
           {filtrados.length > 0 && (
             <div style={{ display:'flex', gap:8, alignItems:'center', marginBottom:16 }}>
@@ -953,6 +980,18 @@ export default function OportunidadesPage({ municipios = [] }) {
           </div>
 
           <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, overflow:'hidden' }}>
+            {expansao.length === 0 && (
+              <div style={{ padding:'32px 20px', textAlign:'center' }}>
+                <AlertTriangle size={20} color="#9CA3AF" style={{ marginBottom:8 }} />
+                <p style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4 }}>
+                  {ufFiltro !== 'Todos' ? `Nenhuma oportunidade de expansão de seguro em ${ufFiltro}` : 'Nenhuma oportunidade de expansão de seguro'}
+                </p>
+                <p style={{ fontSize:11, color:'#9CA3AF' }}>
+                  {ufFiltro !== 'Todos' ? 'Troque o estado no filtro do topo ou selecione "Todos os estados".' : 'Sem municípios aptos sem seguro no momento.'}
+                </p>
+              </div>
+            )}
+            {expansao.length > 0 && (
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
                 <tr style={{ background:'#F9FAFB' }}>
@@ -997,6 +1036,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                 ))}
               </tbody>
             </table>
+            )}
           </div>
         </div>
       )}
