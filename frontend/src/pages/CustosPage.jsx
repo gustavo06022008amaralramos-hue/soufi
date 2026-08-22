@@ -16,9 +16,12 @@ import {
    Estimativas internas de referência (editáveis na simulação) — não há
    tabela pública de custo de produção por hectare específica para cevada
    cervejeira (CONAB/CEPEA acompanham commodities como soja/milho/trigo, não
-   cevada). Ajuste os valores conforme dados reais da sua região. */
+   cevada). Ajuste os valores conforme dados reais da sua região.
+   prod_tha do PR ajustado pra 5,0 t/ha (2026-08) com base em produtividade
+   real informada da região de Guarapuava — os demais estados continuam
+   estimativa, ainda sem confirmação de campo. */
 const CUSTOS_UF = {
-  PR: { semente:180, fertilizante:950,  defensivos:450, mecanizacao:420, secagem:195, admin:120, prod_tha:3.5, label:'Paraná' },
+  PR: { semente:180, fertilizante:950,  defensivos:450, mecanizacao:420, secagem:195, admin:120, prod_tha:5.0, label:'Paraná' },
   SC: { semente:180, fertilizante:980,  defensivos:470, mecanizacao:440, secagem:192, admin:120, prod_tha:3.2, label:'Santa Catarina' },
   RS: { semente:175, fertilizante:920,  defensivos:430, mecanizacao:400, secagem:180, admin:115, prod_tha:3.0, label:'Rio Grande do Sul' },
   GO: { semente:190, fertilizante:1050, defensivos:520, mecanizacao:460, secagem:210, admin:130, prod_tha:2.8, label:'Goiás' },
@@ -262,7 +265,7 @@ export default function CustosPage() {
           <Calculator size={14} color="#2D6A4F" /> Parâmetros da Simulação
         </p>
         <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:24 }}>
-          <SliderRow label="Área (ha)" value={area} onChange={setArea} min={10} max={500} step={10} fmt={v=>`${v} ha`} />
+          <SliderRow label="Área (ha)" value={area} onChange={setArea} min={10} max={2000} step={10} fmt={v=>`${v} ha`} />
           <SliderRow label="Preço da saca (R$/sc 60kg)" value={preco} onChange={setPreco} min={50} max={150} step={2} fmt={v=>`R$ ${v}`} />
           <SliderRow label="Produtividade (t/ha)" value={prodTha} onChange={setProdTha} min={1.0} max={6.0} step={0.1} fmt={v=>`${v.toFixed(1)} t/ha`} cor="#0284c7" />
           <SliderRow label="Distância à Agrária (km)" value={distKm} onChange={setDistKm} min={50} max={1200} step={25} fmt={v=>`${v} km`} cor="#d97706" />

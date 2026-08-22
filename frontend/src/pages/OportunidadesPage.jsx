@@ -25,7 +25,7 @@ const AGRARIA = { lat: -25.5630, lon: -51.4898 };
 // produção por hectare específica para cevada cervejeira) — usadas apenas
 // para simulação comparativa, ajuste conforme dados reais da sua região.
 const CUSTOS_UF = {
-  PR: { semente:180, fertilizante:950,  defensivos:450, mecanizacao:420, secagem_ton:65, prod_tha:3.5 },
+  PR: { semente:180, fertilizante:950,  defensivos:450, mecanizacao:420, secagem_ton:65, prod_tha:5.0 },
   SC: { semente:180, fertilizante:980,  defensivos:470, mecanizacao:440, secagem_ton:65, prod_tha:3.2 },
   RS: { semente:175, fertilizante:920,  defensivos:430, mecanizacao:400, secagem_ton:60, prod_tha:3.0 },
   GO: { semente:190, fertilizante:1050, defensivos:520, mecanizacao:460, secagem_ton:70, prod_tha:2.8 },

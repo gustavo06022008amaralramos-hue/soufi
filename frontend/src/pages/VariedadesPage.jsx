@@ -702,7 +702,7 @@ export default function VariedadesPage() {
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr 1fr', gap: 16 }}>
             {[
-              { label:'Área (ha)', min:1, max:500, step:1, val:calcArea, set:setCalcArea, fmt:v=>`${v} ha` },
+              { label:'Área (ha)', min:10, max:2000, step:10, val:calcArea, set:setCalcArea, fmt:v=>`${v} ha` },
               { label:'Densidade (plantas/m²)', min:100, max:450, step:10, val:calcDens, set:setCalcDens, fmt:v=>`${v}/m²` },
               { label:'PMG — peso 1000 grãos (g)', min:30, max:65, step:1, val:calcPMG, set:setCalcPMG, fmt:v=>`${v} g` },
               { label:'Poder germinativo (%)', min:60, max:100, step:1, val:calcPod, set:setCalcPod, fmt:v=>`${v}%` },
