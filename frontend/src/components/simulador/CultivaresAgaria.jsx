@@ -19,6 +19,15 @@ export const ZARC_PADRAO = {
 };
 
 export const CULTIVARES = {
+  Condessa: {
+    nome:  'Condessa',
+    obtentor: 'Cooperativa Agrária Agroindustrial (FAPA)',
+    icon:  Gem,
+    cor:   '#c026d3',
+    ciclo: '60–65 dias até espigamento, 115–118 dias até maturação',
+    desc:  'Lançamento 2025 (linhagem FAPAC 2021088, cruzamento Sissi // Danielle). Altura 60cm, resistente a acamamento. Baixa adaptação em áreas de menor fertilidade/pH.',
+    zarc: ZARC_PADRAO,
+  },
   Princesa: {
     nome:  'Princesa',
     obtentor: 'Cooperativa Agrária Agroindustrial',

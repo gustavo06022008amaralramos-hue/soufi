@@ -93,6 +93,19 @@ const FILTROS = ['Todas', 'Grupo I', 'Grupo II', 'Grupo III'];
 // Passo Fundo/RS e Guarapuava/PR, 2015–2024. R=resistente, MR=moderadamente
 // resistente, MS=moderadamente suscetível, S=suscetível, AS=altamente suscetível.
 const INFO_EXTRA = {
+  Condessa: {
+    zonas: ['PR'],
+    img: '👸',
+    cor: '#c026d3',
+    caracteristicas: [
+      { label: 'Acamamento', val: 'Resistente', ok: true },
+      { label: 'Ferrugem da folha', val: '1/9 (escala Agrária, 0=resistente)', ok: true },
+      { label: 'Oídio', val: '0/9 (escala Agrária, 0=resistente)', ok: true },
+      { label: 'Mancha marrom', val: '4/9 (escala Agrária, 0=resistente)', ok: false },
+      { label: 'Mancha em rede', val: '2/9 (escala Agrária, 0=resistente)', ok: true },
+      { label: 'Nível de DON', val: '3/9 (escala Agrária, 0=baixo)', ok: true },
+    ],
+  },
   Princesa: {
     zonas: ['PR', 'SC', 'RS'],
     img: '🌾',
