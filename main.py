@@ -1,9 +1,13 @@
 import os
+import threading
+from datetime import date
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from supabase import create_client, Client
 from typing import Optional
 from dotenv import load_dotenv
+
+from zarc_engine import data_para_decendio, montar_resposta
 
 load_dotenv()
 
@@ -18,6 +22,22 @@ if not SUPABASE_URL or not SUPABASE_KEY:
         "SUPABASE_URL e SUPABASE_KEY devem estar definidos nas variáveis de ambiente (.env)."
     )
 
+# FastAPI roda endpoints sync (def, não async def) numa threadpool (Starlette
+# run_in_threadpool) — um client supabase-py COMPARTILHADO entre threads
+# diferentes causa erro intermitente no Windows (WinError 10035, socket sem
+# bloqueio), o mesmo problema já visto nos scripts de coleta em lote. Cada
+# thread do pool recebe seu próprio client via threading.local().
+_thread_local = threading.local()
+
+
+def get_supabase() -> Client:
+    if not hasattr(_thread_local, "client"):
+        _thread_local.client = create_client(SUPABASE_URL, SUPABASE_KEY)
+    return _thread_local.client
+
+
+# Mantido por compatibilidade com o startup (não usar dentro de endpoints —
+# use get_supabase() em cada request pra ser thread-safe).
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ==============================================================================
@@ -51,7 +71,7 @@ def coleta_progresso():
         registros = []
         offset = 0
         while True:
-            batch = supabase.table("municipios_aptidao").select(
+            batch = get_supabase().table("municipios_aptidao").select(
                 "codigo_ibge, lat, pct_argila, temp_media_anual, score_aptidao, apto_geral"
             ).range(offset, offset + 999).execute()
             if not batch.data:
@@ -98,7 +118,7 @@ def municipios_aptos(uf: Optional[str] = Query(default=None, description="Filtra
     """
     try:
         query = (
-            supabase.table("municipios_aptidao")
+            get_supabase().table("municipios_aptidao")
             .select("codigo_ibge, nome_municipio, uf, altitude, temp_media_anual, precipitacao_acumulada_anual, score_aptidao, apto_geral")
             .eq("apto_geral", True)
             .order("score_aptidao", desc=True)
@@ -138,7 +158,7 @@ def municipios_mapa():
         offset = 0
         while True:
             batch = (
-                supabase.table("municipios_aptidao")
+                get_supabase().table("municipios_aptidao")
                 .select(COLS)
                 .range(offset, offset + PAGE - 1)
                 .execute()
@@ -166,7 +186,7 @@ def sazonalidade(codigo_ibge: str):
     try:
         # Dados do município
         mun = (
-            supabase.table("municipios_aptidao")
+            get_supabase().table("municipios_aptidao")
             .select("codigo_ibge, nome_municipio, uf, score_aptidao, apto_geral")
             .eq("codigo_ibge", codigo_ibge)
             .maybe_single()
@@ -181,7 +201,7 @@ def sazonalidade(codigo_ibge: str):
 
         # Dados de sazonalidade mensal
         sazon = (
-            supabase.table("sazonalidade_mensal")
+            get_supabase().table("sazonalidade_mensal")
             .select("mes, temp_media, temp_min, precipitacao, apto_no_mes")
             .eq("codigo_ibge", codigo_ibge)
             .order("mes")
@@ -204,7 +224,7 @@ def municipios_top(limit: int = Query(default=5, ge=1, le=50), uf: str | None = 
     """Retorna os municípios com maior score de aptidão. Opcionalmente filtra por UF."""
     try:
         query = (
-            supabase.table("municipios_aptidao")
+            get_supabase().table("municipios_aptidao")
             .select("codigo_ibge, nome_municipio, uf, score_aptidao, apto_geral, temp_media_anual, precipitacao_acumulada_anual, altitude")
             .not_.is_("score_aptidao", "null")
         )
@@ -223,7 +243,7 @@ def municipios_estatisticas():
         from supabase import PostgrestAPIError
         import requests as _req
 
-        base = supabase.table("municipios_aptidao")
+        base = get_supabase().table("municipios_aptidao")
 
         total    = base.select("codigo_ibge", count="exact").execute().count or 0
         aptos    = base.select("codigo_ibge", count="exact").gte("score_aptidao", 70).execute().count or 0
@@ -242,6 +262,50 @@ def municipios_estatisticas():
             "score_max":   melhor["score_aptidao"] if melhor else None,
             "melhor_municipio": f"{melhor['nome_municipio']}/{melhor['uf']}" if melhor else None,
         }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/zarc/elegibilidade", tags=["ZARC"])
+def zarc_elegibilidade(
+    codigo_ibge: int = Query(...),
+    data_plantio: date = Query(..., description="Data de semeio pretendida, formato YYYY-MM-DD"),
+    solo_ad: str | None = Query(default=None, description="Filtra por classe de solo (AD1..AD6). Sem filtro, retorna todas as classes."),
+    cultura: str = Query(default="cevada", description="Só 'cevada' disponível por enquanto (Fase 1 do plano multicultura)."),
+):
+    """Elegibilidade ZARC oficial por município, decêndio a decêndio —
+    fonte: MAPA (dados.agricultura.gov.br), safra 2025/2026, cevada cervejeira.
+    Substitui o proxy por estado usado na aba Seguro do painel do município."""
+    if cultura != "cevada":
+        raise HTTPException(status_code=400, detail=f"Cultura '{cultura}' ainda não ingerida — só cevada está disponível nesta fase.")
+    try:
+        decendio = data_para_decendio(data_plantio)
+
+        municipio_row = (
+            get_supabase().table("zarc_cevada")
+            .select("municipio, uf")
+            .eq("codigo_ibge", codigo_ibge)
+            .limit(1)
+            .execute()
+        )
+        if not municipio_row.data:
+            # Município fora da abrangência do ZARC de cevada nesta safra
+            return montar_resposta(codigo_ibge, None, None, data_plantio, decendio, [], "2025/2026")
+
+        query = (
+            get_supabase().table("zarc_cevada")
+            .select("grupo, solo_ad, manejo, nivel_risco, portaria")
+            .eq("codigo_ibge", codigo_ibge)
+            .eq("decendio", decendio)
+        )
+        if solo_ad:
+            query = query.eq("solo_ad", solo_ad.upper())
+        registros = query.execute().data
+
+        row = municipio_row.data[0]
+        return montar_resposta(codigo_ibge, row["municipio"], row["uf"], data_plantio, decendio, registros, "2025/2026")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

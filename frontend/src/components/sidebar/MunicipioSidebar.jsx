@@ -1,9 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { X, MapPin, Mountain, Thermometer, CloudRain, Snowflake,
          CheckCircle, XCircle, Truck, Layers, AlertTriangle, FileText,
-         Shield, ExternalLink } from 'lucide-react';
+         Shield, ExternalLink, Loader2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import CalendarioPlantio from './CalendarioPlantio.jsx';
+
+const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
 /* ─── Paleta ─────────────────────────────────────────────── */
 const COR = { apto:'#16a34a', parcial:'#d97706', inapto:'#2563eb', sem_dados:'#6b7280' };
@@ -259,6 +261,23 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
     return { dist, pTon, frete, liq, liqSaca: liq * 60 / 1000, viab: viabLabel(dist) };
   }, [municipio, precoSaca, freteTonKm]);
 
+  /* ZARC real por município, decêndio a decêndio — Fase 1 do plano de 10 fases.
+     Só cevada, safra 2025/2026 (ver /zarc/elegibilidade). Busca sob demanda,
+     só quando a aba Seguro está aberta, e refaz quando a data simulada muda. */
+  const [dataPlantio, setDataPlantio] = useState(() => `${new Date().getFullYear()}-06-15`);
+  const [zarcReal,    setZarcReal]    = useState(null);
+  const [zarcLoading, setZarcLoading] = useState(false);
+
+  useEffect(() => {
+    if (tab !== 1 || !municipio?.codigo_ibge) return;
+    setZarcLoading(true);
+    fetch(`${API}/zarc/elegibilidade?codigo_ibge=${municipio.codigo_ibge}&data_plantio=${dataPlantio}`)
+      .then(r => r.json())
+      .then(setZarcReal)
+      .catch(() => setZarcReal(null))
+      .finally(() => setZarcLoading(false));
+  }, [tab, municipio?.codigo_ibge, dataPlantio]);
+
   if (!municipio) return <EmptyState />;
 
   const score = municipio.score_aptidao ?? 0;
@@ -470,24 +489,82 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
         {/* ── Tab 1: SEGURO ───────────────────────────────── */}
         {tab === 1 && (() => {
           const temZarc = ZARC_UFS.includes(municipio.uf);
-          const corSeg = temZarc ? '#16a34a' : '#dc2626';
-          const bgSeg  = temZarc ? '#f0fdf4' : '#fef2f2';
+
+          /* Agrupa os resultados reais por Grupo (I/II/III), pegando o menor
+             risco disponível em cada grupo pra um resumo compacto */
+          const porGrupo = {};
+          (zarcReal?.resultados ?? []).forEach(r => {
+            if (!porGrupo[r.grupo] || r.nivel_risco < porGrupo[r.grupo].nivel_risco) {
+              porGrupo[r.grupo] = r;
+            }
+          });
+          const gruposOrdenados = Object.values(porGrupo).sort((a, b) => a.nivel_risco - b.nivel_risco);
+
           return (
             <>
-              <div style={{ background: bgSeg, border:`1.5px solid ${corSeg}40`,
-                borderRadius:10, padding:'12px 14px', display:'flex', gap:10, alignItems:'flex-start' }}>
-                <Shield size={18} color={corSeg} style={{ flexShrink:0, marginTop:1 }} />
-                <div>
-                  <p style={{ fontSize:12, fontWeight:800, color:corSeg, marginBottom:4 }}>
-                    {temZarc ? `${municipio.uf} tem ZARC cevada publicado` : `${municipio.uf} está fora do ZARC cevada`}
+              {/* Simulador de data de semeio */}
+              <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:10, padding:'11px 14px' }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
+                  <p style={{ fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:1.2 }}>
+                    Simular data de semeio
                   </p>
-                  <p style={{ fontSize:11, color:'#4B5563', lineHeight:1.5 }}>
-                    {temZarc
-                      ? 'O estado tem portaria MAPA de zoneamento para cevada cervejeira. A elegibilidade exata deste município (época de plantio, classe de solo, grupo de cultivar) precisa ser confirmada no Painel oficial abaixo — o SOUFII ainda não ingere a tabela completa por município.'
-                      : 'Produtores neste estado não têm, hoje, portaria ZARC para cevada cervejeira — o que normalmente significa sem acesso automático a PROAGRO/PSR para essa cultura. Consulte a EMATER/ATER local ou a agência bancária para alternativas.'}
+                  {zarcLoading && <Loader2 size={11} color="#9CA3AF" style={{ animation:'spin 0.8s linear infinite' }} />}
+                </div>
+                <input type="date" value={dataPlantio} onChange={e => setDataPlantio(e.target.value)}
+                  style={{ width:'100%', padding:'6px 10px', borderRadius:7, border:'1px solid #E5E7EB', fontSize:12, color:'#374151' }} />
+                <p style={{ fontSize:9, color:'#9CA3AF', marginTop:5 }}>
+                  ZARC oficial de cevada é publicado por decêndio (períodos de ~10 dias) — mude a data pra ver como a elegibilidade muda ao longo da janela de semeio.
+                </p>
+              </div>
+
+              {/* Resultado real por município */}
+              {zarcReal && !zarcReal.elegivel && (
+                <div style={{ background:'#fef2f2', border:'1.5px solid #dc262640', borderRadius:10, padding:'12px 14px', display:'flex', gap:10, alignItems:'flex-start' }}>
+                  <Shield size={18} color="#dc2626" style={{ flexShrink:0, marginTop:1 }} />
+                  <div>
+                    <p style={{ fontSize:12, fontWeight:800, color:'#dc2626', marginBottom:4 }}>
+                      {zarcReal.municipio ? 'Sem indicação de plantio nessa data' : 'Município fora da abrangência do ZARC de cevada'}
+                    </p>
+                    <p style={{ fontSize:11, color:'#4B5563', lineHeight:1.5 }}>
+                      {zarcReal.municipio
+                        ? `A portaria oficial não indica semeio de cevada cervejeira no decêndio ${zarcReal.decendio} (safra ${zarcReal.safra}) pra esse município. Tente outra data — a janela real costuma ficar entre maio e agosto.`
+                        : 'Esse município não tem nenhum registro na Tábua de Risco de cevada cervejeira (MAPA), safra 2025/2026 — provavelmente fora da área historicamente zoneada pra essa cultura.'}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {zarcReal?.elegivel && (
+                <div style={{ background:'#f0fdf4', border:'1.5px solid #16a34a40', borderRadius:10, padding:'12px 14px' }}>
+                  <div style={{ display:'flex', gap:10, alignItems:'flex-start', marginBottom:10 }}>
+                    <Shield size={18} color="#16a34a" style={{ flexShrink:0, marginTop:1 }} />
+                    <div>
+                      <p style={{ fontSize:12, fontWeight:800, color:'#16a34a', marginBottom:2 }}>
+                        Elegível pra semeio em {new Date(dataPlantio+'T00:00:00').toLocaleDateString('pt-BR')}
+                      </p>
+                      <p style={{ fontSize:10, color:'#6B7280' }}>
+                        Decêndio {zarcReal.decendio} · safra {zarcReal.safra} · ZARC oficial por município (MAPA)
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                    {gruposOrdenados.map(g => (
+                      <div key={g.grupo} style={{ display:'flex', alignItems:'center', gap:8, background:'#fff', borderRadius:7, padding:'6px 10px' }}>
+                        <span style={{ fontSize:11, fontWeight:700, color:'#374151', flex:1 }}>{g.grupo}</span>
+                        <span style={{ fontSize:9, color:'#9CA3AF' }}>melhor solo: {g.solo_ad}</span>
+                        <span style={{
+                          fontSize:10, fontWeight:800, padding:'2px 8px', borderRadius:20,
+                          background: g.nivel_risco === 20 ? '#f0fdf4' : g.nivel_risco === 30 ? '#fffbeb' : '#fef2f2',
+                          color: g.nivel_risco === 20 ? '#16a34a' : g.nivel_risco === 30 ? '#d97706' : '#dc2626',
+                        }}>risco {g.nivel_risco}%</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p style={{ fontSize:9, color:'#9CA3AF', marginTop:8 }}>
+                    Fonte: {gruposOrdenados[0]?.portaria ?? 'Portaria ZARC/MAPA'} — Tábua de Risco, dados.agricultura.gov.br
                   </p>
                 </div>
-              </div>
+              )}
 
               <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:10, padding:'11px 14px' }}>
                 <p style={{ fontSize:9,fontWeight:700,color:'#6B7280',textTransform:'uppercase',
@@ -499,9 +576,9 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                     <span key={uf} style={{
                       fontSize:10, fontWeight: uf===municipio.uf ? 800 : 500,
                       padding:'3px 9px', borderRadius:20,
-                      background: uf===municipio.uf ? `${corSeg}20` : '#F9FAFB',
-                      color: uf===municipio.uf ? corSeg : '#6B7280',
-                      border: `1px solid ${uf===municipio.uf ? corSeg+'50' : '#E5E7EB'}`,
+                      background: uf===municipio.uf ? (temZarc ? '#16a34a20' : '#dc262620') : '#F9FAFB',
+                      color: uf===municipio.uf ? (temZarc ? '#16a34a' : '#dc2626') : '#6B7280',
+                      border: `1px solid ${uf===municipio.uf ? (temZarc ? '#16a34a50' : '#dc262650') : '#E5E7EB'}`,
                     }}>{uf}</span>
                   ))}
                 </div>
@@ -520,7 +597,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
               </a>
 
               <p style={{ fontSize:9, color:'#9CA3AF', lineHeight:1.5 }}>
-                Fonte: Portarias MAPA/ZARC, safra vigente · gov.br/agricultura
+                Fonte: Tábua de Risco ZARC, MAPA (dados.agricultura.gov.br), safra 2025/2026
               </p>
             </>
           );

@@ -20,6 +20,9 @@ log_*.txt
 *_err.txt
 *.log
 
+# Dados brutos baixados de fontes externas (grandes, reproduzíveis via script)
+zarc_dados/
+
 # Node / Frontend
 node_modules/
 frontend/node_modules/
