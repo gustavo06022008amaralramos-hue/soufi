@@ -367,7 +367,7 @@ export default function OportunidadesPage({ municipios = [] }) {
     { axis:'Solo',       val: detalhe.tipo_solo_zarc >= 2 ? 100 : 20 },
     { axis:'Temperatura',val: detalhe.temp_media_anual >= 10 && detalhe.temp_media_anual <= 22 ? 100 : 30 },
     { axis:'Precipit.',  val: detalhe.precipitacao_acumulada_anual >= 400 && detalhe.precipitacao_acumulada_anual <= 2000 ? 100 : 30 },
-    { axis:'Altitude',   val: detalhe.altitude >= 700 ? 100 : 40 },
+    { axis:'Altitude',   val: detalhe.altitude >= 800 ? 100 : 40 },
     { axis:'Geada',      val: (detalhe.risco_geada_pct ?? 100) < 30 ? 100 : 40 },
     { axis:'Logística',  val: detalhe.scoreLog },
   ] : [];

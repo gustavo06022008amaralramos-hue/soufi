@@ -78,10 +78,10 @@ const CRITERIOS = [
   },
   {
     label: 'Altitude', icon: Mountain, cor:'#374151',
-    faixa: '≥ 700m',
+    faixa: '≥ 800m',
     valor: m => m.altitude != null ? `${Math.round(m.altitude)}m` : '—',
-    ok:    m => m.altitude >= 700,
-    nota:  m => rampaAlta(m.altitude, 700, 200),
+    ok:    m => m.altitude >= 800,
+    nota:  m => rampaAlta(m.altitude, 800, 50),
   },
   {
     label: 'Risco de Geada', icon: Snowflake, cor:'#7c3aed',
@@ -180,7 +180,7 @@ th{text-align:left;font-size:9px;font-weight:700;color:#6B7280;text-transform:up
   <div class="g3">
     <div class="card"><div class="ct">Temperatura Média</div><div class="cv">${municipio.temp_media_anual?.toFixed(1)??'—'}°C</div><div class="cu">ZARC: 10–22°C</div></div>
     <div class="card"><div class="ct">Precipitação Anual</div><div class="cv">${municipio.precipitacao_acumulada_anual?.toFixed(0)??'—'}mm</div><div class="cu">ZARC: 400–2.000mm</div></div>
-    <div class="card"><div class="ct">Altitude</div><div class="cv">${municipio.altitude?.toFixed(0)??'—'}m</div><div class="cu">ZARC: ≥ 700m</div></div>
+    <div class="card"><div class="ct">Altitude</div><div class="cv">${municipio.altitude?.toFixed(0)??'—'}m</div><div class="cu">ZARC: ≥ 800m</div></div>
     <div class="card"><div class="ct">Risco de Geada</div><div class="cv">${municipio.risco_geada_pct?.toFixed(0)??'—'}%</div><div class="cu">ZARC: &lt; 30%</div></div>
     <div class="card"><div class="ct">Solo ZARC</div><div class="cv">${municipio.tipo_solo_zarc?`Tipo ${municipio.tipo_solo_zarc}`:'—'}</div><div class="cu">ZARC: Tipo 2 ou 3</div></div>
     <div class="card"><div class="ct">Chuva na Colheita</div><div class="cv">${municipio.chuva_colheita_mm?.toFixed(0)??'—'}mm</div><div class="cu">ZARC: 120–400mm</div></div>

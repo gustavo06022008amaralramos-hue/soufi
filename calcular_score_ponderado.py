@@ -154,9 +154,12 @@ def notas_graduadas(m):
     # limites absolutos ZARC (400-2000mm)
     nota_chuva = _plato(chuva, 700.0, 1400.0, 300.0)
 
-    # Altitude: quanto mais alto melhor (até o piso ZARC de 700m), com rampa a
-    # partir de 500m para não zerar municípios levemente abaixo do limiar
-    nota_altitude = _rampa_alta(alt, 700.0, 200.0)
+    # Altitude: piso elevado de 700m para 800m em 2026-08 (pedido explícito do
+    # usuário pós-FAPA: critério mais real e rígido — bate com a altitude real
+    # das regiões produtoras, ex. Guarapuava a 1050-1200m). Tolerância também
+    # reduzida de 200m para 50m — município abaixo de 750m já zera o critério,
+    # em vez de ainda ganhar nota parcial até 500m como antes.
+    nota_altitude = _rampa_alta(alt, 800.0, 50.0)
 
     # Geada: quanto menor risco melhor, tolerância até o limite ZARC de 30%
     nota_geada = _rampa_baixa(geada, 0.0, 30.0)

@@ -70,7 +70,7 @@ function buildRadar(m) {
     { dim: 'Aptidão',     val: score },
     { dim: 'Temperatura', val: temp >= 10 && temp <= 22 ? 100 : temp > 22 ? Math.max(0, 100 - (temp - 22) * 15) : Math.max(0, 100 - (10 - temp) * 15) },
     { dim: 'Precipit.',   val: prec >= 400 && prec <= 2000 ? 100 : prec < 400 ? Math.max(0, (prec / 400) * 100) : 60 },
-    { dim: 'Altitude',    val: alt >= 700 ? 100 : Math.min(100, (alt / 700) * 90) },
+    { dim: 'Altitude',    val: alt >= 800 ? 100 : Math.min(100, (alt / 800) * 90) },
     { dim: 'Geada OK',    val: geada < 20 ? 100 : geada < 35 ? 75 : geada < 50 ? 40 : 10 },
     { dim: 'Solo',        val: (m.tipo_solo_zarc ?? 0) >= 3 ? 100 : (m.tipo_solo_zarc ?? 0) >= 2 ? 75 : 20 },
     { dim: 'Logística',   val: m.dist ? (m.dist <= 200 ? 100 : m.dist <= 400 ? 80 : m.dist <= 700 ? 55 : 25) : 50 },
@@ -577,7 +577,7 @@ export default function CompararPage({ municipios = [] }) {
                   m.score_aptidao >= 70 ? '✓ Aptidão ZARC confirmada' : m.score_aptidao >= 40 ? '⚠ Aptidão parcial' : '✗ Inapto ZARC',
                   m.dist && m.dist <= 300 ? '✓ Logística excelente' : m.dist && m.dist <= 600 ? '~ Logística razoável' : '⚠ Logística distante',
                   (m.lucro ?? 0) > 500 ? '✓ Lucrativo' : (m.lucro ?? 0) > 0 ? '~ Margem pequena' : '✗ Prejuízo estimado',
-                  m.altitude && m.altitude >= 700 ? '✓ Altitude adequada' : '✗ Altitude insuficiente',
+                  m.altitude && m.altitude >= 800 ? '✓ Altitude adequada' : '✗ Altitude insuficiente',
                 ],
               }).filter(Boolean).map(({ i: idx, m, pontos }) => (
                 <div key={idx} style={{

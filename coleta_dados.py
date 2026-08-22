@@ -356,7 +356,10 @@ def validar_geocodificacao(temp_anual, alt, uf, nome):
 #   Solo    : Tipo 2 ou 3 (argila ≥ 15%)
 #   Temp    : 10–22°C (média anual)
 #   Chuva   : 400-2000mm (acumulado anual; PR/SC/RS recebem 1400-2000mm)
-#   Altitude: >= 700m
+#   Altitude: >= 800m — elevado de 700m em 2026-08 (pedido explícito do usuário
+#             pós-reunião com a FAPA: tornar o critério de altitude mais real e
+#             rígido; bate com a altitude real das regiões produtoras — Guarapuava
+#             fica a 1050-1200m — e com os critérios internos da Agrária Sementes)
 #   Geada   : < 30% dos meses Jul/Ago com T_min ≤ 2°C (risco no espigamento)
 #   Colheita: < 250mm acumulado médio em Out/Nov (risco de germinação na espiga)
 # ==============================================================================
@@ -364,7 +367,7 @@ def calcular_aptidao(temp_anual, chuva_anual, altitude, tipo_zarc, risco_geada_p
     apto_solo     = tipo_zarc is not None and tipo_zarc >= 2
     apto_temp     = 10.0 <= temp_anual <= 22.0
     apto_chuva    = 400.0 <= chuva_anual <= 2000.0
-    apto_alt      = altitude >= 700.0
+    apto_alt      = altitude >= 800.0
     apto_geada    = risco_geada_pct < 30.0
     apto_colheita = chuva_colheita_mm is not None and 120.0 <= chuva_colheita_mm <= 400.0
 

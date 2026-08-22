@@ -85,8 +85,14 @@ def test_pesos_somam_100_por_cento():
 
 
 def test_altitude_no_piso_zarc_da_nota_maxima():
-    notas = sp.notas_graduadas({**municipio_ideal(), "altitude": 700.0})
+    notas = sp.notas_graduadas({**municipio_ideal(), "altitude": 800.0})
     assert notas["altitude"] == 1.0
+
+
+def test_altitude_abaixo_do_novo_piso_perde_nota():
+    """Critério endurecido em 2026-08: 700m (piso antigo) já não é mais nota máxima."""
+    notas = sp.notas_graduadas({**municipio_ideal(), "altitude": 700.0})
+    assert notas["altitude"] < 1.0
 
 
 def test_geada_zero_da_nota_maxima_e_geada_alta_da_zero():

@@ -296,8 +296,8 @@ score_ponderado (graduado, mais recente):
             desc="Temperatura fora dessa faixa compromete a formação do grão. Tolerância de 3°C além do limite. Dados: NASA POWER, média de 32 anos." />
           <CriterioRow icon={CloudRain} cor="#2563eb" label="Precipitação anual" faixa="700–1400mm ideal (peso 15%)"
             desc="Faixa ótima pra cevada malteira; tolerância de 300mm além do limite (400–1700mm ainda dá nota parcial). Abaixo de 400mm exige irrigação." />
-          <CriterioRow icon={Mountain} cor="#374151" label="Altitude" faixa="≥ 700m (peso 15%)"
-            desc="Nota máxima a partir de 700m; rampa de nota parcial entre 500–700m. Altitudes maiores garantem temperaturas mais amenas no inverno." />
+          <CriterioRow icon={Mountain} cor="#374151" label="Altitude" faixa="≥ 800m (peso 15%)"
+            desc="Nota máxima a partir de 800m; rampa de nota parcial curta entre 750–800m (critério endurecido — abaixo de 750m já zera). Altitudes maiores garantem temperaturas mais amenas no inverno." />
           <CriterioRow icon={Snowflake} cor="#7c3aed" label="Risco de geada" faixa="0% ideal, tolerância até 30% (peso 15%)"
             desc="Não é um corte binário — a nota decai de forma contínua entre 0% e 30% de risco. Calculado como % de anos com T_mín baixa em Jul/Ago (espigamento)." />
           <CriterioRow icon={Layers} cor="#92400e" label="Tipo de solo ZARC" faixa="≥35% argila = nota máxima (peso 20%)"
@@ -568,7 +568,7 @@ Score = Σ (peso × nota) × 100, arredondado
 
 Temperatura — "platô": nota 1.0 entre 10–22°C, decai linear até 0 em 7°C ou 25°C (tolerância 3°C)
 Chuva       — "platô": nota 1.0 entre 700–1400mm, decai linear até 0 em 400mm ou 1700mm (tol. 300mm)
-Altitude    — "rampa alta": nota 1.0 a partir de 700m, decai linear até 0 em 500m (tolerância 200m)
+Altitude    — "rampa alta": nota 1.0 a partir de 800m, decai linear até 0 em 750m (tolerância 50m — endurecido em ago/2026)
 Geada       — "rampa baixa": nota 1.0 em 0%, decai linear até 0 em 30% de risco
 Solo        — nota = %argila ÷ 35, limitada a 1.0 (35%+ argila = Tipo 3 = nota máxima)
 Colheita    — "rampa baixa": nota 1.0 até 120mm, decai linear até 0 em 400mm (tolerância 280mm)`}</Formula>

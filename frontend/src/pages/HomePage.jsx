@@ -121,12 +121,12 @@ export default function HomePage({ municipios = [], apiOnline }) {
       const altitudes = municipios.filter(m => m.altitude != null);
       if (altitudes.length > 0) {
         const altMedia = altitudes.reduce((s,m) => s + (m.altitude??0), 0) / altitudes.length;
-        const altos  = municipios.filter(m => (m.altitude??0) >= 700);
-        const baixos = municipios.filter(m => (m.altitude??0) < 700);
+        const altos  = municipios.filter(m => (m.altitude??0) >= 800);
+        const baixos = municipios.filter(m => (m.altitude??0) < 800);
         const pctAptoAlto  = altos.length  ? (altos.filter(m=>(m.score_aptidao??0)>=70).length  / altos.length  * 100) : 0;
         const pctAptoBaixo = baixos.length ? (baixos.filter(m=>(m.score_aptidao??0)>=70).length / baixos.length * 100) : 0;
         const razao = pctAptoBaixo > 0 ? (pctAptoAlto / pctAptoBaixo).toFixed(1) : '—';
-        list.push({ icon: TrendingUp, cor: '#d97706', tipo: 'Altitude', texto: `A altitude média dos municípios analisados é ${altMedia.toFixed(0)}m. Municípios com altitude ≥ 700m têm ${razao}× mais chance de score ≥70 do que municípios abaixo de 700m (dados atuais da base).` });
+        list.push({ icon: TrendingUp, cor: '#d97706', tipo: 'Altitude', texto: `A altitude média dos municípios analisados é ${altMedia.toFixed(0)}m. Municípios com altitude ≥ 800m têm ${razao}× mais chance de score ≥70 do que municípios abaixo de 800m (dados atuais da base).` });
       }
 
       const geadaAlta = municipios.filter(m => (m.risco_geada_pct??0) > 30 && (m.score_aptidao??0) >= 70).length;
@@ -325,7 +325,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
               {[
                 { label:'Temperatura',    val:'10 – 22°C' },
                 { label:'Precipitação',   val:'400 – 1200mm/ano' },
-                { label:'Altitude',       val:'≥ 700m' },
+                { label:'Altitude',       val:'≥ 800m' },
                 { label:'Solo ZARC',      val:'Tipo 2 ou 3' },
               ].map(c => (
                 <div key={c.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
