@@ -278,6 +278,18 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
       .finally(() => setZarcLoading(false));
   }, [tab, municipio?.codigo_ibge, dataPlantio]);
 
+  /* Acúmulo de graus-dia (GDD) real — Fase 4/6 do plano de 10 fases. Mesma
+     data simulada da aba Seguro alimenta os dois ao mesmo tempo. Só cobre
+     PR/SC/RS (escopo da coleta diária) e só até hoje (dado observado). */
+  const [gddReal, setGddReal] = useState(null);
+  useEffect(() => {
+    if (tab !== 1 || !municipio?.codigo_ibge) return;
+    fetch(`${API}/gdd/simulacao?codigo_ibge=${municipio.codigo_ibge}&data_semeio=${dataPlantio}&cultura=cevada`)
+      .then(r => r.json())
+      .then(setGddReal)
+      .catch(() => setGddReal(null));
+  }, [tab, municipio?.codigo_ibge, dataPlantio]);
+
   if (!municipio) return <EmptyState />;
 
   const score = municipio.score_aptidao ?? 0;
@@ -516,6 +528,36 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                   ZARC oficial de cevada é publicado por decêndio (períodos de ~10 dias) — mude a data pra ver como a elegibilidade muda ao longo da janela de semeio.
                 </p>
               </div>
+
+              {/* Acúmulo de graus-dia (GDD) — Fase 4/6 do plano de 10 fases */}
+              {gddReal?.disponivel && (
+                <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:10, padding:'11px 14px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:7, marginBottom:8 }}>
+                    <Thermometer size={13} color="#d97706" />
+                    <p style={{ fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:1.2 }}>
+                      Acúmulo térmico (GDD) desde a semeadura
+                    </p>
+                  </div>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <div style={{ flex:1, background:'#FFFBEB', borderRadius:8, padding:'8px 10px', textAlign:'center' }}>
+                      <p style={{ fontSize:18, fontWeight:800, color:'#d97706', lineHeight:1 }}>{gddReal.gdd_acumulado}</p>
+                      <p style={{ fontSize:8, color:'#9CA3AF', marginTop:2 }}>°D acumulados (Tb={gddReal.tb}°C)</p>
+                    </div>
+                    <div style={{ flex:1, background: gddReal.dias_com_geada > 0 ? '#fef2f2' : '#f0fdf4', borderRadius:8, padding:'8px 10px', textAlign:'center' }}>
+                      <p style={{ fontSize:18, fontWeight:800, color: gddReal.dias_com_geada > 0 ? '#dc2626' : '#16a34a', lineHeight:1 }}>{gddReal.dias_com_geada}</p>
+                      <p style={{ fontSize:8, color:'#9CA3AF', marginTop:2 }}>dias com geada (Tmín≤4°C)</p>
+                    </div>
+                  </div>
+                  <p style={{ fontSize:9, color:'#9CA3AF', marginTop:8 }}>
+                    Clima real observado (NASA POWER) de {new Date(dataPlantio+'T00:00:00').toLocaleDateString('pt-BR')} até {new Date(gddReal.ultimo_dia+'T00:00:00').toLocaleDateString('pt-BR')} ({gddReal.dias_com_dado} dias). Não há dado além de hoje — GDD não é previsão.
+                  </p>
+                </div>
+              )}
+              {gddReal && !gddReal.disponivel && (
+                <div style={{ background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:10, padding:'10px 14px' }}>
+                  <p style={{ fontSize:10, color:'#9CA3AF' }}>{gddReal.motivo}</p>
+                </div>
+              )}
 
               {/* Resultado real por município */}
               {zarcReal && !zarcReal.elegivel && (

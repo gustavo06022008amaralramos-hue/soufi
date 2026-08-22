@@ -8,6 +8,7 @@ from typing import Optional
 from dotenv import load_dotenv
 
 from zarc_engine import data_para_decendio, montar_resposta
+from calcular_gdd import acumular_gdd, TB_POR_CULTURA
 
 load_dotenv()
 
@@ -304,6 +305,61 @@ def zarc_elegibilidade(
 
         row = municipio_row.data[0]
         return montar_resposta(codigo_ibge, row["municipio"], row["uf"], data_plantio, decendio, registros, "2025/2026")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/gdd/simulacao", tags=["GDD"])
+def gdd_simulacao(
+    codigo_ibge: int = Query(...),
+    data_semeio: date = Query(..., description="Data de semeio simulada, formato YYYY-MM-DD"),
+    cultura: str = Query(default="cevada"),
+):
+    """Acúmulo de graus-dia (GDD) real, dia a dia, a partir de uma data de
+    semeio simulada — Fase 4/6 do plano de 10 fases. Só cobre PR/SC/RS
+    (escopo da coleta diária, Fase 3) e só o ano corrente (dado observado,
+    não previsão — não há GDD além de hoje)."""
+    if cultura not in TB_POR_CULTURA:
+        raise HTTPException(status_code=400, detail=f"Cultura '{cultura}' sem T_b definido.")
+    try:
+        registros = (
+            get_supabase().table("clima_diario_nasa")
+            .select("data, tmax, tmin")
+            .eq("codigo_ibge", codigo_ibge)
+            .order("data")
+            .execute()
+        ).data
+
+        if not registros:
+            return {
+                "codigo_ibge": codigo_ibge, "cultura": cultura,
+                "data_semeio": data_semeio.isoformat(),
+                "disponivel": False,
+                "motivo": "Sem clima diário coletado pra este município — fora do escopo atual (PR/SC/RS) ou ainda não coletado.",
+            }
+
+        pontos = acumular_gdd(registros, cultura, data_semeio.isoformat())
+        if not pontos:
+            return {
+                "codigo_ibge": codigo_ibge, "cultura": cultura,
+                "data_semeio": data_semeio.isoformat(),
+                "disponivel": False,
+                "motivo": "Data de semeio é no futuro em relação ao dado observado disponível.",
+            }
+
+        dias_geada = sum(1 for p in pontos if p["geada"])
+        return {
+            "codigo_ibge": codigo_ibge, "cultura": cultura,
+            "data_semeio": data_semeio.isoformat(),
+            "tb": TB_POR_CULTURA[cultura],
+            "disponivel": True,
+            "dias_com_dado": len(pontos),
+            "ultimo_dia": pontos[-1]["data"],
+            "gdd_acumulado": pontos[-1]["gdd_acumulado"],
+            "dias_com_geada": dias_geada,
+        }
     except HTTPException:
         raise
     except Exception as e:
