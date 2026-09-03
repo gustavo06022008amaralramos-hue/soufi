@@ -35,7 +35,7 @@ export default function AppLayout({ apiOnline, onRetry }) {
   }
 
   return (
-    <div style={{ display:'flex', height:'100vh', overflow:'hidden', background:'var(--bg-deep)' }}>
+    <div className="app-shell" style={{ display:'flex', overflow:'hidden', background:'var(--bg-deep)' }}>
       <Sidebar />
 
       <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>

@@ -47,6 +47,8 @@
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
+html, body, #root { height: 100%; }
+
 body {
   background: var(--bg-deep);
   color: var(--text-primary);
@@ -54,6 +56,18 @@ body {
   -webkit-font-smoothing: antialiased;
   font-size: 14px;
   line-height: 1.65;
+}
+
+/* Shell da aplicação (AppLayout) — 100vh pode renderizar menor que a tela
+   de verdade em alguns navegadores/monitores (barra de endereço dinâmica,
+   escala de tela, etc.), deixando uma faixa em branco embaixo. 100dvh é a
+   unidade moderna que mede a altura real visível; onde não é suportada,
+   cai pra 100vh (regra de cima). */
+.app-shell {
+  height: 100vh;
+}
+@supports (height: 100dvh) {
+  .app-shell { height: 100dvh; }
 }
 
 /* ── Textura sutil de fundo (grain) ───────────────── */
