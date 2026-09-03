@@ -718,8 +718,16 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
             <SearchBar municipios={municipios} onSelect={onSelect} campo={campo} />
           </div>
 
-          {/* Controles */}
-          <div style={{ position:'absolute', top:12, left:14, zIndex:1000 }}>
+          {/* Controles + Legenda — empilhados num único bloco (não mais dois
+              overlays ancorados independentemente por top/bottom, que se
+              sobrepunham em telas mais baixas desde que o seletor de
+              Cultura cresceu o painel). Com scroll de segurança caso ainda
+              não caiba. */}
+          <div style={{
+            position:'absolute', top:12, left:14, bottom:12, zIndex:1000,
+            display:'flex', flexDirection:'column', gap:12,
+            overflowY:'auto', maxWidth:230,
+          }}>
             <ControlPanel
               cultura={cultura}           setCultura={setCultura}
               tipoMapa={tipoMapa}         setTipoMapa={setTipoMapa}
@@ -728,10 +736,6 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
               filtroScoreMin={filtroScoreMin} setFiltroScoreMin={setFiltroScoreMin}
               counts={counts}
             />
-          </div>
-
-          {/* Legenda */}
-          <div style={{ position:'absolute', bottom:46, left:14, zIndex:1000 }}>
             <Legend counts={counts} />
           </div>
 

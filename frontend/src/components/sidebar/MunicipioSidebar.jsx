@@ -396,15 +396,17 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
           </div>
         </div>
 
-        {/* Tabs */}
-        <div style={{ display:'flex', gap:0, marginBottom:-1 }}>
+        {/* Tabs — flexWrap defensivo: se o rótulo não couber numa linha
+            (fonte diferente, zoom, janela estreita), quebra pra próxima
+            linha em vez de cortar o texto. */}
+        <div style={{ display:'flex', flexWrap:'wrap', gap:0, marginBottom:-1 }}>
           {TABS.map((t,i) => (
             <button key={t} onClick={() => setTab(i)} style={{
-              flex:1, padding:'8px 4px', fontSize:11, fontWeight: tab===i ? 700 : 500,
+              flex:'1 1 70px', minWidth:0, padding:'8px 4px', fontSize:11, fontWeight: tab===i ? 700 : 500,
               color: tab===i ? cor : '#6B7280',
               background:'transparent', border:'none', cursor:'pointer',
               borderBottom: tab===i ? `2px solid ${cor}` : '2px solid transparent',
-              transition:'all 0.15s',
+              transition:'all 0.15s', whiteSpace:'normal', wordBreak:'break-word',
             }}>{t}</button>
           ))}
         </div>
