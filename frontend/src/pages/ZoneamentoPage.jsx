@@ -6,17 +6,22 @@ import MunicipioSidebar from '../components/sidebar/MunicipioSidebar.jsx';
 
 const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
-/* ── Tiles (sem satélite) ── */
+/* ── Tiles (sem satélite) ──
+   CartoDB (basemaps.cartocdn.com) passou a exigir API key nos tiles
+   gratuitos — trocado por OpenStreetMap padrão (sem chave). O "modo
+   escuro" usa o mesmo tileset com um filtro CSS (.map-tiles-dark,
+   index.css), já que não existe mais um tileset escuro gratuito
+   equivalente sem chave. */
 const TILES = {
   labels: {
-    url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; OpenStreetMap &copy; CartoDB',
-    subdomains: 'abcd',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors',
+    subdomains: 'abc',
   },
   dark: {
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
-    attribution: '&copy; OpenStreetMap &copy; CartoDB',
-    subdomains: 'abcd',
+    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    attribution: '&copy; OpenStreetMap contributors',
+    subdomains: 'abc',
   },
 };
 
@@ -29,6 +34,14 @@ const CORES = {
 };
 const LABEL_CLASS = {
   apto:'Apto', parcial:'Parcialmente Apto', inapto:'Inapto', sem_dados:'Sem dados',
+};
+
+/* ── Culturas (Fase 7 — mesma paleta/estilo do mapa, só troca qual score
+   alimenta a cor) ── */
+const CULTURAS = {
+  cevada: { label:'Cevada', campo:'score_aptidao', cor:'#d9b25f' },
+  trigo:  { label:'Trigo',  campo:'score_trigo',   cor:'#d99a4a' },
+  soja:   { label:'Soja',   campo:'score_soja',    cor:'#7bb572' },
 };
 const UFS = [
   'Todos','AC','AL','AM','AP','BA','CE','DF','ES','GO',
@@ -52,17 +65,19 @@ const BOUNDS_UF = {
   TO:[[-13.5,-50.8],[-5.2,-45.7]],
 };
 
-function getClassificacao(dados) {
-  if (!dados || dados.score_aptidao == null) return 'sem_dados';
-  if (dados.score_aptidao >= 70) return 'apto';
-  if (dados.score_aptidao >= 40) return 'parcial';
+function getClassificacao(dados, campo = 'score_aptidao') {
+  const score = dados?.[campo];
+  if (score == null) return 'sem_dados';
+  if (score >= 70) return 'apto';
+  if (score >= 40) return 'parcial';
   return 'inapto';
 }
 
-function isVisible(props, { filtroUF, filtroClasse, filtroScoreMin }) {
+function isVisible(props, { filtroUF, filtroClasse, filtroScoreMin, campo = 'score_aptidao' }) {
   if (!filtroClasse[props._classe]) return false;
   if (filtroUF !== 'Todos' && props._dados?.uf !== filtroUF) return false;
-  if (props._dados?.score_aptidao != null && props._dados.score_aptidao < filtroScoreMin) return false;
+  const score = props._dados?.[campo];
+  if (score != null && score < filtroScoreMin) return false;
   return true;
 }
 
@@ -191,10 +206,30 @@ function ClasseChip({ ativo, cor, label, onClick }) {
 }
 
 /* ── Painel de controles ── */
-function ControlPanel({ tipoMapa, setTipoMapa, filtroUF, setFiltroUF, filtroClasse, setFiltroClasse, filtroScoreMin, setFiltroScoreMin, counts }) {
+function ControlPanel({ cultura, setCultura, tipoMapa, setTipoMapa, filtroUF, setFiltroUF, filtroClasse, setFiltroClasse, filtroScoreMin, setFiltroScoreMin, counts }) {
   const lbl = { display:'block', fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:1.2, marginBottom:7 };
   return (
     <Panel style={{ padding:'13px 13px', width:230, display:'flex', flexDirection:'column', gap:13 }}>
+
+      {/* Cultura — o mapa recolore, paleta/estilo continuam os mesmos */}
+      <div>
+        <label style={lbl}>Cultura</label>
+        <div style={{ display:'flex', gap:4 }}>
+          {Object.entries(CULTURAS).map(([k, c]) => (
+            <button key={k} onClick={() => setCultura(k)} style={{
+              flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:3,
+              padding:'6px 4px', borderRadius:8, border: cultura===k ? `1px solid ${c.cor}` : '1px solid transparent',
+              cursor:'pointer',
+              background: cultura===k ? `${c.cor}22` : '#F0F7F2',
+              color:      cultura===k ? c.cor : '#6B7280',
+              fontWeight: cultura===k ? 700 : 400,
+              fontSize:9.5, transition:'all 0.15s',
+            }}>
+              {c.label}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* Métricas rápidas */}
       <div style={{ display:'flex', gap:6 }}>
@@ -312,7 +347,7 @@ function Legend({ counts }) {
 const LABEL_BUSCA = { apto:'Apto', parcial:'Parc.', inapto:'Inapto', sem_dados:'—' };
 
 /* ── SearchBar melhorada ── */
-function SearchBar({ municipios, onSelect }) {
+function SearchBar({ municipios, onSelect, campo = 'score_aptidao' }) {
   const [query,  setQuery]  = useState('');
   const [aberto, setAberto] = useState(false);
   const [foco,   setFoco]   = useState(-1);
@@ -347,13 +382,13 @@ function SearchBar({ municipios, onSelect }) {
         const sb = nb.startsWith(q) ? 0 : 1;
         if (sa !== sb) return sa - sb;
         /* aptos primeiro */
-        const ca = getClassificacao(a) === 'apto' ? 0 : 1;
-        const cb = getClassificacao(b) === 'apto' ? 0 : 1;
+        const ca = getClassificacao(a, campo) === 'apto' ? 0 : 1;
+        const cb = getClassificacao(b, campo) === 'apto' ? 0 : 1;
         if (ca !== cb) return ca - cb;
         return a.nome_municipio.localeCompare(b.nome_municipio);
       })
       .slice(0, 12);
-  }, [query, municipios]);
+  }, [query, municipios, campo]);
 
   function selecionar(m) {
     onSelect(m);
@@ -416,7 +451,7 @@ function SearchBar({ municipios, onSelect }) {
             {resultados.length} resultado{resultados.length !== 1 ? 's' : ''} · ↑↓ navegar · Enter selecionar
           </div>
           {resultados.map((m, i) => {
-            const cl  = getClassificacao(m);
+            const cl  = getClassificacao(m, campo);
             const cor = CORES[cl];
             const t   = m.temp_media_anual;
             const alt = m.altitude;
@@ -445,9 +480,9 @@ function SearchBar({ municipios, onSelect }) {
                   </p>
                 </div>
                 {/* Score + label */}
-                {m.score_aptidao != null && (
+                {m[campo] != null && (
                   <div style={{ textAlign:'right', flexShrink:0 }}>
-                    <p style={{ fontSize:13, fontWeight:800, color:cor, lineHeight:1 }}>{m.score_aptidao}</p>
+                    <p style={{ fontSize:13, fontWeight:800, color:cor, lineHeight:1 }}>{m[campo]}</p>
                     <p style={{ fontSize:8, color:cor, fontWeight:600 }}>{LABEL_BUSCA[cl]}</p>
                   </div>
                 )}
@@ -474,9 +509,11 @@ function SearchBar({ municipios, onSelect }) {
    ════════════════════════════════════════════════ */
 export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
   const [tipoMapa,       setTipoMapa]       = useState('labels');
+  const [cultura,        setCultura]        = useState('cevada');
   const [filtroUF,       setFiltroUF]       = useState('Todos');
   const [filtroClasse,   setFiltroClasse]   = useState({ apto:true, parcial:true, inapto:true, sem_dados:true });
   const [filtroScoreMin, setFiltroScoreMin] = useState(0);
+  const campo = CULTURAS[cultura].campo;
   const [selecionado,    setSelecionado]    = useState(null);
   const [sazonalidade,   setSazonalidade]   = useState(null);
   const [loadingSazon,   setLoadingSazon]   = useState(false);
@@ -486,7 +523,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
 
   const geojsonRef       = useRef(null);
   const infoRef          = useRef(null);
-  const filterRef        = useRef({ filtroUF, filtroClasse, filtroScoreMin });
+  const filterRef        = useRef({ filtroUF, filtroClasse, filtroScoreMin, campo });
   const tipoMapaRef      = useRef(tipoMapa);
   const onSelectRef      = useRef(null);
   const selectedLayerRef = useRef(null); // { layer, props }
@@ -497,7 +534,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
       .catch(()=>setLoadingGeo(false));
   }, []);
 
-  useEffect(() => { filterRef.current = { filtroUF, filtroClasse, filtroScoreMin }; }, [filtroUF, filtroClasse, filtroScoreMin]);
+  useEffect(() => { filterRef.current = { filtroUF, filtroClasse, filtroScoreMin, campo }; }, [filtroUF, filtroClasse, filtroScoreMin, campo]);
   useEffect(() => { tipoMapaRef.current = tipoMapa; }, [tipoMapa]);
   useEffect(() => { setMapBounds(filtroUF!=='Todos' ? (BOUNDS_UF[filtroUF]??null) : null); }, [filtroUF]);
 
@@ -508,7 +545,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
     geojsonRef.current.eachLayer(layer => {
       if (!layer.feature) return;
       const p = layer.feature.properties;
-      if (!isVisible(p, { filtroUF, filtroClasse, filtroScoreMin })) {
+      if (!isVisible(p, { filtroUF, filtroClasse, filtroScoreMin, campo })) {
         layer.setStyle(ESTILO_OCULTO);
       } else if (selectedLayerRef.current?.layer === layer) {
         layer.setStyle({ ...getEstiloBase(CORES[p._classe], dark), ...ESTILO_SELECIONADO });
@@ -516,7 +553,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
         layer.setStyle(getEstiloBase(CORES[p._classe], dark));
       }
     });
-  }, [filtroUF, filtroClasse, filtroScoreMin]);
+  }, [filtroUF, filtroClasse, filtroScoreMin, campo]);
 
   /* Atualiza opacidade/borda quando muda entre claro/escuro */
   useEffect(() => {
@@ -584,21 +621,21 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
       features: geojsonData.features.map(f => {
         const cod   = String(f.properties?.codarea ?? '');
         const dados = dadosMap.get(cod);
-        return { ...f, properties:{ ...f.properties, _dados:dados??null, _classe:getClassificacao(dados) } };
+        return { ...f, properties:{ ...f.properties, _dados:dados??null, _classe:getClassificacao(dados, campo) } };
       }),
     };
-  }, [geojsonData, dadosMap]);
+  }, [geojsonData, dadosMap, campo]);
 
   /* Contagem para legenda */
   const counts = useMemo(() => {
     const c = { apto:0, parcial:0, inapto:0, sem_dados:0 };
     if (!geojsonComDados) return c;
-    const f = { filtroUF, filtroClasse, filtroScoreMin };
+    const f = { filtroUF, filtroClasse, filtroScoreMin, campo };
     geojsonComDados.features.forEach(ft => {
       if (isVisible(ft.properties, f)) c[ft.properties._classe]++;
     });
     return c;
-  }, [geojsonComDados, filtroUF, filtroClasse, filtroScoreMin]);
+  }, [geojsonComDados, filtroUF, filtroClasse, filtroScoreMin, campo]);
 
   /* Stats do estado selecionado (para a info bar) */
   const statsEstado = useMemo(() => {
@@ -607,15 +644,15 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
     if (!muns.length) return null;
     return {
       total:   muns.length,
-      aptos:   muns.filter(m=>m.score_aptidao>=70).length,
-      parciais:muns.filter(m=>m.score_aptidao>=40 && m.score_aptidao<70).length,
-      inaptos: muns.filter(m=>m.score_aptidao<40).length,
+      aptos:   muns.filter(m=>m[campo]>=70).length,
+      parciais:muns.filter(m=>m[campo]>=40 && m[campo]<70).length,
+      inaptos: muns.filter(m=>m[campo]<40).length,
     };
-  }, [municipios, filtroUF]);
+  }, [municipios, filtroUF, campo]);
 
   const infoBarDefault = filtroUF!=='Todos' && statsEstado
     ? `${filtroUF} — ${statsEstado.total} municípios · ${statsEstado.aptos} Aptos · ${statsEstado.parciais} Parc. Aptos · ${statsEstado.inaptos} Inaptos`
-    : 'SOUFII · Zoneamento de Aptidão para Cevada Cervejeira · Brasil';
+    : `SOUFII · Zoneamento de Aptidão para ${CULTURAS[cultura].label} · Brasil`;
 
   const styleFunc = useCallback((f) => {
     const p = f.properties;
@@ -631,8 +668,9 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
         e.target.setStyle(ESTILO_HOVER);
         if (infoRef.current) {
           const d = props._dados;
+          const s = d?.[filterRef.current.campo];
           infoRef.current.textContent = d
-            ? `📍 ${d.nome_municipio} / ${d.uf}  ·  Score ${d.score_aptidao??'—'}/100  ·  ${LABEL_CLASS[props._classe]}`
+            ? `📍 ${d.nome_municipio} / ${d.uf}  ·  Score ${s??'—'}/100  ·  ${LABEL_CLASS[props._classe]}`
             : `${props.codarea??'—'}  ·  Sem dados`;
         }
       },
@@ -652,7 +690,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
 
   const tile    = TILES[tipoMapa] ?? TILES.labels;
   const centro  = selecionado?.lat != null ? [selecionado.lat, selecionado.lon] : null;
-  const dataKey = `geo-${geojsonComDados?.features?.length??0}-${dadosMap.size}`;
+  const dataKey = `geo-${cultura}-${geojsonComDados?.features?.length??0}-${dadosMap.size}`;
 
   return (
     <div style={{ display:'flex', height:'100%', margin:-24, overflow:'hidden' }}>
@@ -677,12 +715,13 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
         <div style={{ flex:1, position:'relative', overflow:'hidden' }}>
           {/* Busca */}
           <div style={{ position:'absolute', top:12, left:'50%', transform:'translateX(-50%)', zIndex:1000 }}>
-            <SearchBar municipios={municipios} onSelect={onSelect} />
+            <SearchBar municipios={municipios} onSelect={onSelect} campo={campo} />
           </div>
 
           {/* Controles */}
           <div style={{ position:'absolute', top:12, left:14, zIndex:1000 }}>
             <ControlPanel
+              cultura={cultura}           setCultura={setCultura}
               tipoMapa={tipoMapa}         setTipoMapa={setTipoMapa}
               filtroUF={filtroUF}         setFiltroUF={setFiltroUF}
               filtroClasse={filtroClasse} setFiltroClasse={setFiltroClasse}
@@ -722,7 +761,8 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
             scrollWheelZoom={false}
             style={{ width:'100%', height:'100%', background:'#d8e8db' }}
           >
-            <TileLayer key={tipoMapa} url={tile.url} attribution={tile.attribution} subdomains={tile.subdomains} maxZoom={19} />
+            <TileLayer key={tipoMapa} url={tile.url} attribution={tile.attribution} subdomains={tile.subdomains} maxZoom={19}
+              className={tipoMapa === 'dark' ? 'map-tiles-dark' : ''} />
             <ZoomControl position="bottomright" />
             <FlyToBoundsController bounds={mapBounds} />
             <FlyToMunController centro={centro} />

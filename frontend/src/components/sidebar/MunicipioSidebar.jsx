@@ -116,6 +116,15 @@ const ZARC_UFS = ['PR', 'SC', 'RS', 'SP', 'MG', 'GO', 'DF'];
 const MAPA_ZARC_URL = 'https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico';
 const MAPA_PAINEL_URL = 'https://www.gov.br/agricultura/pt-br/assuntos/riscos-seguro/programa-nacional-de-zoneamento-agricola-de-risco-climatico/painel-de-indicacao-de-riscos-1';
 
+// Simulador multicultura (Fase 6/7) — mesmo endpoint /zarc/elegibilidade e
+// /gdd/simulacao generalizados por `cultura`, mesma paleta usada no seletor
+// de cultura do Zoneamento.
+const CULTURAS_SIM = {
+  cevada: { label:'Cevada', nome:'cevada cervejeira', cor:'#d9b25f' },
+  trigo:  { label:'Trigo',  nome:'trigo',             cor:'#d99a4a' },
+  soja:   { label:'Soja',   nome:'soja',              cor:'#7bb572' },
+};
+
 const SOLO_INFO = {
   1: { label:'Tipo 1 — Arenoso',      cor:'#ef4444', recom:'Não recomendado pelo ZARC' },
   2: { label:'Tipo 2 — Textura Média', cor:'#f59e0b', recom:'Aceito com manejo adequado' },
@@ -261,9 +270,11 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
     return { dist, pTon, frete, liq, liqSaca: liq * 60 / 1000, viab: viabLabel(dist) };
   }, [municipio, precoSaca, freteTonKm]);
 
-  /* ZARC real por município, decêndio a decêndio — Fase 1 do plano de 10 fases.
-     Só cevada, safra 2025/2026 (ver /zarc/elegibilidade). Busca sob demanda,
-     só quando a aba Seguro está aberta, e refaz quando a data simulada muda. */
+  /* ZARC real por município, decêndio a decêndio — Fase 1/7 do plano de 10
+     fases. Cevada, trigo ou soja (ver /zarc/elegibilidade?cultura=). Busca
+     sob demanda, só quando a aba Seguro está aberta, e refaz quando a data
+     simulada ou a cultura mudam. */
+  const [culturaSim,  setCulturaSim]  = useState('cevada');
   const [dataPlantio, setDataPlantio] = useState(() => `${new Date().getFullYear()}-06-15`);
   const [zarcReal,    setZarcReal]    = useState(null);
   const [zarcLoading, setZarcLoading] = useState(false);
@@ -271,24 +282,24 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
   useEffect(() => {
     if (tab !== 1 || !municipio?.codigo_ibge) return;
     setZarcLoading(true);
-    fetch(`${API}/zarc/elegibilidade?codigo_ibge=${municipio.codigo_ibge}&data_plantio=${dataPlantio}`)
+    fetch(`${API}/zarc/elegibilidade?codigo_ibge=${municipio.codigo_ibge}&data_plantio=${dataPlantio}&cultura=${culturaSim}`)
       .then(r => r.json())
       .then(setZarcReal)
       .catch(() => setZarcReal(null))
       .finally(() => setZarcLoading(false));
-  }, [tab, municipio?.codigo_ibge, dataPlantio]);
+  }, [tab, municipio?.codigo_ibge, dataPlantio, culturaSim]);
 
-  /* Acúmulo de graus-dia (GDD) real — Fase 4/6 do plano de 10 fases. Mesma
-     data simulada da aba Seguro alimenta os dois ao mesmo tempo. Só cobre
-     PR/SC/RS (escopo da coleta diária) e só até hoje (dado observado). */
+  /* Acúmulo de graus-dia (GDD) real — Fase 4/6/7 do plano de 10 fases. Mesma
+     data e cultura simuladas da aba Seguro alimentam os dois ao mesmo tempo.
+     Só cobre PR/SC/RS (escopo da coleta diária) e só até hoje (dado observado). */
   const [gddReal, setGddReal] = useState(null);
   useEffect(() => {
     if (tab !== 1 || !municipio?.codigo_ibge) return;
-    fetch(`${API}/gdd/simulacao?codigo_ibge=${municipio.codigo_ibge}&data_semeio=${dataPlantio}&cultura=cevada`)
+    fetch(`${API}/gdd/simulacao?codigo_ibge=${municipio.codigo_ibge}&data_semeio=${dataPlantio}&cultura=${culturaSim}`)
       .then(r => r.json())
       .then(setGddReal)
       .catch(() => setGddReal(null));
-  }, [tab, municipio?.codigo_ibge, dataPlantio]);
+  }, [tab, municipio?.codigo_ibge, dataPlantio, culturaSim]);
 
   if (!municipio) return <EmptyState />;
 
@@ -512,20 +523,35 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
           });
           const gruposOrdenados = Object.values(porGrupo).sort((a, b) => a.nivel_risco - b.nivel_risco);
 
+          const c = CULTURAS_SIM[culturaSim];
+
           return (
             <>
+              {/* Seletor de cultura — Fase 7 do plano de 10 fases */}
+              <div style={{ display:'flex', gap:4 }}>
+                {Object.entries(CULTURAS_SIM).map(([k, cfg]) => (
+                  <button key={k} onClick={() => setCulturaSim(k)} style={{
+                    flex:1, padding:'6px 4px', borderRadius:8, cursor:'pointer',
+                    border: culturaSim===k ? `1px solid ${cfg.cor}` : '1px solid #E5E7EB',
+                    background: culturaSim===k ? `${cfg.cor}1a` : '#F9FAFB',
+                    color: culturaSim===k ? cfg.cor : '#6B7280',
+                    fontWeight: culturaSim===k ? 700 : 500, fontSize:11,
+                  }}>{cfg.label}</button>
+                ))}
+              </div>
+
               {/* Simulador de data de semeio */}
               <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:10, padding:'11px 14px' }}>
                 <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:6 }}>
                   <p style={{ fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:1.2 }}>
-                    Simular data de semeio
+                    Simular data de semeio — {c.label}
                   </p>
                   {zarcLoading && <Loader2 size={11} color="#9CA3AF" style={{ animation:'spin 0.8s linear infinite' }} />}
                 </div>
                 <input type="date" value={dataPlantio} onChange={e => setDataPlantio(e.target.value)}
                   style={{ width:'100%', padding:'6px 10px', borderRadius:7, border:'1px solid #E5E7EB', fontSize:12, color:'#374151' }} />
                 <p style={{ fontSize:9, color:'#9CA3AF', marginTop:5 }}>
-                  ZARC oficial de cevada é publicado por decêndio (períodos de ~10 dias) — mude a data pra ver como a elegibilidade muda ao longo da janela de semeio.
+                  ZARC oficial de {c.nome} é publicado por decêndio (períodos de ~10 dias) — mude a data pra ver como a elegibilidade muda ao longo da janela de semeio.
                 </p>
               </div>
 
@@ -565,12 +591,12 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                   <Shield size={18} color="#dc2626" style={{ flexShrink:0, marginTop:1 }} />
                   <div>
                     <p style={{ fontSize:12, fontWeight:800, color:'#dc2626', marginBottom:4 }}>
-                      {zarcReal.municipio ? 'Sem indicação de plantio nessa data' : 'Município fora da abrangência do ZARC de cevada'}
+                      {zarcReal.municipio ? 'Sem indicação de plantio nessa data' : `Município fora da abrangência do ZARC de ${c.nome}`}
                     </p>
                     <p style={{ fontSize:11, color:'#4B5563', lineHeight:1.5 }}>
                       {zarcReal.municipio
-                        ? `A portaria oficial não indica semeio de cevada cervejeira no decêndio ${zarcReal.decendio} (safra ${zarcReal.safra}) pra esse município. Tente outra data — a janela real costuma ficar entre maio e agosto.`
-                        : 'Esse município não tem nenhum registro na Tábua de Risco de cevada cervejeira (MAPA), safra 2025/2026 — provavelmente fora da área historicamente zoneada pra essa cultura.'}
+                        ? `A portaria oficial não indica semeio de ${c.nome} no decêndio ${zarcReal.decendio} (safra ${zarcReal.safra}) pra esse município. Tente outra data.`
+                        : `Esse município não tem nenhum registro na Tábua de Risco de ${c.nome} (MAPA), safra 2025/2026 — provavelmente fora da área historicamente zoneada pra essa cultura.`}
                     </p>
                   </div>
                 </div>
@@ -608,23 +634,25 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 </div>
               )}
 
-              <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:10, padding:'11px 14px' }}>
-                <p style={{ fontSize:9,fontWeight:700,color:'#6B7280',textTransform:'uppercase',
-                  letterSpacing:1.2,marginBottom:8 }}>
-                  Estados com ZARC cevada publicado
-                </p>
-                <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
-                  {ZARC_UFS.map(uf => (
-                    <span key={uf} style={{
-                      fontSize:10, fontWeight: uf===municipio.uf ? 800 : 500,
-                      padding:'3px 9px', borderRadius:20,
-                      background: uf===municipio.uf ? (temZarc ? '#16a34a20' : '#dc262620') : '#F9FAFB',
-                      color: uf===municipio.uf ? (temZarc ? '#16a34a' : '#dc2626') : '#6B7280',
-                      border: `1px solid ${uf===municipio.uf ? (temZarc ? '#16a34a50' : '#dc262650') : '#E5E7EB'}`,
-                    }}>{uf}</span>
-                  ))}
+              {culturaSim === 'cevada' && (
+                <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:10, padding:'11px 14px' }}>
+                  <p style={{ fontSize:9,fontWeight:700,color:'#6B7280',textTransform:'uppercase',
+                    letterSpacing:1.2,marginBottom:8 }}>
+                    Estados com ZARC cevada publicado
+                  </p>
+                  <div style={{ display:'flex', gap:5, flexWrap:'wrap' }}>
+                    {ZARC_UFS.map(uf => (
+                      <span key={uf} style={{
+                        fontSize:10, fontWeight: uf===municipio.uf ? 800 : 500,
+                        padding:'3px 9px', borderRadius:20,
+                        background: uf===municipio.uf ? (temZarc ? '#16a34a20' : '#dc262620') : '#F9FAFB',
+                        color: uf===municipio.uf ? (temZarc ? '#16a34a' : '#dc2626') : '#6B7280',
+                        border: `1px solid ${uf===municipio.uf ? (temZarc ? '#16a34a50' : '#dc262650') : '#E5E7EB'}`,
+                      }}>{uf}</span>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               <a href={MAPA_PAINEL_URL} target="_blank" rel="noopener noreferrer" style={{
                 display:'flex', alignItems:'center', gap:8, textDecoration:'none',
@@ -639,7 +667,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
               </a>
 
               <p style={{ fontSize:9, color:'#9CA3AF', lineHeight:1.5 }}>
-                Fonte: Tábua de Risco ZARC, MAPA (dados.agricultura.gov.br), safra 2025/2026
+                Fonte: Tábua de Risco ZARC de {c.nome}, MAPA (dados.agricultura.gov.br), safra 2025/2026
               </p>
             </>
           );

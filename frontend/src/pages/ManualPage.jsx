@@ -510,8 +510,8 @@ Preço líquido = preço bruto − frete estimado`}</Formula>
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {[
-            { nome: 'Princesa', tipo: 'Agrária · Grupo II', cor: '#16a34a', desc: '80 dias até espigamento, 122 dias até maturação. Altura 70cm. Resistente a ferrugem, moderadamente resistente a mancha-reticular.' },
-            { nome: 'Duquesa', tipo: 'Agrária · Grupo II', cor: '#15803d', desc: '77 dias até espigamento, 120 dias até maturação — a mais precoce do portfólio. Altura 72cm. Resistente a ferrugem, suscetível a giberela.' },
+            { nome: 'Princesa', tipo: 'Agrária · Grupo II', cor: '#16a34a', desc: '75 dias até espigamento, 122 dias até maturação (portfólio Agrária 2026). Altura 75cm. Moderadamente resistente à mancha em rede até o fim do perfilhamento.' },
+            { nome: 'Duquesa', tipo: 'Agrária · Grupo II', cor: '#15803d', desc: '75 dias até espigamento, 122 dias até maturação (portfólio Agrária 2026). Altura 70cm. Resistente a acamamento, moderadamente resistente à mancha em rede.' },
             { nome: 'Imperatriz', tipo: 'FAPA · Grupo II', cor: '#0891b2', desc: '82 dias até espigamento, 127 dias até maturação. Altura 73cm. Moderadamente resistente à maioria das doenças foliares.' },
             { nome: 'BRS Cauê', tipo: 'Embrapa · Grupo II', cor: '#d97706', desc: '90 dias até espigamento, 132 dias até maturação. Porte baixo (72cm, genes de nanismo) reduz acamamento. Altamente suscetível a oídio.' },
           ].map(cv => (

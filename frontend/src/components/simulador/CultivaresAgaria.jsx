@@ -1,9 +1,14 @@
 import { Sprout, Crown, Star, Gem } from 'lucide-react';
 
 // Perfis reais das cultivares de cevada cervejeira indicadas pela Portaria
-// SPA/MAPA ZARC do Paraná (nº 358/2024) e pela publicação "Indicações
-// Técnicas para a Produção de Cevada Cervejeira — safras 2025 e 2026"
-// (Embrapa Trigo, 2025, Tabela 3.1 — ensaios Passo Fundo/RS e Guarapuava/PR).
+// SPA/MAPA ZARC do Paraná (nº 358/2024). Ciclo (dias até espigamento/
+// maturação) de Condessa, Princesa e Duquesa vem do portfólio 2026 da
+// Agrária (portfolio-sementes-agraria-v2.pdf, fichas técnicas próprias,
+// 2026-08-25 — números mais recentes que a Tabela 3.1 abaixo pra essas 3).
+// Imperatriz e BRS Cauê (não vendidas pela Agrária) seguem citadas pela
+// publicação "Indicações Técnicas para a Produção de Cevada Cervejeira —
+// safras 2025 e 2026" (Embrapa Trigo, 2025, Tabela 3.1 — ensaios Passo
+// Fundo/RS e Guarapuava/PR).
 //
 // IMPORTANTE: não existe, em nenhuma fonte oficial, uma tabela de "faixa
 // climática ideal por cultivar" (temperatura/chuva/altitude diferentes por
@@ -33,8 +38,8 @@ export const CULTIVARES = {
     obtentor: 'Cooperativa Agrária Agroindustrial',
     icon:  Star,
     cor:   '#f59e0b',
-    ciclo: 'Grupo II · 80 dias até espigamento, 122 dias até maturação',
-    desc:  'Cultivar própria da Agrária. Altura de planta 70cm; resistente a ferrugem, moderadamente resistente a mancha-reticular e mancha-marrom.',
+    ciclo: '75 dias até espigamento, 122 dias até maturação',
+    desc:  'Cultivar própria da Agrária (cruzamento Margret / PFC 2007103, linhagem FAPAC 2017015, lançamento 2022). Altura de planta 75cm; moderadamente resistente à mancha em rede até o fim do perfilhamento, suscetível depois.',
     zarc: ZARC_PADRAO,
   },
   Duquesa: {
@@ -42,8 +47,8 @@ export const CULTIVARES = {
     obtentor: 'Cooperativa Agrária Agroindustrial',
     icon:  Gem,
     cor:   '#06b6d4',
-    ciclo: 'Grupo II · 77 dias até espigamento, 120 dias até maturação',
-    desc:  'Cultivar própria da Agrária, ciclo mais precoce do portfólio. Altura de planta 72cm; resistente a ferrugem, suscetível a giberela.',
+    ciclo: '75 dias até espigamento, 122 dias até maturação',
+    desc:  'Cultivar própria da Agrária (cruzamento Conchita / BRS Sampa, linhagem FAPAC 2019047, lançamento 2023). Altura de planta 70cm; resistente a acamamento, moderadamente resistente à mancha em rede até o fim do perfilhamento.',
     zarc: ZARC_PADRAO,
   },
   Imperatriz: {

@@ -12,9 +12,28 @@ do simulador ao vivo (Fase 6).
 Decisões tomadas com o usuário (2026-08-22), a partir das anotações de
 campo dele:
   - T_b (temperatura base) da cevada = 0°C — "qualquer temperatura acima
-    de 0°C o cultivo cresce". Só cevada está resolvida; trigo (4,5°C) e
-    soja (10°C) ficam como valores propostos, não confirmados, até a
-    Fase 5 (schema multicultura).
+    de 0°C o cultivo cresce".
+  - T_b do trigo = 0°C — CONFIRMADO em 2026-09-01 contra fonte oficial:
+    Embrapa Trigo, "Cultivo de Trigo" (Sistema de Produção, Caierão et al.,
+    infoteca.cnptia.embrapa.br/infoteca/bitstream/doc/1155370/1/Cultivo-de-Trigo.pdf),
+    que usa explicitamente "temperatura base de 0°C" no cálculo de
+    filocronos (Slafer & Rawson, 1994; Cunha et al., 2009) — substitui o
+    valor de 4,5°C que estava proposto sem fonte.
+  - T_b da soja: pesquisado em 2026-09-01, mas AO CONTRÁRIO do trigo não
+    há um valor único confirmável — a literatura diverge de verdade entre
+    estudos reais: Camargo, Brunini & Miranda, "Temperatura-base para
+    cálculo dos graus-dia para cultivares de soja em São Paulo" (Pesquisa
+    Agropecuária Brasileira, Embrapa/IAC, ensaios em Campinas/Ribeirão
+    Preto/Pindamonhangaba, 4 cultivares: UFV-1, Santa Rosa, Viçoja,
+    Paraná) achou T_b=14°C pra fase plantio→maturação em TODAS as
+    cultivares testadas — é a fonte mais forte encontrada (estudo dedicado
+    e revisado por pares, não uma menção de passagem). Outros estudos
+    citam 10°C (Embrapa, produtividade em Belterra/PA) e até 7,6°C.
+    Adotado 14°C por ser a fonte mais direta e melhor documentada, mas
+    ainda é uma aproximação — cultivares modernas (transgênicas RR2/
+    Intacta) e regiões fora de SP podem divergir do estudo original.
+    Segue como o T_b menos sólido dos três (cevada e trigo têm citação
+    única e consistente; soja não).
   - Geada = T2M_MIN (temperatura do ar a 2m, NASA POWER) <= 4°C. Não é
     literalmente a temperatura de relva/solo (que é mais baixa que o ar
     a 2m em noite de céu limpo) — é o proxy já calibrado nas anotações
@@ -26,8 +45,8 @@ campo dele:
 
 TB_POR_CULTURA = {
     "cevada": 0.0,   # confirmado com o usuário — anotações de campo
-    "trigo":  4.5,   # proposto, não confirmado ainda
-    "soja":   10.0,  # bem estabelecido na literatura agronômica (Embrapa Soja)
+    "trigo":  0.0,   # confirmado — Embrapa Trigo, "Cultivo de Trigo" (2026-09-01)
+    "soja":   14.0,  # Camargo, Brunini & Miranda (Pesq. Agropec. Bras., Embrapa/IAC) — melhor fonte, ainda aproximada
 }
 
 LIMIAR_GEADA_C = 4.0  # T2M_MIN <= isso conta como geada (anotações de campo)

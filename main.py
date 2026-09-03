@@ -152,7 +152,8 @@ def municipios_mapa():
             "tipo_solo, pct_argila, tipo_solo_zarc, "
             "temp_media_anual, precipitacao_acumulada_anual, "
             "risco_geada_pct, chuva_colheita_mm, "
-            "apto_geral, score_aptidao"
+            "apto_geral, score_aptidao, "
+            "score_trigo, classificacao_trigo, score_soja, classificacao_soja"
         )
         PAGE = 1000
         todos = []
@@ -267,34 +268,42 @@ def municipios_estatisticas():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+ZARC_TABELA_POR_CULTURA = {
+    "cevada": "zarc_cevada",
+    "trigo": "zarc_trigo",
+    "soja": "zarc_soja",
+}
+
+
 @app.get("/zarc/elegibilidade", tags=["ZARC"])
 def zarc_elegibilidade(
     codigo_ibge: int = Query(...),
     data_plantio: date = Query(..., description="Data de semeio pretendida, formato YYYY-MM-DD"),
     solo_ad: str | None = Query(default=None, description="Filtra por classe de solo (AD1..AD6). Sem filtro, retorna todas as classes."),
-    cultura: str = Query(default="cevada", description="Só 'cevada' disponível por enquanto (Fase 1 do plano multicultura)."),
+    cultura: str = Query(default="cevada", description="'cevada', 'trigo' ou 'soja' (Fase 7 do plano multicultura)."),
 ):
     """Elegibilidade ZARC oficial por município, decêndio a decêndio —
-    fonte: MAPA (dados.agricultura.gov.br), safra 2025/2026, cevada cervejeira.
-    Substitui o proxy por estado usado na aba Seguro do painel do município."""
-    if cultura != "cevada":
-        raise HTTPException(status_code=400, detail=f"Cultura '{cultura}' ainda não ingerida — só cevada está disponível nesta fase.")
+    fonte: MAPA (dados.agricultura.gov.br), safra 2025/2026. Substitui o
+    proxy por estado usado na aba Seguro do painel do município."""
+    tabela = ZARC_TABELA_POR_CULTURA.get(cultura)
+    if tabela is None:
+        raise HTTPException(status_code=400, detail=f"Cultura '{cultura}' não suportada — use uma de {list(ZARC_TABELA_POR_CULTURA)}.")
     try:
         decendio = data_para_decendio(data_plantio)
 
         municipio_row = (
-            get_supabase().table("zarc_cevada")
+            get_supabase().table(tabela)
             .select("municipio, uf")
             .eq("codigo_ibge", codigo_ibge)
             .limit(1)
             .execute()
         )
         if not municipio_row.data:
-            # Município fora da abrangência do ZARC de cevada nesta safra
+            # Município fora da abrangência do ZARC dessa cultura nesta safra
             return montar_resposta(codigo_ibge, None, None, data_plantio, decendio, [], "2025/2026")
 
         query = (
-            get_supabase().table("zarc_cevada")
+            get_supabase().table(tabela)
             .select("grupo, solo_ad, manejo, nivel_risco, portaria")
             .eq("codigo_ibge", codigo_ibge)
             .eq("decendio", decendio)
