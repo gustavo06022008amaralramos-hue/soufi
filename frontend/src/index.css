@@ -103,6 +103,12 @@ main > * { animation: pageIn 0.2s ease forwards; }
 
 /* ── Leaflet ───────────────────────────────────── */
 .leaflet-container { background: #d8e8db !important; }
+/* Tiles OpenStreetMap (sem API key) invertidos pra simular modo escuro —
+   CartoDB dark_all passou a exigir chave, então não dá mais pra usar um
+   tileset escuro pronto de graça. */
+.map-tiles-dark {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.88) saturate(0.85);
+}
 .leaflet-control-zoom {
   border: 1px solid #D1D5DB !important;
   border-radius: 8px !important;
