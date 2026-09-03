@@ -177,11 +177,39 @@ function Panel({ children, style={} }) {
   );
 }
 
+/* ── Cards de métrica (Bloco 4.2) ── */
+function MetricCard({ label, value, cor, bg }) {
+  return (
+    <div style={{ flex:1, background:bg, border:`1px solid ${cor}30`, borderRadius:9, padding:'8px 10px' }}>
+      <p style={{ fontSize:18, fontWeight:800, color:cor, lineHeight:1 }}>{value.toLocaleString('pt-BR')}</p>
+      <p style={{ fontSize:9, color:'#6B7280', marginTop:2 }}>{label}</p>
+    </div>
+  );
+}
+
+/* ── Chip de classificação (Bloco 4.3) ── */
+function ClasseChip({ ativo, cor, label, onClick }) {
+  return (
+    <button onClick={onClick} style={{
+      display:'flex', alignItems:'center', gap:5, cursor:'pointer',
+      padding:'5px 10px', borderRadius:99, fontSize:10.5, fontWeight: ativo?700:500,
+      border:`1px solid ${ativo?cor:'#E5E7EB'}`,
+      background: ativo ? `${cor}16` : '#F9FAFB',
+      color: ativo ? cor : '#9CA3AF',
+      transition:'all 0.15s',
+    }}>
+      {ativo && <Check size={10} />}
+      <span style={{ width:7, height:7, borderRadius:2, background:cor, flexShrink:0, opacity:ativo?1:0.4 }} />
+      {label}
+    </button>
+  );
+}
+
 /* ── Painel de controles ── */
-function ControlPanel({ cultura, setCultura, tipoMapa, setTipoMapa, filtroUF, setFiltroUF, filtroScoreMin, setFiltroScoreMin }) {
+function ControlPanel({ cultura, setCultura, tipoMapa, setTipoMapa, filtroUF, setFiltroUF, filtroClasse, setFiltroClasse, filtroScoreMin, setFiltroScoreMin, counts }) {
   const lbl = { display:'block', fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:1.2, marginBottom:7 };
   return (
-    <Panel style={{ padding:'11px 13px', width:230, display:'flex', flexDirection:'column', gap:10 }}>
+    <Panel style={{ padding:'13px 13px', width:230, display:'flex', flexDirection:'column', gap:13 }}>
 
       {/* Cultura — o mapa recolore, paleta/estilo continuam os mesmos */}
       <div>
@@ -203,6 +231,12 @@ function ControlPanel({ cultura, setCultura, tipoMapa, setTipoMapa, filtroUF, se
         </div>
       </div>
 
+      {/* Métricas rápidas */}
+      <div style={{ display:'flex', gap:6 }}>
+        <MetricCard label="aptos"               value={counts.apto}    cor="#1A7A3C" bg="#f0fdf4" />
+        <MetricCard label="parcialmente aptos"   value={counts.parcial} cor="#D4A017" bg="#fffbeb" />
+      </div>
+
       {/* Mapa base */}
       <div>
         <label style={lbl}>Mapa Base</label>
@@ -221,6 +255,17 @@ function ControlPanel({ cultura, setCultura, tipoMapa, setTipoMapa, filtroUF, se
             }}>
               {o.icon}{o.label}
             </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Classificação */}
+      <div>
+        <label style={lbl}>Classificação ZARC</label>
+        <div style={{ display:'flex', flexWrap:'wrap', gap:5 }}>
+          {Object.entries(CORES).map(([k, cor]) => (
+            <ClasseChip key={k} ativo={filtroClasse[k]??true} cor={cor} label={LABEL_CLASS[k]}
+              onClick={() => setFiltroClasse(f => ({...f,[k]:!f[k]}))} />
           ))}
         </div>
       </div>
@@ -264,44 +309,35 @@ function ControlPanel({ cultura, setCultura, tipoMapa, setTipoMapa, filtroUF, se
   );
 }
 
-/* ── Legenda — também é o filtro de classificação (fundidos: eram duas
-   listas idênticas de apto/parcial/inapto/sem-dados em painéis separados,
-   uma só pra filtrar e outra só pra mostrar contagem — clicar numa linha
-   agora faz as duas coisas, economizando uma seção inteira de altura). ── */
-function Legend({ counts, filtroClasse, setFiltroClasse }) {
+/* ── Legenda (Bloco 4.5 — barra proporcional + percentual) ── */
+function Legend({ counts }) {
   const total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
   return (
-    <Panel style={{ padding:'9px 12px', width:230 }}>
-      <p style={{ fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:1.2, marginBottom:6 }}>
-        Classificação ZARC — clique pra filtrar
+    <Panel style={{ padding:'10px 12px', width:230 }}>
+      <p style={{ fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:1.2, marginBottom:8 }}>
+        Legenda · Aptidão ZARC
       </p>
       {Object.entries(CORES).map(([k,cor]) => {
-        const n    = counts[k] ?? 0;
-        const pct  = Math.round(n / total * 100);
-        const ativo = filtroClasse[k] ?? true;
+        const n   = counts[k] ?? 0;
+        const pct = Math.round(n / total * 100);
         return (
-          <button key={k} onClick={() => setFiltroClasse(f => ({...f,[k]:!f[k]}))} style={{
-            display:'flex', width:'100%', alignItems:'center', gap:7, padding:'3px 0',
-            borderBottom:'1px solid #F3F4F6', border:'none', borderBottomStyle:'solid',
-            background:'transparent', cursor:'pointer', textAlign:'left', opacity: ativo ? 1 : 0.4,
-          }}>
-            {ativo
-              ? <Check size={9} color={cor} style={{ flexShrink:0 }} />
-              : <div style={{ width:9, height:9, borderRadius:2, background:cor, flexShrink:0 }} />}
-            <span style={{ fontSize:10, color:'#374151', width:72, flexShrink:0 }}>{LABEL_CLASS[k]}</span>
+          <div key={k} style={{ display:'flex', alignItems:'center', gap:7, padding:'4px 0',
+            borderBottom:'1px solid #F3F4F6' }}>
+            <div style={{ width:9, height:9, borderRadius:2, background:cor, flexShrink:0 }} />
+            <span style={{ fontSize:10, color:'#374151', width:78, flexShrink:0 }}>{LABEL_CLASS[k]}</span>
             <div style={{ flex:1, height:5, borderRadius:99, background:'#F3F4F6', overflow:'hidden' }}>
               <div style={{ width:`${pct}%`, height:'100%', borderRadius:99, background:cor, transition:'width 0.3s' }} />
             </div>
             <span style={{ fontSize:9, fontFamily:'monospace', color:'#6B7280', minWidth:26, textAlign:'right' }}>
               {n.toLocaleString('pt-BR')}
             </span>
-            <span style={{ fontSize:9, fontWeight:700, color:'#374151', minWidth:24, textAlign:'right' }}>
+            <span style={{ fontSize:9, fontWeight:700, color:'#374151', minWidth:26, textAlign:'right' }}>
               {pct}%
             </span>
-          </button>
+          </div>
         );
       })}
-      <div style={{ marginTop:4, paddingTop:2 }}>
+      <div style={{ marginTop:6, paddingTop:2 }}>
         <span style={{ fontSize:9, color:'#9CA3AF' }}>{total.toLocaleString('pt-BR')} exibidos</span>
       </div>
     </Panel>
@@ -696,9 +732,11 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
               cultura={cultura}           setCultura={setCultura}
               tipoMapa={tipoMapa}         setTipoMapa={setTipoMapa}
               filtroUF={filtroUF}         setFiltroUF={setFiltroUF}
+              filtroClasse={filtroClasse} setFiltroClasse={setFiltroClasse}
               filtroScoreMin={filtroScoreMin} setFiltroScoreMin={setFiltroScoreMin}
+              counts={counts}
             />
-            <Legend counts={counts} filtroClasse={filtroClasse} setFiltroClasse={setFiltroClasse} />
+            <Legend counts={counts} />
           </div>
 
           {/* Loading */}
