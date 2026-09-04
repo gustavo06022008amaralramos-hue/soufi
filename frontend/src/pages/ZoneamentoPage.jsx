@@ -693,7 +693,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
   const dataKey = `geo-${cultura}-${geojsonComDados?.features?.length??0}-${dadosMap.size}`;
 
   return (
-    <div style={{ display:'flex', height:'100%', margin:-24, overflow:'hidden' }}>
+    <div style={{ display:'flex', height:'calc(100% + 56px)', margin:'-28px -32px', overflow:'hidden' }}>
 
       {/* ══ Mapa ══ */}
       <div style={{ flex:1, position:'relative', overflow:'hidden', display:'flex', flexDirection:'column' }}>
