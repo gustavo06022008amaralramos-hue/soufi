@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { MapContainer, TileLayer, GeoJSON, ZoomControl, useMap } from 'react-leaflet';
 import { Search, X, MapPin, SlidersHorizontal, Map as MapIcon, Layers, Check } from 'lucide-react';
 import 'leaflet/dist/leaflet.css';
@@ -508,8 +509,13 @@ function SearchBar({ municipios, onSelect, campo = 'score_aptidao' }) {
    PÁGINA PRINCIPAL
    ════════════════════════════════════════════════ */
 export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
+  // Cultura inicial pode vir de outra tela (ex: KPI do Dashboard "218
+  // oportunidades de seguro — trigo" leva direto pro mapa já em trigo).
+  const location = useLocation();
   const [tipoMapa,       setTipoMapa]       = useState('labels');
-  const [cultura,        setCultura]        = useState('cevada');
+  const [cultura,        setCultura]        = useState(() =>
+    ['cevada','trigo','soja'].includes(location.state?.cultura) ? location.state.cultura : 'cevada'
+  );
   const [filtroUF,       setFiltroUF]       = useState('Todos');
   const [filtroClasse,   setFiltroClasse]   = useState({ apto:true, parcial:true, inapto:true, sem_dados:true });
   const [filtroScoreMin, setFiltroScoreMin] = useState(0);

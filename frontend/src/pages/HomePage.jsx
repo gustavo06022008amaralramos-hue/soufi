@@ -139,6 +139,27 @@ export default function HomePage({ municipios = [], apiOnline }) {
     return list.slice(0, 4);
   }, [municipios, statsApi]);
 
+  // KPIs por cultura — mesmo esquema de cor usado em todo o app desde a
+  // Fase 7 (dourado=cevada, laranja=trigo, verde=soja), calculado client-side
+  // a partir do que /municipios/mapa já traz (score_aptidao/score_trigo/score_soja).
+  const kpisPorCultura = useMemo(() => {
+    const campos = { cevada:'score_aptidao', trigo:'score_trigo', soja:'score_soja' };
+    return Object.entries(campos).map(([cultura, campo]) => {
+      const comDado = municipios.filter(m => m[campo] != null);
+      return {
+        cultura,
+        aptos:    comDado.filter(m => m[campo] >= 70).length,
+        parciais: comDado.filter(m => m[campo] >= 40 && m[campo] < 70).length,
+        temDado:  comDado.length > 0,
+      };
+    });
+  }, [municipios]);
+  const CULTURA_INFO = {
+    cevada: { label:'Cevada', cor:'#9c7a24', bg:'#f7edd4' },
+    trigo:  { label:'Trigo',  cor:'#b3651f', bg:'#fbeadc' },
+    soja:   { label:'Soja',   cor:'#3d6b31', bg:'#e8f0e4' },
+  };
+
   const processados = progresso?.processados ?? statsApi?.total ?? municipios.length;
   const pctColeta   = ((processados/5571)*100).toFixed(1);
 
@@ -249,6 +270,55 @@ export default function HomePage({ municipios = [], apiOnline }) {
           ))}
         </div>
       </div>
+
+      {/* ── KPIs por cultura ── */}
+      {kpisPorCultura.some(k => k.temDado) && (
+        <div style={{ marginBottom:20 }}>
+          <p style={{ fontSize:13, fontWeight:700, color:'#1B4332', marginBottom:10 }}>Aptidão por Cultura</p>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+            {kpisPorCultura.map(k => {
+              const info = CULTURA_INFO[k.cultura];
+              return (
+                <button key={k.cultura}
+                  onClick={() => navigate('/zoneamento', { state:{ cultura:k.cultura } })}
+                  style={{
+                    background:'#fff', border:`1px solid ${info.cor}30`, borderRadius:12,
+                    padding:'14px 16px', cursor:'pointer', textAlign:'left',
+                    display:'flex', flexDirection:'column', gap:8, transition:'all 0.15s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.borderColor = info.cor; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+                  onMouseLeave={e => { e.currentTarget.style.borderColor = `${info.cor}30`; e.currentTarget.style.transform = 'none'; }}
+                >
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+                    <span style={{ fontSize:12, fontWeight:800, color:info.cor }}>{info.label}</span>
+                    <ArrowRight size={12} color={info.cor} />
+                  </div>
+                  <div style={{ display:'flex', gap:16 }}>
+                    <div>
+                      <p style={{ fontSize:22, fontWeight:800, color:info.cor, lineHeight:1 }}>
+                        {k.temDado ? k.aptos.toLocaleString('pt-BR') : '—'}
+                      </p>
+                      <p style={{ fontSize:9, color:'#9CA3AF', marginTop:3 }}>aptos</p>
+                    </div>
+                    <div>
+                      <p style={{ fontSize:22, fontWeight:800, color:'#9CA3AF', lineHeight:1 }}>
+                        {k.temDado ? k.parciais.toLocaleString('pt-BR') : '—'}
+                      </p>
+                      <p style={{ fontSize:9, color:'#9CA3AF', marginTop:3 }}>parc. aptos</p>
+                    </div>
+                  </div>
+                  <div style={{ height:4, background: info.bg, borderRadius:2, overflow:'hidden' }}>
+                    <div style={{
+                      height:'100%', borderRadius:2, background:info.cor,
+                      width: k.temDado ? `${Math.min(100, (k.aptos/(municipios.length||1))*100*4)}%` : '0%',
+                    }} />
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Como funciona + clima ── */}
       <div style={{ display:'grid', gridTemplateColumns:'1.4fr 1fr', gap:16, marginBottom:20 }}>
