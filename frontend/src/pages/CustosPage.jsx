@@ -192,6 +192,10 @@ const TABS_CUSTOS = [
 /* ══ COMPONENTE PRINCIPAL ══════════════════════════════ */
 export default function CustosPage() {
   const [tab,      setTab]      = useState(0);
+  // "Facilidade de manuseio" do plano: telas com muitos sliders ganham um
+  // modo simples (só o essencial pra estimativa rápida) e um avançado (todos
+  // os parâmetros) — evita afogar quem abre a tela pela primeira vez.
+  const [modoAvancado, setModoAvancado] = useState(false);
   const [uf,       setUf]       = useState('PR');
   const [area,     setArea]     = useState(50);
   const [preco,    setPreco]    = useState(90);
@@ -253,10 +257,24 @@ export default function CustosPage() {
             tabela pública de custo de produção por hectare para cevada cervejeira; ajuste conforme sua realidade
           </p>
         </div>
-        <select value={uf} onChange={e => { setUf(e.target.value); setProdTha(CUSTOS_UF[e.target.value].prod_tha); }}
-          style={{ border:'1px solid #D1D5DB', borderRadius:8, padding:'7px 12px', fontSize:12, color:'#374151', background:'#fff', cursor:'pointer', fontWeight:600 }}>
-          {UFS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
-        </select>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <div style={{ display:'flex', background:'#F0F7F2', border:'1px solid rgba(45,106,79,0.2)', borderRadius:8, padding:2 }}>
+            {[['simples','Simples'],['avancado','Avançado']].map(([k,label]) => (
+              <button key={k} onClick={() => setModoAvancado(k === 'avancado')} style={{
+                padding:'6px 12px', borderRadius:6, border:'none', cursor:'pointer',
+                background: (k==='avancado')===modoAvancado ? '#fff' : 'transparent',
+                boxShadow: (k==='avancado')===modoAvancado ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
+                color: (k==='avancado')===modoAvancado ? '#1B4332' : '#6B7280',
+                fontWeight: (k==='avancado')===modoAvancado ? 700 : 500,
+                fontSize:11, transition:'all 0.15s',
+              }}>{label}</button>
+            ))}
+          </div>
+          <select value={uf} onChange={e => { setUf(e.target.value); setProdTha(CUSTOS_UF[e.target.value].prod_tha); }}
+            style={{ border:'1px solid #D1D5DB', borderRadius:8, padding:'7px 12px', fontSize:12, color:'#374151', background:'#fff', cursor:'pointer', fontWeight:600 }}>
+            {UFS.map(u => <option key={u.value} value={u.value}>{u.label}</option>)}
+          </select>
+        </div>
       </div>
 
       {/* ── Sliders ── */}
@@ -264,12 +282,20 @@ export default function CustosPage() {
         <p style={{ fontSize:12, fontWeight:700, color:'#1B4332', marginBottom:16, display:'flex', alignItems:'center', gap:6 }}>
           <Calculator size={14} color="#2D6A4F" /> Parâmetros da Simulação
         </p>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:24 }}>
+        <div style={{ display:'grid', gridTemplateColumns: modoAvancado ? 'repeat(4,1fr)' : 'repeat(2,1fr)', gap:24 }}>
           <SliderRow label="Área (ha)" value={area} onChange={setArea} min={10} max={2000} step={10} fmt={v=>`${v} ha`} />
           <SliderRow label="Preço da saca (R$/sc 60kg)" value={preco} onChange={setPreco} min={50} max={150} step={2} fmt={v=>`R$ ${v}`} />
-          <SliderRow label="Produtividade (t/ha)" value={prodTha} onChange={setProdTha} min={1.0} max={6.0} step={0.1} fmt={v=>`${v.toFixed(1)} t/ha`} cor="#0284c7" />
-          <SliderRow label="Distância à Agrária (km)" value={distKm} onChange={setDistKm} min={50} max={1200} step={25} fmt={v=>`${v} km`} cor="#d97706" />
+          {modoAvancado && (<>
+            <SliderRow label="Produtividade (t/ha)" value={prodTha} onChange={setProdTha} min={1.0} max={6.0} step={0.1} fmt={v=>`${v.toFixed(1)} t/ha`} cor="#0284c7" />
+            <SliderRow label="Distância à maltaria (km)" value={distKm} onChange={setDistKm} min={50} max={1200} step={25} fmt={v=>`${v} km`} cor="#d97706" />
+          </>)}
         </div>
+        {!modoAvancado && (
+          <p style={{ fontSize:10, color:'#6B7280', marginTop:14 }}>
+            Usando produtividade média de {uf} ({prodTha.toFixed(1)} t/ha) e distância de referência ({distKm} km) —
+            mude pro modo <strong>Avançado</strong> pra ajustar esses dois também.
+          </p>
+        )}
       </div>
 
       {/* ── KPIs principais ── */}
