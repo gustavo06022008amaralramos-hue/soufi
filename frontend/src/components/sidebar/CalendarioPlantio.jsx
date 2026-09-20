@@ -1,4 +1,4 @@
-import { AlertTriangle, Snowflake, CloudRain, Leaf } from 'lucide-react';
+import { AlertTriangle, Snowflake, CloudRain, Leaf, Sprout, GitBranch, Wheat, Sun, Package } from 'lucide-react';
 
 /* ── Regiões → calendário adaptado ── */
 const SUL     = new Set(['PR','SC','RS']);
@@ -17,13 +17,21 @@ const CONFIG = {
   nordeste: { meses:['Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'], label:'Ciclo altitude · Jun–Nov',   mesInicio:5 },
 };
 
-/* Fases: iCol/fCol = índice 0-based dentro do array de meses exibidos */
+/* Fases: iCol/fCol = índice 0-based dentro do array de meses exibidos.
+   Ícone + explicação — mesmo texto já usado no Manual ("Como interpretar o
+   Calendário de Cultivo?") — repetido aqui, ao lado do dado, em vez de só
+   numa página separada, pra reduzir a barreira de quem não é agrônomo. */
 const FASES = [
-  { label:'Semeio',       iCol:1, fCol:3, cor:'#15803d', aviso:null },
-  { label:'Perfilhamento',iCol:2, fCol:4, cor:'#0284c7', aviso:null },
-  { label:'Espigamento',  iCol:3, fCol:5, cor:'#ca8a04', aviso:'Crítico — risco de geada', avisoCols:[3] },
-  { label:'Maturação',    iCol:4, fCol:6, cor:'#d97706', aviso:null },
-  { label:'Colheita',     iCol:5, fCol:7, cor:'#065f46', aviso:'Risco de chuva na colheita', avisoCols:[5,6] },
+  { label:'Semeio', icon:Sprout, iCol:1, fCol:3, cor:'#15803d', aviso:null,
+    explicacao:'Janela recomendada. Semeio tardio (Jul) reduz risco de geada no espigamento.' },
+  { label:'Perfilhamento', icon:GitBranch, iCol:2, fCol:4, cor:'#0284c7', aviso:null,
+    explicacao:'Fase de desenvolvimento vegetativo. Temperatura ideal 10–18°C.' },
+  { label:'Espigamento', icon:Wheat, iCol:3, fCol:5, cor:'#ca8a04', aviso:'Crítico — risco de geada', avisoCols:[3],
+    explicacao:'Fase crítica. Geada nessa fase pode causar dano irreversível à espiga.' },
+  { label:'Maturação', icon:Sun, iCol:4, fCol:6, cor:'#d97706', aviso:null,
+    explicacao:'Formação do grão. Clima seco favorece qualidade malteável.' },
+  { label:'Colheita', icon:Package, iCol:5, fCol:7, cor:'#065f46', aviso:'Risco de chuva na colheita', avisoCols:[5,6],
+    explicacao:'Chuva acima do padrão nesse período causa germinação pré-colheita (GPH).' },
 ];
 
 /* Janela de semeio recomendada por score — não há tabela oficial de produtividade
@@ -123,7 +131,8 @@ export default function CalendarioPlantio({ municipio, calendario }) {
       {/* Barras de fase */}
       <div style={{ display:'flex', flexDirection:'column', gap:5, marginBottom:10 }}>
         {FASES.map((fase, fi) => (
-          <div key={fi} style={{ display:'grid', gridTemplateColumns:`repeat(${N},1fr)` }}>
+          <div key={fi} title={`${fase.label} — ${fase.explicacao}`}
+            style={{ display:'grid', gridTemplateColumns:`repeat(${N},1fr)`, cursor:'help' }}>
             {Array.from({ length: N }, (_, col) => {
               const inRange = col >= fase.iCol && col < fase.fCol;
               const isFirst = col === fase.iCol;
@@ -149,10 +158,13 @@ export default function CalendarioPlantio({ municipio, calendario }) {
                   borderRadius:`${isFirst?4:0}px ${isLast?4:0}px ${isLast?4:0}px ${isFirst?4:0}px`,
                 }}>
                   {isFirst && (
-                    <span style={{ fontSize:8, fontWeight:700, color:'#fff',
-                      whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
-                      maxWidth:`${(fase.fCol-fase.iCol)*60}px` }}>
-                      {fase.label}
+                    <span style={{ display:'flex', alignItems:'center', gap:3, overflow:'hidden' }}>
+                      <fase.icon size={10} color="#fff" style={{ flexShrink:0 }} />
+                      <span style={{ fontSize:8, fontWeight:700, color:'#fff',
+                        whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis',
+                        maxWidth:`${(fase.fCol-fase.iCol)*60-14}px` }}>
+                        {fase.label}
+                      </span>
                     </span>
                   )}
                 </div>
