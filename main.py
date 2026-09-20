@@ -155,7 +155,8 @@ def municipios_mapa():
             "apto_geral, score_aptidao, "
             "score_trigo, classificacao_trigo, score_soja, classificacao_soja, "
             "dist_guarapuava_km, dist_lages_km, dist_ponta_grossa_km, "
-            "frete_estimado_sc, maltaria_referencia, zona_logistica"
+            "frete_estimado_sc, maltaria_referencia, zona_logistica, "
+            "tem_zarc_cevada"
         )
         PAGE = 1000
         todos = []

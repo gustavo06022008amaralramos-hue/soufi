@@ -37,8 +37,11 @@ const CUSTOS_UF = {
   default: { semente:185, fertilizante:1000, defensivos:480, mecanizacao:440, secagem_ton:65, prod_tha:2.8 },
 };
 
-// Estados com ZARC cevada cervejeira publicado (Portaria SPA/MAPA + Embrapa
-// Trigo 2025) — mesma lista usada na aba Seguro do painel de município.
+// Estados com ZARC cevada cervejeira publicado — mantido só como fallback
+// pra município sem a flag real ainda calculada (tem_zarc_cevada, Fase 1 +
+// atualizar_flag_zarc_real.py). A fonte de verdade agora é por MUNICÍPIO,
+// não por estado: nem todo município de um estado "com ZARC" tem registro
+// real (a Tábua de Risco cobre 1.429 dos ~1.600+ municípios desses 7 estados).
 const UFS_COM_SEGURO = new Set(['PR', 'SC', 'RS', 'SP', 'MG', 'GO', 'DF']);
 
 /* ─── Helpers ────────────────────────────────────────────────── */
@@ -90,7 +93,8 @@ function calcViabilidade(m, precoSaca, freteTonKm) {
   const breakeven_tha = custo_total / Math.max(precoLiqTon, 1);
   const roi          = custo_total > 0 ? (lucro_ha / custo_total) * 100 : 0;
 
-  const temSeguro   = UFS_COM_SEGURO.has(m.uf) && (m.score_aptidao ?? 0) >= 70;
+  const temZarcReal = m.tem_zarc_cevada ?? UFS_COM_SEGURO.has(m.uf);
+  const temSeguro   = temZarcReal && (m.score_aptidao ?? 0) >= 70;
   const scoreSeguro = temSeguro ? 30 : (m.score_aptidao ?? 0) >= 40 ? 85 : 0;
 
   // ── Hard Filter ──────────────────────────────────────────────
