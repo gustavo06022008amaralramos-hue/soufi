@@ -23,6 +23,19 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.asin(Math.sqrt(a));
 }
 
+// 3 maltarias de referência (calcular_frete.py já calcula a distância do
+// município às 3 e escolhe a mais próxima) — nome curto pra exibição.
+const MALTARIAS_NOME = {
+  'Cooperativa Agraria (Guarapuava/PR)': 'Agrária',
+  'AmBev Lages (SC)': 'AmBev Lages',
+  'Cargill Ponta Grossa (PR)': 'Cargill Ponta Grossa',
+};
+const MALTARIAS_CAMPO = {
+  'Cooperativa Agraria (Guarapuava/PR)': 'dist_guarapuava_km',
+  'AmBev Lages (SC)': 'dist_lages_km',
+  'Cargill Ponta Grossa (PR)': 'dist_ponta_grossa_km',
+};
+
 function fmt(v, dec = 0) {
   if (v == null) return '—';
   return Number(v).toLocaleString('pt-BR', { minimumFractionDigits: dec, maximumFractionDigits: dec });
@@ -45,7 +58,11 @@ const CUSTOS_UF = {
 function enriquecer(m, precoSaca = 95) {
   if (!m) return null;
   const c = CUSTOS_UF[m.uf] ?? CUSTOS_UF.default;
-  const dist = m.lat && m.lon ? Math.round(haversine(m.lat, m.lon, AGRARIA.lat, AGRARIA.lon) * 1.35) : null;
+  const campoDist = MALTARIAS_CAMPO[m.maltaria_referencia];
+  const dist = campoDist && m[campoDist] != null
+    ? Math.round(m[campoDist])
+    : (m.lat && m.lon ? Math.round(haversine(m.lat, m.lon, AGRARIA.lat, AGRARIA.lon) * 1.35) : null);
+  const maltaria = MALTARIAS_NOME[m.maltaria_referencia] ?? 'Agrária';
   const precoTon = (precoSaca / 60) * 1000;
   const frete = dist ? dist * 0.32 : 0;
   const liquido = precoTon - frete;
@@ -53,7 +70,7 @@ function enriquecer(m, precoSaca = 95) {
   const receita = liquido * c.prod_tha;
   const lucro = receita - custoTotal;
   const roi = custoTotal > 0 ? (lucro / custoTotal) * 100 : 0;
-  return { ...m, dist, frete, liquido, custoTotal, receita, lucro, roi, prod_tha: c.prod_tha };
+  return { ...m, dist, maltaria, frete, liquido, custoTotal, receita, lucro, roi, prod_tha: c.prod_tha };
 }
 
 /* ── Dimensões do radar ─────────────────────────── */
@@ -94,7 +111,7 @@ const LINHAS = [
   { label: 'Risco de geada', key: 'risco_geada_pct', fmt: v => `${fmt(v,0)}%`, maior: 'pior' },
   { label: 'Tipo de solo ZARC', key: 'tipo_solo_zarc', fmt: v => `Tipo ${v ?? '—'}`, maior: 'melhor' },
   { label: 'Argila (%)', key: 'pct_argila', fmt: v => `${fmt(v,1)}%`, maior: 'melhor' },
-  { label: 'Distância Agrária', key: 'dist', fmt: v => v ? `${v} km` : '—', maior: 'pior' },
+  { label: 'Distância à maltaria mais próxima', key: 'dist', fmt: v => v ? `${v} km` : '—', maior: 'pior' },
   { label: 'Frete estimado', key: 'frete', fmt: v => v ? fmtR(v) + '/ton' : '—', maior: 'pior' },
   { label: 'Preço líquido/ton', key: 'liquido', fmt: v => v ? fmtR(v) : '—', maior: 'melhor' },
   { label: 'Custo produção/ha', key: 'custoTotal', fmt: v => fmtR(v), maior: 'pior' },
@@ -304,7 +321,7 @@ export default function CompararPage({ municipios = [] }) {
                           <span style={{ fontSize: 9, fontWeight: 700, color: m.score_aptidao >= 70 ? '#1A7A3C' : m.score_aptidao >= 40 ? '#D4A017' : '#4A90C4', background: m.score_aptidao >= 70 ? '#F0FDF4' : m.score_aptidao >= 40 ? '#FFFBEB' : '#EFF6FF', borderRadius: 5, padding: '2px 6px', border: `1px solid ${m.score_aptidao >= 70 ? '#1A7A3C' : m.score_aptidao >= 40 ? '#D4A017' : '#4A90C4'}30` }}>
                             ZARC {m.score_aptidao ?? '—'}/100
                           </span>
-                          {m.dist && <span style={{ fontSize: 9, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', borderRadius: 5, padding: '2px 6px' }}>{m.dist} km</span>}
+                          {m.dist && <span style={{ fontSize: 9, fontWeight: 600, color: '#6B7280', background: '#F3F4F6', borderRadius: 5, padding: '2px 6px' }}>{m.dist} km · {m.maltaria}</span>}
                           <span style={{ fontSize: 9, fontWeight: 600, color: (m.lucro ?? 0) >= 0 ? '#1A7A3C' : '#DC2626', background: (m.lucro ?? 0) >= 0 ? '#F0FDF4' : '#FEF2F2', borderRadius: 5, padding: '2px 6px' }}>
                             ROI {fmt(m.roi, 0)}%
                           </span>

@@ -26,6 +26,15 @@ function haversine(la1,lo1,la2,lo2) {
   const a = Math.sin((la2-la1)*r/2)**2 + Math.cos(la1*r)*Math.cos(la2*r)*Math.sin((lo2-lo1)*r/2)**2;
   return R*2*Math.asin(Math.sqrt(a));
 }
+
+// 3 maltarias de referência (calcular_frete.py já calcula a distância do
+// município às 3 e escolhe a mais próxima — antes só a Agrária aparecia
+// em qualquer tela do frontend, mesmo pra município mais perto de outra).
+const MALTARIAS_INFO = {
+  'Cooperativa Agraria (Guarapuava/PR)': { nome: 'Cooperativa Agrária', local: 'Entre Rios, Guarapuava / PR', campo: 'dist_guarapuava_km' },
+  'AmBev Lages (SC)':                    { nome: 'AmBev Maltaria',      local: 'Lages / SC',                  campo: 'dist_lages_km' },
+  'Cargill Ponta Grossa (PR)':           { nome: 'Cargill',             local: 'Ponta Grossa / PR',            campo: 'dist_ponta_grossa_km' },
+};
 function viabLabel(d) {
   if (d<=300) return { label:'Muito viável', cor:'#16a34a' };
   if (d<=600) return { label:'Viável',        cor:'#65a30d' };
@@ -206,7 +215,7 @@ th{text-align:left;font-size:9px;font-weight:700;color:#6B7280;text-transform:up
 ${log ? `<div class="sec">
   <div class="stitle">Análise Logística</div>
   <div class="g2">
-    <div class="card"><div class="ct">Distância até Cooperativa Agrária</div><div class="cv">${log.dist} km</div><div class="cu">Entre Rios, Guarapuava / PR</div></div>
+    <div class="card"><div class="ct">Distância até ${log.destino.nome}</div><div class="cv">${log.dist} km</div><div class="cu">${log.destino.local}</div></div>
     <div class="card" style="border-color:${log.viab.cor}50;"><div class="ct">Viabilidade</div><div class="cv" style="color:${log.viab.cor};">${log.viab.label}</div><div class="cu">Líquido/saca: R$ ${log.liqSaca.toFixed(2)}</div></div>
     <div class="card"><div class="ct">Preço bruto / ton</div><div class="cv">R$ ${Math.round(log.pTon)}</div><div class="cu">≈ R$ ${(log.pTon*60/1000).toFixed(0)}/saca</div></div>
     <div class="card"><div class="ct">Frete estimado</div><div class="cv">R$ ${Math.round(log.frete)}/ton</div><div class="cu">Líquido: R$ ${Math.round(log.liq)}/ton</div></div>
@@ -263,11 +272,15 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
   /* useMemo ANTES do early return — regra dos hooks */
   const log = useMemo(() => {
     if (!municipio?.lat || !municipio?.lon) return null;
-    const dist    = Math.round(haversine(municipio.lat, municipio.lon, AGRARIA.lat, AGRARIA.lon) * 1.35);
+    const maltariaInfo = MALTARIAS_INFO[municipio.maltaria_referencia];
+    const dist = maltariaInfo
+      ? Math.round(municipio[maltariaInfo.campo])
+      : Math.round(haversine(municipio.lat, municipio.lon, AGRARIA.lat, AGRARIA.lon) * 1.35);
+    const destino = maltariaInfo ?? MALTARIAS_INFO['Cooperativa Agraria (Guarapuava/PR)'];
     const pTon    = (precoSaca / 60) * 1000;
     const frete   = dist * freteTonKm;
     const liq     = pTon - frete;
-    return { dist, pTon, frete, liq, liqSaca: liq * 60 / 1000, viab: viabLabel(dist) };
+    return { dist, pTon, frete, liq, liqSaca: liq * 60 / 1000, viab: viabLabel(dist), destino };
   }, [municipio, precoSaca, freteTonKm]);
 
   /* ZARC real por município, decêndio a decêndio — Fase 1/7 do plano de 10
@@ -684,8 +697,8 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
               display:'flex',alignItems:'center',gap:8 }}>
               <Truck size={14} color="#374151" />
               <div style={{ flex:1 }}>
-                <p style={{ fontSize:10,color:'#6B7280' }}>Destino — Cooperativa Agrária</p>
-                <p style={{ fontSize:12,fontWeight:600,color:'#374151' }}>Entre Rios, Guarapuava / PR</p>
+                <p style={{ fontSize:10,color:'#6B7280' }}>Destino — {log.destino.nome} (mais próxima)</p>
+                <p style={{ fontSize:12,fontWeight:600,color:'#374151' }}>{log.destino.local}</p>
               </div>
               <div style={{ textAlign:'right' }}>
                 <p style={{ fontSize:20,fontWeight:800,color:'#374151',lineHeight:1 }}>{log.dist}</p>
@@ -747,7 +760,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
               ))}
             </div>
             <p style={{ fontSize:9,color:'#9CA3AF',lineHeight:1.5 }}>
-              Distância estimada via fator rodoviário 1,35× sobre linha reta.
+              Distância real até a maltaria de referência mais próxima entre as 3 (Cooperativa Agrária, AmBev Lages, Cargill Ponta Grossa) — via fator rodoviário 1,35× sobre linha reta.
             </p>
           </>
         )}

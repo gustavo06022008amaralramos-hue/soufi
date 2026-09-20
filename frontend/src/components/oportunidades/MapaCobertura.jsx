@@ -104,7 +104,7 @@ export default function MapaCobertura({ dados = [], onSelect, selected }) {
                   </p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     <Row label="Score ZARC" val={`${m.score_aptidao ?? '—'}/100`} />
-                    <Row label="Distância Agrária" val={`${m.dist} km`} />
+                    <Row label={`Distância (${m.maltaria ?? 'maltaria'})`} val={`${m.dist} km`} />
                     <Row label="Lucro est./ha" val={`R$ ${Math.round(m.lucro_ha ?? 0)}`} />
                     <Row label="ROI" val={`${(m.roi ?? 0).toFixed(0)}%`} />
                     <Row label="Score combinado" val={`${m.scoreComb ?? 0}`} highlight />

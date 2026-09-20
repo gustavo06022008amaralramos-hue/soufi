@@ -153,7 +153,9 @@ def municipios_mapa():
             "temp_media_anual, precipitacao_acumulada_anual, "
             "risco_geada_pct, chuva_colheita_mm, "
             "apto_geral, score_aptidao, "
-            "score_trigo, classificacao_trigo, score_soja, classificacao_soja"
+            "score_trigo, classificacao_trigo, score_soja, classificacao_soja, "
+            "dist_guarapuava_km, dist_lages_km, dist_ponta_grossa_km, "
+            "frete_estimado_sc, maltaria_referencia, zona_logistica"
         )
         PAGE = 1000
         todos = []

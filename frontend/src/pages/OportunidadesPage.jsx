@@ -49,19 +49,37 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.asin(Math.sqrt(a));
 }
 
-function calcLogistica(lat, lon, precoSaca, freteTonKm) {
-  if (!lat || !lon) return null;
-  const dist = Math.round(haversine(lat, lon, AGRARIA.lat, AGRARIA.lon) * 1.35);
+// 3 maltarias de referência (calcular_frete.py já calcula a distância do
+// município às 3 e escolhe a mais próxima) — antes só a Agrária era usada
+// em qualquer tela, mesmo pra município mais perto de outra.
+const MALTARIAS_NOME = {
+  'Cooperativa Agraria (Guarapuava/PR)': 'Agrária',
+  'AmBev Lages (SC)': 'AmBev Lages',
+  'Cargill Ponta Grossa (PR)': 'Cargill Ponta Grossa',
+};
+const MALTARIAS_CAMPO = {
+  'Cooperativa Agraria (Guarapuava/PR)': 'dist_guarapuava_km',
+  'AmBev Lages (SC)': 'dist_lages_km',
+  'Cargill Ponta Grossa (PR)': 'dist_ponta_grossa_km',
+};
+
+function calcLogistica(m, precoSaca, freteTonKm) {
+  if (!m.lat || !m.lon) return null;
+  const campoDist = MALTARIAS_CAMPO[m.maltaria_referencia];
+  const dist = campoDist && m[campoDist] != null
+    ? Math.round(m[campoDist])
+    : Math.round(haversine(m.lat, m.lon, AGRARIA.lat, AGRARIA.lon) * 1.35);
+  const maltaria = MALTARIAS_NOME[m.maltaria_referencia] ?? 'Agrária';
   const precoTon = (precoSaca / 60) * 1000;
   const frete    = dist * freteTonKm;
   const liquido  = precoTon - frete;
   const scoreLog = dist <= 150 ? 100 : dist <= 300 ? 85 : dist <= 500 ? 65 : dist <= 700 ? 40 : 15;
-  return { dist, precoTon, frete, liquido, scoreLog };
+  return { dist, maltaria, precoTon, frete, liquido, scoreLog };
 }
 
 function calcViabilidade(m, precoSaca, freteTonKm) {
   const c   = CUSTOS_UF[m.uf] ?? CUSTOS_UF.default;
-  const log = calcLogistica(m.lat, m.lon, precoSaca, freteTonKm);
+  const log = calcLogistica(m, precoSaca, freteTonKm);
   if (!log) return null;
 
   const precoLiqTon  = log.liquido;
@@ -373,7 +391,7 @@ export default function OportunidadesPage({ municipios = [] }) {
   ] : [];
 
   function exportCSV() {
-    const cols = ['nome_municipio','uf','score_aptidao','dist','frete','liquido','lucro_ha','roi','scoreComb'];
+    const cols = ['nome_municipio','uf','score_aptidao','dist','maltaria','frete','liquido','lucro_ha','roi','scoreComb'];
     const rows = filtrados.map(m => cols.map(c => {
       const v = m[c];
       return typeof v === 'number' ? v.toFixed(1) : (v ?? '');
@@ -438,7 +456,7 @@ export default function OportunidadesPage({ municipios = [] }) {
             <h1 style={{ fontSize:22, fontWeight:800, color:'#fff', letterSpacing:-0.3 }}>Oportunidades de Expansão</h1>
           </div>
           <p style={{ fontSize:12, color:'rgba(255,255,255,0.65)', marginLeft:49 }}>
-            Ranking combinado — aptidão ZARC · logística Agrária · viabilidade econômica · seguro agrícola
+            Ranking combinado — aptidão ZARC · logística (maltaria mais próxima) · viabilidade econômica · seguro agrícola
           </p>
         </div>
         <button onClick={exportCSV} style={{
@@ -458,7 +476,7 @@ export default function OportunidadesPage({ municipios = [] }) {
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
         <KpiCard icon={Leaf}    label="Aptos ZARC"         value={kpis.aptos}   sub={ufFiltro==='Todos' ? 'score ≥ 70' : `score ≥ 70 em ${ufFiltro}`}            cor="#16a34a" total={dadosUF.length} />
         <KpiCard icon={Shield}  label="Oport. de Seguro"   value={kpis.semSeg}  sub={ufFiltro==='Todos' ? 'aptos sem PSR ativo' : `sem PSR em ${ufFiltro}`}   cor="#7c3aed" total={dadosUF.length} />
-        <KpiCard icon={Truck}   label="Logística Viável"   value={kpis.viaveis} sub="até 500 km da Agrária" cor="#2563eb" total={dadosUF.length} />
+        <KpiCard icon={Truck}   label="Logística Viável"   value={kpis.viaveis} sub="até 500 km da maltaria mais próxima" cor="#2563eb" total={dadosUF.length} />
         <KpiCard icon={Star}    label="Prioridade 1"       value={kpis.prio1}   sub="score combinado ≥ 75"  cor="#d97706" total={dadosUF.length} />
       </div>
 
@@ -670,7 +688,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                     <p style={{ fontSize:16, fontWeight:800, color:'#111827' }}>
                       {detalhe.nome_municipio} <span style={{ color:'#9CA3AF', fontWeight:500 }}>· {detalhe.uf}</span>
                     </p>
-                    <p style={{ fontSize:11, color:'#6B7280', marginTop:2 }}>IBGE {detalhe.codigo_ibge} · {detalhe.dist} km da Agrária</p>
+                    <p style={{ fontSize:11, color:'#6B7280', marginTop:2 }}>IBGE {detalhe.codigo_ibge} · {detalhe.dist} km · {detalhe.maltaria}</p>
                   </div>
                   <button onClick={() => setDetalhe(null)} style={{
                     background:'#F3F4F6', border:'1px solid #E5E7EB', borderRadius:8,
@@ -795,7 +813,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                 <div>
                   <p style={{ fontSize:11, fontWeight:700, color:'#374151', marginBottom:12, textTransform:'uppercase', letterSpacing:0.8 }}>Logística</p>
                   {[
-                    ['Distância Agrária', `${mapaSelected.dist} km`],
+                    [`Distância (${mapaSelected.maltaria})`, `${mapaSelected.dist} km`],
                     ['Frete estimado',    `R$ ${Math.round(mapaSelected.frete)}/ton`],
                     ['Preço líq./ton',    `R$ ${Math.round(mapaSelected.liquido)}`],
                     ['Lucro est./ha',     `R$ ${Math.round(mapaSelected.lucro_ha)}`],
@@ -963,7 +981,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                           <p style={{ fontSize:12, fontWeight:600, color:'#374151' }}>
                             {m.nome_municipio} <span style={{ color:'#9CA3AF', fontWeight:500 }}>/ {m.uf}</span>
                           </p>
-                          <p style={{ fontSize:10, color:'#9CA3AF' }}>{m.dist} km da Agrária · R$ {Math.round(m.lucro_ha).toLocaleString('pt-BR')}/ha</p>
+                          <p style={{ fontSize:10, color:'#9CA3AF' }}>{m.dist} km · {m.maltaria} · R$ {Math.round(m.lucro_ha).toLocaleString('pt-BR')}/ha</p>
                         </div>
                         <ScoreBadge score={m.scoreComb} compact />
                       </button>
@@ -996,7 +1014,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                   <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12 }}>
                     <div>
                       <p style={{ fontSize:13, fontWeight:700, color:'#111827' }}>{m.nome_municipio}</p>
-                      <p style={{ fontSize:10, color:'#6B7280' }}>{m.uf} · {m.altitude?.toFixed(0)}m · {m.dist}km Agrária</p>
+                      <p style={{ fontSize:10, color:'#6B7280' }}>{m.uf} · {m.altitude?.toFixed(0)}m · {m.dist}km {m.maltaria}</p>
                     </div>
                     <ScoreBadge score={m.scoreComb} compact />
                   </div>
@@ -1061,7 +1079,7 @@ export default function OportunidadesPage({ municipios = [] }) {
             <table style={{ width:'100%', borderCollapse:'collapse' }}>
               <thead>
                 <tr style={{ background:'#F9FAFB' }}>
-                  {['Município','UF','Score ZARC','Distância Agrária','Lucro est./ha','ROI','Dist. p/ Seguro','Prioridade'].map(h => (
+                  {['Município','UF','Score ZARC','Distância (maltaria)','Lucro est./ha','ROI','Dist. p/ Seguro','Prioridade'].map(h => (
                     <th key={h} style={{ padding:'10px 14px', fontSize:10, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.8, textAlign:'left', borderBottom:'1px solid #E5E7EB' }}>{h}</th>
                   ))}
                 </tr>
