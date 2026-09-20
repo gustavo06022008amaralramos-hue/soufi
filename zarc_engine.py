@@ -29,6 +29,25 @@ def classificar_risco(nivel_risco):
     return f"ELEGIVEL_{nivel_risco}"
 
 
+def montar_calendario(registros):
+    """Reduz os registros de zarc_<cultura> de um município (todos os
+    decêndios, grupos, solos e manejos) a UM ponto por decêndio (1-36): o
+    melhor (menor) nível de risco disponível entre qualquer grupo/solo/manejo
+    naquele decêndio. Base real pra desenhar uma barra de época de semeadura
+    do ano inteiro (Fase "melhorias por página" — barra horizontal, real,
+    sem inventar fases fenológicas que não temos dado pra sustentar)."""
+    melhor_por_decendio = {}
+    for r in registros:
+        d = r["decendio"]
+        risco = r["nivel_risco"]
+        if d not in melhor_por_decendio or risco < melhor_por_decendio[d]:
+            melhor_por_decendio[d] = risco
+    return [
+        {"decendio": d, "nivel_risco": melhor_por_decendio.get(d)}
+        for d in range(1, 37)
+    ]
+
+
 def montar_resposta(codigo_ibge, municipio, uf, data_plantio, decendio, registros, safra):
     """Monta a resposta final do endpoint /zarc/elegibilidade a partir dos
     registros já filtrados (mesmo município + decêndio, de zarc_cevada)."""

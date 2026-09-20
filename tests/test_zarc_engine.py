@@ -64,3 +64,24 @@ def test_montar_resposta_com_registros_elegivel():
     assert resp["elegivel"] is True
     assert resp["resultados"][0]["classificacao"] == "ELEGIVEL_20"
     assert resp["resultados"][0]["portaria"] == "Port.426_de_15-10-2025"
+
+
+def test_montar_calendario_tem_36_pontos_mesmo_sem_registro():
+    cal = ze.montar_calendario([])
+    assert len(cal) == 36
+    assert all(p["nivel_risco"] is None for p in cal)
+    assert [p["decendio"] for p in cal] == list(range(1, 37))
+
+
+def test_montar_calendario_pega_o_melhor_risco_por_decendio():
+    registros = [
+        {"decendio": 17, "nivel_risco": 40},
+        {"decendio": 17, "nivel_risco": 20},   # melhor (menor) — deve vencer
+        {"decendio": 17, "nivel_risco": 30},
+        {"decendio": 18, "nivel_risco": 30},
+    ]
+    cal = ze.montar_calendario(registros)
+    por_decendio = {p["decendio"]: p["nivel_risco"] for p in cal}
+    assert por_decendio[17] == 20
+    assert por_decendio[18] == 30
+    assert por_decendio[1] is None

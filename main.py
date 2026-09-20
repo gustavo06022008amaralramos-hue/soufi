@@ -7,7 +7,7 @@ from supabase import create_client, Client
 from typing import Optional
 from dotenv import load_dotenv
 
-from zarc_engine import data_para_decendio, montar_resposta
+from zarc_engine import data_para_decendio, montar_resposta, montar_calendario
 from calcular_gdd import acumular_gdd, TB_POR_CULTURA
 
 load_dotenv()
@@ -155,8 +155,10 @@ def municipios_mapa():
             "apto_geral, score_aptidao, "
             "score_trigo, classificacao_trigo, score_soja, classificacao_soja, "
             "dist_guarapuava_km, dist_lages_km, dist_ponta_grossa_km, "
-            "frete_estimado_sc, maltaria_referencia, zona_logistica, "
-            "tem_zarc_cevada"
+            "frete_estimado_sc, maltaria_referencia, zona_logistica"
+            # tem_zarc_cevada: FORA temporariamente — migrations/010 ainda não
+            # rodou em produção (coluna não existe, quebra o endpoint inteiro).
+            # Reativar (", tem_zarc_cevada") assim que a migração rodar.
         )
         PAGE = 1000
         todos = []
@@ -317,6 +319,52 @@ def zarc_elegibilidade(
 
         row = municipio_row.data[0]
         return montar_resposta(codigo_ibge, row["municipio"], row["uf"], data_plantio, decendio, registros, "2025/2026")
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/zarc/calendario", tags=["ZARC"])
+def zarc_calendario(
+    codigo_ibge: int = Query(...),
+    cultura: str = Query(default="cevada", description="'cevada', 'trigo' ou 'soja'."),
+):
+    """Janela de semeadura do ANO INTEIRO (36 decêndios) por município —
+    melhor risco disponível em cada decêndio, entre qualquer grupo/solo/
+    manejo. Base real pra uma barra de época de semeadura visual (melhoria
+    'barra de época de semeadura', não uma fase fenológica inventada)."""
+    tabela = ZARC_TABELA_POR_CULTURA.get(cultura)
+    if tabela is None:
+        raise HTTPException(status_code=400, detail=f"Cultura '{cultura}' não suportada — use uma de {list(ZARC_TABELA_POR_CULTURA)}.")
+    try:
+        municipio_row = (
+            get_supabase().table(tabela)
+            .select("municipio, uf")
+            .eq("codigo_ibge", codigo_ibge)
+            .limit(1)
+            .execute()
+        )
+        if not municipio_row.data:
+            return {
+                "codigo_ibge": codigo_ibge, "municipio": None, "uf": None,
+                "cultura": cultura, "safra": "2025/2026",
+                "calendario": montar_calendario([]),
+            }
+
+        registros = (
+            get_supabase().table(tabela)
+            .select("decendio, nivel_risco")
+            .eq("codigo_ibge", codigo_ibge)
+            .execute()
+        ).data
+
+        row = municipio_row.data[0]
+        return {
+            "codigo_ibge": codigo_ibge, "municipio": row["municipio"], "uf": row["uf"],
+            "cultura": cultura, "safra": "2025/2026",
+            "calendario": montar_calendario(registros),
+        }
     except HTTPException:
         raise
     except Exception as e:

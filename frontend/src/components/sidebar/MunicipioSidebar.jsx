@@ -4,6 +4,7 @@ import { X, MapPin, Mountain, Thermometer, CloudRain, Snowflake,
          Shield, ExternalLink, Loader2 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import CalendarioPlantio from './CalendarioPlantio.jsx';
+import EpocaSemeaduraBar from './EpocaSemeaduraBar.jsx';
 
 const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
@@ -599,6 +600,9 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                   <p style={{ fontSize:10, color:'#9CA3AF' }}>{gddReal.motivo}</p>
                 </div>
               )}
+
+              {/* Barra de época de semeadura — ano inteiro, real (36 decêndios) */}
+              <EpocaSemeaduraBar codigoIbge={municipio.codigo_ibge} cultura={culturaSim} decendioAtual={zarcReal?.decendio} />
 
               {/* Resultado real por município */}
               {zarcReal && !zarcReal.elegivel && (
