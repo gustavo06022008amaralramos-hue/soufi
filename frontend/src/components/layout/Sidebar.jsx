@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, Map, BarChart2, Leaf,
   Newspaper, LogOut, Handshake, TrendingUp, BookOpen,
-  Calculator, GitCompare,
+  Calculator, GitCompare, Rocket,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext.jsx';
 import { SoufiiIcon, SoufiiWordmark } from '../ui/SoufiiLogo.jsx';
@@ -19,6 +19,7 @@ const NAV = [
   { to:'/parceiros',    icon:Handshake,       label:'Parceiros'    },
   { to:'/oportunidades',icon:TrendingUp,      label:'Oportunidades'},
   { to:'/manual',       icon:BookOpen,        label:'Manual'       },
+  { to:'/pitch',        icon:Rocket,          label:'Pitch Plataforma', destaque: true },
 ];
 
 export default function Sidebar() {
