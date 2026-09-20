@@ -51,6 +51,26 @@ function diasMaturacao(ciclo) {
   return m ? Number(m[1]) : 999;
 }
 
+/* Cor pro cartão de reação a doença — cobre as duas escalas reais usadas nas
+   fontes (Embrapa Trigo R/MR/MS/S/AS e a escala numérica 0-9 da Agrária,
+   0=resistente) sem inventar uma terceira escala. */
+function corDoenca(val, ok) {
+  const v = (val ?? '').toLowerCase();
+  if (v.includes('altamente suscet')) return '#dc2626';
+  if (v.includes('moderadamente suscet')) return '#f59e0b';
+  if (/(?<!moderadamente )suscet/.test(v)) return '#dc2626';
+  if (v.includes('moderadamente resist')) return '#65a30d';
+  if (v.includes('resistente')) return '#10b981';
+  const escala09 = v.match(/^(\d+)\/9/);
+  if (escala09) {
+    const n = Number(escala09[1]);
+    if (n <= 2) return '#10b981';
+    if (n <= 5) return '#f59e0b';
+    return '#dc2626';
+  }
+  return ok ? '#10b981' : '#f59e0b';
+}
+
 /* Junta o catálogo oficial com as cultivares cadastradas pelo usuário numa
    lista única, no mesmo formato { key, c, extra, oficial } usado pelos
    cards e pelo modal de detalhe. */
@@ -311,14 +331,21 @@ function Detalhe({ cultivarKey, c, extra, oficial, onClose, onDelete }) {
         {extra.caracteristicas.length === 0 ? (
           <p style={{ fontSize: 11, color: 'var(--text-faint)', marginBottom: 20 }}>Nenhuma característica de doença informada no cadastro.</p>
         ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginBottom: 20 }}>
-          {extra.caracteristicas.map(({ label, val, ok }) => (
-            <div key={label} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              {ok ? <CheckCircle size={13} color="#10b981" /> : <AlertTriangle size={13} color="#f59e0b" />}
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', flex: 1 }}>{label}</span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: ok ? 'var(--text-primary)' : '#f59e0b' }}>{val}</span>
-            </div>
-          ))}
+        // Cartões coloridos lado a lado (padrão do portfólio Agrária: escaneia a
+        // "saúde" da cultivar num olhar) em vez de lista de texto com check/alerta.
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: 6, marginBottom: 20 }}>
+          {extra.caracteristicas.map(({ label, val, ok }) => {
+            const cor = corDoenca(val, ok);
+            return (
+              <div key={label} style={{
+                background: `${cor}15`, border: `1px solid ${cor}40`, borderRadius: 8,
+                padding: '8px 9px',
+              }}>
+                <p style={{ fontSize: 9, color: 'var(--text-faint)', marginBottom: 3, lineHeight: 1.3 }}>{label}</p>
+                <p style={{ fontSize: 12, fontWeight: 700, color: cor, lineHeight: 1.3 }}>{val}</p>
+              </div>
+            );
+          })}
         </div>
         )}
 
