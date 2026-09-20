@@ -458,45 +458,50 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
               </div>
             </div>
 
-            {/* Critérios com valor real */}
-            <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:10, overflow:'hidden' }}>
+            {/* Critérios com valor real — cartões lado a lado (mesmo padrão dos
+                cartões de reação a doença em Variedades: escaneia num olhar
+                em vez de ler linha por linha). */}
+            <div>
               <p style={{ fontSize:9,fontWeight:700,color:'#6B7280',textTransform:'uppercase',
-                letterSpacing:1.2,padding:'10px 14px 8px',borderBottom:'1px solid #F3F4F6' }}>
+                letterSpacing:1.2,marginBottom:7 }}>
                 Critérios ZARC / EMBRAPA
               </p>
-              {criterios.map((c, i) => {
-                // 3 níveis a partir da nota graduada (0-1): ideal / parcial (perto do
-                // limite, ainda ganha crédito) / fora (sem crédito nenhum). Sem isso,
-                // um valor a poucos décimos do limite parecia igual a um valor bem fora.
-                const tier = c.nota >= 0.999 ? 'ideal' : c.nota > 0 ? 'parcial' : 'fora';
-                const corTier = tier === 'ideal' ? '#16a34a' : tier === 'parcial' ? '#d97706' : '#dc2626';
-                const Icone = tier === 'ideal' ? CheckCircle : tier === 'parcial' ? AlertTriangle : XCircle;
-                return (
-                  <div key={c.label} style={{
-                    padding:'8px 14px 10px',
-                    borderBottom: i < criterios.length-1 ? '1px solid #F9FAFB' : 'none',
-                    background: tier === 'ideal' ? '#f0fdf420' : '#fff',
-                  }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:9 }}>
-                      <Icone size={14} color={corTier} style={{ flexShrink:0 }} />
-                      <c.icon size={11} color={c.cor} style={{ flexShrink:0 }} />
-                      <span style={{ flex:1, fontSize:11, color:'#374151', fontWeight:500 }}>{c.label}</span>
-                      <span style={{ fontSize:11, fontWeight:700, color:corTier }}>{c.val}</span>
-                      <span style={{ fontSize:9, color:'#9CA3AF', minWidth:52, textAlign:'right' }}>{c.faixa}</span>
-                    </div>
-                    {tier === 'parcial' && (
-                      <div style={{ display:'flex', alignItems:'center', gap:6, marginTop:4, paddingLeft:23 }}>
-                        <div style={{ flex:1, height:4, background:'#F3F4F6', borderRadius:2, overflow:'hidden' }}>
-                          <div style={{ width:`${Math.round(c.nota*100)}%`, height:'100%', background:corTier, borderRadius:2 }} />
-                        </div>
-                        <span style={{ fontSize:8, color:corTier, fontWeight:700, flexShrink:0 }}>
-                          {Math.round(c.nota*100)}% do critério — perto do ideal, não é reprovação total
-                        </span>
+              <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:6 }}>
+                {criterios.map(c => {
+                  // 3 níveis a partir da nota graduada (0-1): ideal / parcial (perto do
+                  // limite, ainda ganha crédito) / fora (sem crédito nenhum). Sem isso,
+                  // um valor a poucos décimos do limite parecia igual a um valor bem fora.
+                  const tier = c.nota >= 0.999 ? 'ideal' : c.nota > 0 ? 'parcial' : 'fora';
+                  const corTier = tier === 'ideal' ? '#16a34a' : tier === 'parcial' ? '#d97706' : '#dc2626';
+                  const Icone = tier === 'ideal' ? CheckCircle : tier === 'parcial' ? AlertTriangle : XCircle;
+                  return (
+                    <div key={c.label} style={{
+                      background: `${corTier}12`, border:`1px solid ${corTier}35`,
+                      borderRadius:9, padding:'8px 10px',
+                    }}>
+                      <div style={{ display:'flex', alignItems:'center', gap:5, marginBottom:4 }}>
+                        <c.icon size={10} color={c.cor} style={{ flexShrink:0 }} />
+                        <span style={{ fontSize:9, color:'#6B7280', flex:1, lineHeight:1.2 }}>{c.label}</span>
+                        <Icone size={12} color={corTier} style={{ flexShrink:0 }} />
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                      <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:4 }}>
+                        <span style={{ fontSize:13, fontWeight:700, color:corTier }}>{c.val}</span>
+                        <span style={{ fontSize:8, color:'#9CA3AF' }}>{c.faixa}</span>
+                      </div>
+                      {tier === 'parcial' && (
+                        <div style={{ marginTop:5 }}>
+                          <div style={{ height:4, background:'#F3F4F6', borderRadius:2, overflow:'hidden' }}>
+                            <div style={{ width:`${Math.round(c.nota*100)}%`, height:'100%', background:corTier, borderRadius:2 }} />
+                          </div>
+                          <span style={{ fontSize:7, color:corTier, fontWeight:600 }}>
+                            {Math.round(c.nota*100)}% do critério — perto do ideal
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Cultivares */}
