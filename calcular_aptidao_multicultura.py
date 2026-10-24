@@ -56,7 +56,16 @@ caracteristicas-da-especie-e-relacoes-com-o-ambiente/exigencias-climaticas):
 Reaproveita as funções de nota graduada (_plato/_rampa_alta/_rampa_baixa)
 de calcular_score_ponderado.py — mesma matemática, sem duplicar.
 """
-from calcular_score_ponderado import _plato, _rampa_alta, _rampa_baixa
+from calcular_score_ponderado import _plato, _rampa_alta, _rampa_baixa, LITORANEOS_IBGE, TETO_SCORE_LITORAL
+
+
+def eh_litoraneo(codigo_ibge):
+    """Município litorâneo direto (lista nacional do IBGE, mesma usada pra
+    cevada) — decisão do usuário (2026-09-20): nenhum município litorâneo
+    direto pode ser Apta nem Parcial em NENHUMA cultura, não só cevada.
+    Clima costeiro (umidade, salinidade, solo arenoso) é uma restrição
+    física, não específica de uma cultura só."""
+    return str(codigo_ibge) in LITORANEOS_IBGE
 
 # ==============================================================================
 # PESOS por cultura — cada uma com seus próprios critérios (ver fontes acima)
@@ -114,12 +123,18 @@ def notas_soja(m, registros_zarc):
 
 def score_trigo(m, registros_zarc):
     notas = notas_trigo(m, registros_zarc)
-    return int(round(sum(PESOS_TRIGO[k] * notas[k] for k in PESOS_TRIGO) * 100))
+    score = int(round(sum(PESOS_TRIGO[k] * notas[k] for k in PESOS_TRIGO) * 100))
+    if eh_litoraneo(m.get("codigo_ibge")):
+        score = min(score, TETO_SCORE_LITORAL)
+    return score
 
 
 def score_soja(m, registros_zarc):
     notas = notas_soja(m, registros_zarc)
-    return int(round(sum(PESOS_SOJA[k] * notas[k] for k in PESOS_SOJA) * 100))
+    score = int(round(sum(PESOS_SOJA[k] * notas[k] for k in PESOS_SOJA) * 100))
+    if eh_litoraneo(m.get("codigo_ibge")):
+        score = min(score, TETO_SCORE_LITORAL)
+    return score
 
 
 # ==============================================================================
@@ -127,9 +142,14 @@ def score_soja(m, registros_zarc):
 # decisão do usuário (2026-08-25): 0 reprovados = Apta; até 2 reprovados =
 # Parcial; mais de 2 reprovados = Inapta.
 # ==============================================================================
-def classificar_aptidao(criterios_aprovados):
+def classificar_aptidao(criterios_aprovados, litoraneo=False):
     """`criterios_aprovados`: lista de bool (True = passou no critério).
-    Retorna 'Apta' | 'Parcial' | 'Inapta'."""
+    Retorna 'Apta' | 'Parcial' | 'Inapta'. `litoraneo=True` força Inapta
+    direto — decisão do usuário (2026-09-20), município litorâneo direto
+    nunca é Apta nem Parcial em nenhuma cultura, independente de quantos
+    critérios climáticos brutos ele passaria."""
+    if litoraneo:
+        return "Inapta"
     reprovados = sum(1 for c in criterios_aprovados if not c)
     if reprovados == 0:
         return "Apta"

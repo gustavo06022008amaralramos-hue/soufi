@@ -63,16 +63,24 @@ PESOS = {
 assert abs(sum(PESOS.values()) - 1.0) < 1e-9
 
 # ==============================================================================
-# REGRA DE NEGÓCIO — Nordeste e municípios litorâneos diretos nunca são "Apto"
+# REGRA DE NEGÓCIO — Nordeste nunca é "Apto"; município litorâneo direto nunca
+# é nem "Parcialmente Apto"
 # ==============================================================================
 # O score por média climática anual é um proxy simplificado (não é o balanço
 # hídrico decendial do ZARC oficial) e às vezes classifica como "apto" cidades
 # litorâneas ou nordestinas que na prática não têm tradição nem clima real de
 # cultivo de cevada (ex: Florianópolis/SC, Balneário Camboriú/SC apareciam com
-# score 83; Boninal/BA com score 100). Decisão explícita do usuário: essas
-# regiões nunca devem ultrapassar o limiar de "Apto" (score >= 70).
+# score 83; Boninal/BA com score 100).
+# Decisão explícita do usuário (2026-08-22): Nordeste nunca ultrapassa o
+# limiar de "Apto" (score >= 70).
+# Decisão explícita do usuário (2026-09-20), mais rígida: município litorâneo
+# direto (defronta com o mar de verdade — lista nacional do IBGE, não só
+# Nordeste) nunca fica nem "Parcialmente Apto" (score >= 40) — clima costeiro
+# (umidade, salinidade, solo arenoso) é incompatível com cevada mesmo quando
+# a média anual de temperatura/chuva parece favorável.
 NORDESTE_UFS = {"AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"}
-TETO_SCORE_RESTRITO = 65  # abaixo de 70, com margem de segurança
+TETO_SCORE_NORDESTE = 65  # abaixo de 70 (Apto), com margem de segurança
+TETO_SCORE_LITORAL  = 39  # abaixo de 40 (Parcialmente Apto) — vira sempre Inapto
 
 _caminho_litoraneos = os.path.join(os.path.dirname(os.path.abspath(__file__)), "municipios_litoraneos_ibge.json")
 try:
@@ -83,10 +91,13 @@ except FileNotFoundError:
 
 
 def aplicar_regra_regiao_restrita(score, uf, codigo_ibge):
-    """Tampa o score em TETO_SCORE_RESTRITO se o município é do Nordeste ou
-    litorâneo direto (fonte: IBGE 'Municípios defrontantes com o mar')."""
-    if uf in NORDESTE_UFS or str(codigo_ibge) in LITORANEOS_IBGE:
-        return min(score, TETO_SCORE_RESTRITO)
+    """Município litorâneo direto (fonte: IBGE 'Municípios defrontantes com
+    o mar', nacional — não só Nordeste) nunca passa de Inapto. Nordeste como
+    um todo (mesmo sem ser litorâneo) nunca passa de Apto."""
+    if str(codigo_ibge) in LITORANEOS_IBGE:
+        return min(score, TETO_SCORE_LITORAL)
+    if uf in NORDESTE_UFS:
+        return min(score, TETO_SCORE_NORDESTE)
     return score
 
 

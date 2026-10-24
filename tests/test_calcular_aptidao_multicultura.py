@@ -92,3 +92,31 @@ def test_criterios_binarios_soja_fora_da_faixa():
     m = {"temp_media_anual": 5}
     assert apt.criterios_binarios_soja(m) == [False]
     assert apt.classificar_aptidao(apt.criterios_binarios_soja(m)) == "Parcial"
+
+
+# ── Regra do litoral (2026-09-20): nenhum município litorâneo direto pode
+# ser Apta nem Parcial em nenhuma cultura, mesmo com critérios climáticos
+# ideais. Mesma lista nacional do IBGE já usada pra cevada.
+def test_eh_litoraneo_reconhece_municipio_real_da_lista():
+    assert apt.eh_litoraneo("4205407") is True   # Florianópolis/SC
+    assert apt.eh_litoraneo("4109401") is False  # Guarapuava/PR, não litorâneo
+
+
+def test_classificar_aptidao_litoraneo_forca_inapta_mesmo_com_tudo_aprovado():
+    assert apt.classificar_aptidao([True, True, True, True], litoraneo=True) == "Inapta"
+
+
+def test_score_trigo_litoraneo_nunca_passa_do_teto():
+    m_ideal = {"codigo_ibge": "4205407", "pct_argila": 40, "temp_media_anual": 15, "altitude": 900, "risco_geada_pct": 0}
+    assert apt.score_trigo(m_ideal, []) < 40
+
+
+def test_score_soja_litoraneo_nunca_passa_do_teto():
+    m_ideal = {"codigo_ibge": "4205407", "temp_media_anual": 25}
+    registros_perfeitos = [{"decendio": d, "nivel_risco": 20} for d in range(1, 37)]
+    assert apt.score_soja(m_ideal, registros_perfeitos) < 40
+
+
+def test_score_trigo_nao_litoraneo_nao_e_afetado():
+    m_ideal = {"codigo_ibge": "4109401", "pct_argila": 40, "temp_media_anual": 15, "altitude": 900, "risco_geada_pct": 0}
+    assert apt.score_trigo(m_ideal, []) == 85  # sem ZARC (peso 0.15), resto ideal: 0.85*100

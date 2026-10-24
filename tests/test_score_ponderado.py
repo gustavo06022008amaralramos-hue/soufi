@@ -111,20 +111,32 @@ def test_score_e_monotono_em_relacao_a_geada():
 
 def test_municipio_nordeste_nunca_e_apto_mesmo_com_clima_ideal():
     """Regra de negócio: Nordeste nunca deve ultrapassar o limiar de Apto (70),
-    mesmo que os critérios climáticos brutos deem nota máxima."""
+    mesmo que os critérios climáticos brutos deem nota máxima. (2900108 não
+    é litorâneo direto, então só a regra de Nordeste se aplica aqui.)"""
     m = {**municipio_ideal(), "uf": "BA", "codigo_ibge": "2900108"}
     score = sp.calcular_score_ponderado(m)
     assert score < 70
-    assert score <= sp.TETO_SCORE_RESTRITO
+    assert score <= sp.TETO_SCORE_NORDESTE
 
 
-def test_municipio_litoraneo_direto_nunca_e_apto():
-    """Regra de negócio: município litorâneo direto (lista IBGE) nunca deve
-    ultrapassar o limiar de Apto, mesmo fora do Nordeste."""
+def test_municipio_litoraneo_direto_nunca_e_nem_parcialmente_apto():
+    """Regra de negócio (2026-09-20, mais rígida que a de Nordeste): município
+    litorâneo direto (lista nacional do IBGE) nunca passa de Inapto — nem
+    Parcialmente Apto (40) — mesmo com clima ideal e mesmo fora do Nordeste."""
     # Florianópolis/SC, código IBGE real, está na lista de litorâneos diretos.
     m = {**municipio_ideal(), "uf": "SC", "codigo_ibge": "4205407"}
     score = sp.calcular_score_ponderado(m)
-    assert score < 70
+    assert score < 40
+    assert score <= sp.TETO_SCORE_LITORAL
+
+
+def test_municipio_litoraneo_e_nordestino_usa_o_teto_mais_rigido():
+    """Quando o município é litorâneo E do Nordeste ao mesmo tempo, o teto
+    mais rígido (litoral, <40) deve vencer, não o de Nordeste (<70)."""
+    # Salvador/BA, litorâneo direto e nordestino.
+    m = {**municipio_ideal(), "uf": "BA", "codigo_ibge": "2927408"}
+    score = sp.calcular_score_ponderado(m)
+    assert score < 40
 
 
 def test_municipio_fora_da_regiao_restrita_nao_e_afetado():
