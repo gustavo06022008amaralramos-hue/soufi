@@ -90,6 +90,8 @@ def main():
             m.get("risco_geada_pct"), m.get("chuva_colheita_mm"),
         )
         score_aptidao = sp.aplicar_regra_regiao_restrita(score_aptidao, m.get("uf"), m.get("codigo_ibge"))
+        if str(m.get("codigo_ibge")) in sp.LITORANEOS_IBGE:
+            apto_geral = False  # litoral direto nunca é apto (regra 2026-09-20)
         score_ponderado = sp.calcular_score_ponderado(m)
 
         cliente = get_client()
