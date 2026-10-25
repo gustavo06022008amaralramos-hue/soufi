@@ -49,15 +49,15 @@ function viabLabel(d) {
    Isso alimenta o indicador de 3 níveis (ideal / parcial / fora) nas linhas
    abaixo — sem essa gradação, um valor a 0,5°C do limite aparecia com o
    mesmo "X vermelho" de um valor 10°C fora da faixa. */
-function plato(v, idealMin, idealMax, tolerancia) {
+function plato(v, idealMin, idealMax, tolerancia, toleranciaAlta = tolerancia) {
   if (v == null) return 0;
   if (v >= idealMin && v <= idealMax) return 1;
   if (v < idealMin) {
     const limite = idealMin - tolerancia;
     return v <= limite ? 0 : (v - limite) / tolerancia;
   }
-  const limite = idealMax + tolerancia;
-  return v >= limite ? 0 : (limite - v) / tolerancia;
+  const limite = idealMax + toleranciaAlta;
+  return v >= limite ? 0 : (limite - v) / toleranciaAlta;
 }
 function rampaAlta(v, minimo, tolerancia) {
   if (v == null) return 0;
@@ -76,42 +76,44 @@ function rampaBaixa(v, maximo, tolerancia) {
 const CRITERIOS = [
   {
     label: 'Temperatura', icon: Thermometer, cor:'#d97706',
-    faixa: '10–22°C',
+    faixa: '10–22°C', ideal: '10–22°C',
     valor: m => m.temp_media_anual != null ? `${m.temp_media_anual.toFixed(1)}°C` : '—',
     ok:    m => m.temp_media_anual >= 10 && m.temp_media_anual <= 22,
     nota:  m => plato(m.temp_media_anual, 10, 22, 3),
   },
   {
     label: 'Precipitação', icon: CloudRain, cor:'#2563eb',
-    faixa: '400–2000mm',
+    faixa: '400–2000mm', ideal: '700–1400mm',
     valor: m => m.precipitacao_acumulada_anual != null ? `${Math.round(m.precipitacao_acumulada_anual)}mm` : '—',
     ok:    m => m.precipitacao_acumulada_anual >= 400 && m.precipitacao_acumulada_anual <= 2000,
-    nota:  m => plato(m.precipitacao_acumulada_anual, 700, 1400, 300),
+    // mesma borda assimétrica do backend (calcular_score_ponderado.py): 400 e 2000mm zeram
+    nota:  m => plato(m.precipitacao_acumulada_anual, 700, 1400, 300, 600),
   },
   {
     label: 'Altitude', icon: Mountain, cor:'#374151',
-    faixa: '≥ 800m',
+    faixa: '≥ 800m', ideal: '≥ 800m',
     valor: m => m.altitude != null ? `${Math.round(m.altitude)}m` : '—',
     ok:    m => m.altitude >= 800,
     nota:  m => rampaAlta(m.altitude, 800, 50),
   },
   {
     label: 'Risco de Geada', icon: Snowflake, cor:'#7c3aed',
-    faixa: '< 30%',
+    faixa: '< 30%', ideal: '0%',
     valor: m => m.risco_geada_pct != null ? `${m.risco_geada_pct.toFixed(0)}%` : '—',
     ok:    m => m.risco_geada_pct != null && m.risco_geada_pct < 30,
     nota:  m => rampaBaixa(m.risco_geada_pct, 0, 30),
   },
   {
     label: 'Solo (ZARC)', icon: Layers, cor:'#92400e',
-    faixa: 'Tipo 2 ou 3',
+    faixa: 'Tipo 2 ou 3', ideal: '≥ 35% argila',
     valor: m => m.tipo_solo_zarc != null ? `Tipo ${m.tipo_solo_zarc}` : '—',
     ok:    m => m.tipo_solo_zarc != null && m.tipo_solo_zarc >= 2,
-    nota:  m => m.tipo_solo_zarc == null ? 0 : (m.tipo_solo_zarc >= 2 ? 1 : 0),
+    // espelha o backend: nota proporcional à argila, 35%+ (Tipo 3) = nota cheia
+    nota:  m => m.pct_argila == null ? 0 : Math.max(0, Math.min(1, m.pct_argila / 35)),
   },
   {
     label: 'Chuva Colheita', icon: CloudRain, cor:'#0e7490',
-    faixa: '120–400mm',
+    faixa: '120–400mm', ideal: '≤ 120mm',
     valor: m => m.chuva_colheita_mm != null ? `${Math.round(m.chuva_colheita_mm)}mm` : '—',
     ok:    m => m.chuva_colheita_mm != null && m.chuva_colheita_mm >= 120 && m.chuva_colheita_mm <= 400,
     nota:  m => rampaBaixa(m.chuva_colheita_mm, 120, 280),
@@ -499,7 +501,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                             <div style={{ width:`${Math.round(c.nota*100)}%`, height:'100%', background:corTier, borderRadius:2 }} />
                           </div>
                           <span style={{ fontSize:7, color:corTier, fontWeight:600 }}>
-                            {Math.round(c.nota*100)}% do critério — perto do ideal
+                            nota {Math.round(c.nota*100)}% · ideal {c.ideal}
                           </span>
                         </div>
                       )}

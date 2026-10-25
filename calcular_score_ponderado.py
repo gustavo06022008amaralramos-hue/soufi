@@ -101,9 +101,11 @@ def aplicar_regra_regiao_restrita(score, uf, codigo_ibge):
     return score
 
 
-def _plato(valor, ideal_min, ideal_max, tolerancia):
+def _plato(valor, ideal_min, ideal_max, tolerancia, tolerancia_alta=None):
     """Nota 0-1: 1.0 dentro da faixa ideal, decai linearmente até 0 na borda
-    de tolerância, 0 fora dela. Usado para critérios com faixa ótima central."""
+    de tolerância, 0 fora dela. Usado para critérios com faixa ótima central.
+    `tolerancia_alta` permite borda superior diferente da inferior (padrão:
+    igual à inferior)."""
     if valor is None:
         return 0.0
     if ideal_min <= valor <= ideal_max:
@@ -113,11 +115,11 @@ def _plato(valor, ideal_min, ideal_max, tolerancia):
         if valor <= limite:
             return 0.0
         return (valor - limite) / tolerancia
-    else:
-        limite = ideal_max + tolerancia
-        if valor >= limite:
-            return 0.0
-        return (limite - valor) / tolerancia
+    tol = tolerancia if tolerancia_alta is None else tolerancia_alta
+    limite = ideal_max + tol
+    if valor >= limite:
+        return 0.0
+    return (limite - valor) / tol
 
 
 def _rampa_alta(valor, minimo, tolerancia):
@@ -162,8 +164,11 @@ def notas_graduadas(m):
     nota_temp = _plato(temp, 10.0, 22.0, 3.0)
 
     # Chuva: faixa ideal 700-1400mm (ótima p/ cevada malteira), tolerância até os
-    # limites absolutos ZARC (400-2000mm)
-    nota_chuva = _plato(chuva, 700.0, 1400.0, 300.0)
+    # limites absolutos ZARC (400-2000mm) — por isso a borda é assimétrica:
+    # 300mm abaixo (700->400) e 600mm acima (1400->2000). Antes a tolerância era
+    # 300 dos dois lados e a nota zerava em 1700mm, dentro do limite ZARC
+    # (ex.: Guarapuava, 1722mm, levava 0 em chuva).
+    nota_chuva = _plato(chuva, 700.0, 1400.0, 300.0, tolerancia_alta=600.0)
 
     # Altitude: piso elevado de 700m para 800m em 2026-08 (pedido explícito do
     # usuário pós-FAPA: critério mais real e rígido — bate com a altitude real

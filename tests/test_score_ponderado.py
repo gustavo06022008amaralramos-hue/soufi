@@ -145,3 +145,19 @@ def test_municipio_fora_da_regiao_restrita_nao_e_afetado():
     m = {**municipio_ideal(), "uf": "PR", "codigo_ibge": "4109401"}
     score = sp.calcular_score_ponderado(m)
     assert score == 100
+
+
+# ── Chuva: tolerância assimétrica até os limites ZARC 400-2000mm ──────────────
+def test_chuva_dentro_do_limite_zarc_acima_do_ideal_tem_nota_parcial():
+    # Guarapuava real: 1722mm — dentro de 400-2000, acima do ideal 700-1400
+    nota = sp.notas_graduadas({"precipitacao_acumulada_anual": 1722})["chuva"]
+    assert abs(nota - (2000 - 1722) / 600) < 1e-9
+
+
+def test_chuva_no_limite_zarc_superior_zera():
+    assert sp.notas_graduadas({"precipitacao_acumulada_anual": 2000})["chuva"] == 0.0
+
+
+def test_chuva_borda_inferior_continua_300mm():
+    assert sp.notas_graduadas({"precipitacao_acumulada_anual": 400})["chuva"] == 0.0
+    assert abs(sp.notas_graduadas({"precipitacao_acumulada_anual": 550})["chuva"] - 0.5) < 1e-9
