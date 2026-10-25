@@ -6,7 +6,7 @@ import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import CalendarioPlantio from './CalendarioPlantio.jsx';
 import EpocaSemeaduraBar from './EpocaSemeaduraBar.jsx';
 
-const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
+import { API, getJson } from '../../lib/api.js';
 
 /* ─── Paleta ─────────────────────────────────────────────── */
 const COR = { apto:'#16a34a', parcial:'#d97706', inapto:'#2563eb', sem_dados:'#6b7280' };
@@ -296,10 +296,9 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
   useEffect(() => {
     if (tab !== 1 || !municipio?.codigo_ibge) return;
     setZarcLoading(true);
-    fetch(`${API}/zarc/elegibilidade?codigo_ibge=${municipio.codigo_ibge}&data_plantio=${dataPlantio}&cultura=${culturaSim}`)
-      .then(r => r.json())
+    getJson(`${API}/zarc/elegibilidade?codigo_ibge=${municipio.codigo_ibge}&data_plantio=${dataPlantio}&cultura=${culturaSim}`)
       .then(setZarcReal)
-      .catch(() => setZarcReal(null))
+      .catch(() => setZarcReal({ erro: true }))
       .finally(() => setZarcLoading(false));
   }, [tab, municipio?.codigo_ibge, dataPlantio, culturaSim]);
 
@@ -309,10 +308,9 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
   const [gddReal, setGddReal] = useState(null);
   useEffect(() => {
     if (tab !== 1 || !municipio?.codigo_ibge) return;
-    fetch(`${API}/gdd/simulacao?codigo_ibge=${municipio.codigo_ibge}&data_semeio=${dataPlantio}&cultura=${culturaSim}`)
-      .then(r => r.json())
+    getJson(`${API}/gdd/simulacao?codigo_ibge=${municipio.codigo_ibge}&data_semeio=${dataPlantio}&cultura=${culturaSim}`)
       .then(setGddReal)
-      .catch(() => setGddReal(null));
+      .catch(() => setGddReal(null)); // erro: só não mostra o bloco de GDD
   }, [tab, municipio?.codigo_ibge, dataPlantio, culturaSim]);
 
   if (!municipio) return <EmptyState />;
@@ -617,7 +615,15 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
               <EpocaSemeaduraBar codigoIbge={municipio.codigo_ibge} cultura={culturaSim} decendioAtual={zarcReal?.decendio} />
 
               {/* Resultado real por município */}
-              {zarcReal && !zarcReal.elegivel && (
+              {zarcReal?.erro && (
+                <div style={{ background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:10, padding:'10px 14px' }}>
+                  <p style={{ fontSize:11, color:'#6B7280', lineHeight:1.5 }}>
+                    Não foi possível consultar o ZARC oficial agora (API indisponível ou desatualizada). Tente novamente em instantes.
+                  </p>
+                </div>
+              )}
+
+              {zarcReal && !zarcReal.erro && !zarcReal.elegivel && (
                 <div style={{ background:'#fef2f2', border:'1.5px solid #dc262640', borderRadius:10, padding:'12px 14px', display:'flex', gap:10, alignItems:'flex-start' }}>
                   <Shield size={18} color="#dc2626" style={{ flexShrink:0, marginTop:1 }} />
                   <div>

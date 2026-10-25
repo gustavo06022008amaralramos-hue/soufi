@@ -5,7 +5,7 @@ import { Search, X, MapPin, SlidersHorizontal, Map as MapIcon, Layers, Check } f
 import 'leaflet/dist/leaflet.css';
 import MunicipioSidebar from '../components/sidebar/MunicipioSidebar.jsx';
 
-const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
+import { API, getJson } from '../lib/api.js';
 
 /* ── Tiles (sem satélite) ──
    CartoDB (basemaps.cartocdn.com) passou a exigir API key nos tiles
@@ -581,8 +581,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
     setSelecionado(m); setSazonalidade(null);
     if (!m) return;
     setLoadingSazon(true);
-    fetch(`${API}/sazonalidade/${m.codigo_ibge}`)
-      .then(r=>r.json()).then(d=>setSazonalidade(d.calendario??[]))
+    getJson(`${API}/sazonalidade/${m.codigo_ibge}`).then(d=>setSazonalidade(d.calendario??[]))
       .catch(()=>setSazonalidade([])).finally(()=>setLoadingSazon(false));
   }, []);
   useEffect(() => { onSelectRef.current = onSelect; }, [onSelect]);

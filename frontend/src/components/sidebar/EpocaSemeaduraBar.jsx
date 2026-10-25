@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 
-const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
+import { API, getJson } from '../../lib/api.js';
 
 const MESES = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
@@ -29,8 +29,7 @@ export default function EpocaSemeaduraBar({ codigoIbge, cultura, decendioAtual }
   useEffect(() => {
     if (!codigoIbge) return;
     setLoading(true);
-    fetch(`${API}/zarc/calendario?codigo_ibge=${codigoIbge}&cultura=${cultura}`)
-      .then(r => r.json())
+    getJson(`${API}/zarc/calendario?codigo_ibge=${codigoIbge}&cultura=${cultura}`)
       .then(setDados)
       .catch(() => setDados(null))
       .finally(() => setLoading(false));

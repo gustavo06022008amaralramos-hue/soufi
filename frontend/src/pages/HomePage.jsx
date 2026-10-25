@@ -7,7 +7,7 @@ import {
   Lightbulb, TrendingUp, AlertTriangle, Star,
 } from 'lucide-react';
 
-const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
+import { API, getJson } from '../lib/api.js';
 const WEATHER_KEY  = import.meta.env.VITE_WEATHER_KEY;
 
 const ICONES_CLIMA = {
@@ -42,15 +42,12 @@ export default function HomePage({ municipios = [], apiOnline }) {
 
   useEffect(() => {
     if (apiOnline) {
-      fetch(`${API}/coleta/progresso`)
-        .then(r=>r.json()).then(setProgresso).catch(()=>{});
-      fetch(`${API}/municipios/estatisticas`)
-        .then(r=>r.json()).then(setStatsApi).catch(()=>{});
+      getJson(`${API}/coleta/progresso`).then(setProgresso).catch(()=>{});
+      getJson(`${API}/municipios/estatisticas`).then(setStatsApi).catch(()=>{});
       // Pede uf=PR ao backend, mas tambem filtra no cliente como salvaguarda —
       // se o backend ainda nao tiver o filtro em producao (deploy defasado),
       // o dashboard nao deve mostrar municipio de outro estado de qualquer forma.
-      fetch(`${API}/municipios/top?limit=50&uf=PR`)
-        .then(r=>r.json())
+      getJson(`${API}/municipios/top?limit=50&uf=PR`)
         .then(d=>setTopApi((d.municipios??[]).filter(m=>m.uf==='PR').slice(0,5)))
         .catch(()=>{});
     }
