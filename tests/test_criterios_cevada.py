@@ -49,3 +49,25 @@ def test_regra_regional_litoral_ideal_e_inapto():
 
 def test_sul_interior_ideal_segue_apto():
     assert cc.aptidao_final(**IDEAL, uf="PR", codigo_ibge="4109401") == (True, 100)  # Guarapuava
+
+
+# ── Regras de referência do ZARC oficial de cevada (2026-10-25) ───────────────
+def test_sem_zarc_oficial_nao_chega_a_apto():
+    # Pacaraima/RR: clima "ideal" na média anual, mas sem zoneamento de cevada
+    apto, score = cc.aptidao_final(**IDEAL, uf="RR", codigo_ibge="1400456", tem_zarc_cevada=False)
+    assert (apto, score) == (False, 65)
+
+
+def test_com_zarc_oficial_geada_alta_nao_reprova():
+    # Guarapuava real: risco de geada 61% na média anual, mas ZARC indica janelas seguras
+    m = {**IDEAL, "risco_geada_pct": 61}
+    assert cc.aptidao_final(**m, uf="PR", codigo_ibge="4109401", tem_zarc_cevada=True) == (True, 100)
+
+
+def test_flag_zarc_desconhecida_mantem_regra_antiga():
+    m = {**IDEAL, "risco_geada_pct": 61}
+    assert cc.aptidao_final(**m, uf="PR", codigo_ibge="4109401") == (False, 83)
+
+
+def test_litoral_continua_inapto_mesmo_com_zarc():
+    assert cc.aptidao_final(**IDEAL, uf="SC", codigo_ibge="4205407", tem_zarc_cevada=True) == (False, 39)

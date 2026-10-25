@@ -81,6 +81,10 @@ assert abs(sum(PESOS.values()) - 1.0) < 1e-9
 NORDESTE_UFS = {"AL", "BA", "CE", "MA", "PB", "PE", "PI", "RN", "SE"}
 TETO_SCORE_NORDESTE = 65  # abaixo de 70 (Apto), com margem de segurança
 TETO_SCORE_LITORAL  = 39  # abaixo de 40 (Parcialmente Apto) — vira sempre Inapto
+# Sem nenhum registro no ZARC oficial de cevada (MAPA, Tábua de Risco) o
+# município não chega a Apto: a média climática anual sozinha classificava
+# como aptas regiões sem inverno real (ex.: Pacaraima/RR, planalto equatorial).
+TETO_SCORE_SEM_ZARC = 65
 
 _caminho_litoraneos = os.path.join(os.path.dirname(os.path.abspath(__file__)), "municipios_litoraneos_ibge.json")
 try:
@@ -90,14 +94,18 @@ except FileNotFoundError:
     LITORANEOS_IBGE = set()
 
 
-def aplicar_regra_regiao_restrita(score, uf, codigo_ibge):
+def aplicar_regra_regiao_restrita(score, uf, codigo_ibge, tem_zarc_cevada=None):
     """Município litorâneo direto (fonte: IBGE 'Municípios defrontantes com
     o mar', nacional — não só Nordeste) nunca passa de Inapto. Nordeste como
-    um todo (mesmo sem ser litorâneo) nunca passa de Apto."""
+    um todo (mesmo sem ser litorâneo) nunca passa de Apto. Município sem ZARC
+    oficial de cevada (tem_zarc_cevada=False) também nunca passa de Apto;
+    None = flag desconhecida, regra não se aplica."""
     if str(codigo_ibge) in LITORANEOS_IBGE:
         return min(score, TETO_SCORE_LITORAL)
     if uf in NORDESTE_UFS:
-        return min(score, TETO_SCORE_NORDESTE)
+        score = min(score, TETO_SCORE_NORDESTE)
+    if tem_zarc_cevada is False:
+        score = min(score, TETO_SCORE_SEM_ZARC)
     return score
 
 
@@ -177,8 +185,13 @@ def notas_graduadas(m):
     # em vez de ainda ganhar nota parcial até 500m como antes.
     nota_altitude = _rampa_alta(alt, 800.0, 50.0)
 
-    # Geada: quanto menor risco melhor, tolerância até o limite ZARC de 30%
-    nota_geada = _rampa_baixa(geada, 0.0, 30.0)
+    # Geada: quanto menor risco melhor, tolerância até o limite ZARC de 30%.
+    # Município com ZARC oficial de cevada: o zoneamento já avalia a geada no
+    # decêndio do espigamento e só indica datas dentro do risco aceito (SEAPI-RS,
+    # 2021: "foram avaliados os riscos para a incidência de geada no decêndio do
+    # espigamento"), então a média anual não penaliza — sem isso o Sul, que tem
+    # inverno de verdade, perdia para regiões sem inverno.
+    nota_geada = 1.0 if m.get("tem_zarc_cevada") else _rampa_baixa(geada, 0.0, 30.0)
 
     # Chuva na colheita: ideal <=120mm, tolerância até o limite ZARC de 400mm
     nota_colheita = _rampa_baixa(colheita, 120.0, 280.0)
@@ -192,7 +205,7 @@ def notas_graduadas(m):
 def calcular_score_ponderado(m):
     notas = notas_graduadas(m)
     score = int(round(sum(PESOS[k] * notas[k] for k in PESOS) * 100))
-    return aplicar_regra_regiao_restrita(score, m.get("uf"), m.get("codigo_ibge"))
+    return aplicar_regra_regiao_restrita(score, m.get("uf"), m.get("codigo_ibge"), m.get("tem_zarc_cevada"))
 
 
 def buscar_todos():
@@ -201,7 +214,7 @@ def buscar_todos():
     while True:
         batch = supabase.table("municipios_aptidao").select(
             "codigo_ibge, uf, pct_argila, temp_media_anual, "
-            "precipitacao_acumulada_anual, altitude, risco_geada_pct, chuva_colheita_mm"
+            "precipitacao_acumulada_anual, altitude, risco_geada_pct, chuva_colheita_mm, tem_zarc_cevada"
         ).range(offset, offset + 999).execute()
         if not batch.data:
             break

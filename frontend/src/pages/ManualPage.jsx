@@ -300,7 +300,7 @@ score_ponderado (graduado, mais recente):
           <CriterioRow icon={Mountain} cor="#374151" label="Altitude" faixa="≥ 800m (peso 15%)"
             desc="Nota máxima a partir de 800m; rampa de nota parcial curta entre 750–800m (critério endurecido — abaixo de 750m já zera). Altitudes maiores garantem temperaturas mais amenas no inverno." />
           <CriterioRow icon={Snowflake} cor="#7c3aed" label="Risco de geada" faixa="0% ideal, tolerância até 30% (peso 15%)"
-            desc="Não é um corte binário — a nota decai de forma contínua entre 0% e 30% de risco. Calculado como % de anos com T_mín baixa em Jul/Ago (espigamento)." />
+            desc="Não é um corte binário — a nota decai de forma contínua entre 0% e 30% de risco. Calculado como % de anos com T_mín baixa em Jul/Ago (espigamento). Em município com ZARC oficial de cevada o critério conta como atendido: o zoneamento do MAPA já avalia a geada no decêndio do espigamento e só indica datas dentro do risco aceito." />
           <CriterioRow icon={Layers} cor="#92400e" label="Tipo de solo ZARC" faixa="≥35% argila = nota máxima (peso 20%)"
             desc="Nota = %argila ÷ 35, limitada a 1.0. Tipo 3 (argiloso, >35%) e Tipo 2 (textura média, 15–35%) são os aceitos pelo ZARC; Tipo 1 (<15%) não é recomendado." />
           <CriterioRow icon={CloudRain} cor="#0e7490" label="Chuva na colheita" faixa="≤120mm ideal, tolerância até 400mm (peso 10%)"
@@ -568,12 +568,13 @@ Preço líquido = preço bruto − frete estimado`}</Formula>
 Score = Σ (peso × nota) × 100, arredondado
 
 Temperatura — "platô": nota 1.0 entre 10–22°C, decai linear até 0 em 7°C ou 25°C (tolerância 3°C)
-Chuva       — "platô": nota 1.0 entre 700–1400mm, decai linear até 0 em 400mm ou 1700mm (tol. 300mm)
+Chuva       — "platô": nota 1.0 entre 700–1400mm, decai linear até 0 em 400mm (tol. 300mm) ou 2000mm (tol. 600mm)
 Altitude    — "rampa alta": nota 1.0 a partir de 800m, decai linear até 0 em 750m (tolerância 50m — endurecido em ago/2026)
 Geada       — "rampa baixa": nota 1.0 em 0%, decai linear até 0 em 30% de risco
+              (nota 1.0 direto se o município tem ZARC oficial de cevada)
 Solo        — nota = %argila ÷ 35, limitada a 1.0 (35%+ argila = Tipo 3 = nota máxima)
 Colheita    — "rampa baixa": nota 1.0 até 120mm, decai linear até 0 em 400mm (tolerância 280mm)`}</Formula>
-          <p style={{ fontSize: 10, color: '#9CA3AF' }}>Fonte do código: calcular_score_ponderado.py — testado com 19 casos automatizados (pytest).</p>
+          <p style={{ fontSize: 10, color: '#9CA3AF' }}>Fonte do código: calcular_score_ponderado.py — testado com casos automatizados (pytest).</p>
         </Calculo>
 
         <Calculo titulo="2. Score de aptidão binário (score_aptidao)" usadoEm="mapa, dashboard, comparador, oportunidades">
@@ -588,14 +589,18 @@ Colheita    — "rampa baixa": nota 1.0 até 120mm, decai linear até 0 em 400mm
             a no máximo 39 pontos e <code>apto_geral</code> falso — sempre "Inapto", em cevada, trigo e soja
             (regra da cooperativa: litoral não pode ser nem parcialmente apto). Municípios do Nordeste (AL, BA,
             CE, MA, PB, PE, PI, RN, SE) fora do litoral ficam limitados a 65 pontos — nunca passam de
-            "Parcialmente Apto".
+            "Parcialmente Apto". Município <strong>sem nenhum registro no ZARC oficial de cevada</strong> (MAPA,
+            Tábua de Risco) também fica limitado a 65 pontos para cevada — o MAPA não indica nenhuma época de
+            semeadura lá.
           </p>
           <Destaque icon={AlertTriangle} cor="#d97706" title="Por quê">
             O critério de geada premia risco de geada baixo — mas cevada é cultivo de inverno, então baixo
             risco de geada geralmente significa "essa região não tem inverno de verdade". Isso fazia o
             proxy simplificado (média climática anual) classificar como aptas cidades litorâneas e
-            nordestinas sem tradição real de cultivo. A produção comercial de cevada cervejeira no Brasil
-            é, na prática, quase toda concentrada em PR/SC/RS.
+            nordestinas sem tradição real de cultivo (ex.: Pacaraima/RR, planalto equatorial a 897m, chegava a
+            83). Ao mesmo tempo penalizava o Sul, que tem inverno de verdade: Guarapuava, com 61% de risco de
+            geada na média anual, não era apta. Por isso o ZARC oficial virou a referência — ele avalia a geada
+            no decêndio do espigamento e indica só as datas seguras, em vez da média do ano inteiro.
           </Destaque>
         </Calculo>
 

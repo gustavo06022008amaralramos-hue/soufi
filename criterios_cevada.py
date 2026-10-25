@@ -41,13 +41,20 @@ def calcular_aptidao(temp_anual, chuva_anual, altitude, tipo_zarc, risco_geada_p
 
 
 def aptidao_final(temp_anual, chuva_anual, altitude, tipo_zarc, risco_geada_pct, chuva_colheita_mm,
-                  uf, codigo_ibge):
-    """(apto_geral, score_aptidao) com a regra regional aplicada: litoral direto
-    nunca é apto (teto 39), Nordeste nunca passa de Parcial (teto 65)."""
+                  uf, codigo_ibge, tem_zarc_cevada=None):
+    """(apto_geral, score_aptidao) com as regras de referência aplicadas:
+      - litoral direto nunca é apto (teto 39); Nordeste nunca passa de Parcial (65);
+      - sem ZARC oficial de cevada (tem_zarc_cevada=False) nunca passa de Parcial (65);
+      - com ZARC oficial (True), o critério de geada é considerado atendido: o
+        zoneamento já avalia geada no espigamento e só indica datas seguras.
+    tem_zarc_cevada=None (flag ainda não calculada) não aplica as regras do ZARC —
+    rode atualizar_flag_zarc_real.py e recalcular_altitude_800m.py depois de coletar."""
     import calcular_score_ponderado as sp  # import tardio: o módulo cria client Supabase
 
+    if tem_zarc_cevada:
+        risco_geada_pct = 0.0
     apto, score = calcular_aptidao(temp_anual, chuva_anual, altitude, tipo_zarc,
                                    risco_geada_pct, chuva_colheita_mm)
-    score = sp.aplicar_regra_regiao_restrita(score, uf, codigo_ibge)
+    score = sp.aplicar_regra_regiao_restrita(score, uf, codigo_ibge, tem_zarc_cevada)
     # apto só com score pleno: se o teto regional derrubou o score, deixa de ser apto
     return apto and score >= 70, score

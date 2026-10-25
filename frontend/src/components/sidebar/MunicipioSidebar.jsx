@@ -99,9 +99,13 @@ const CRITERIOS = [
   {
     label: 'Risco de Geada', icon: Snowflake, cor:'#7c3aed',
     faixa: '< 30%', ideal: '0%',
+    // Município com ZARC oficial de cevada: o zoneamento já avalia a geada no
+    // espigamento e só indica datas seguras, então a média anual não reprova
+    // (mesma regra do backend, criterios_cevada.py / calcular_score_ponderado.py).
     valor: m => m.risco_geada_pct != null ? `${m.risco_geada_pct.toFixed(0)}%` : '—',
-    ok:    m => m.risco_geada_pct != null && m.risco_geada_pct < 30,
-    nota:  m => rampaBaixa(m.risco_geada_pct, 0, 30),
+    ok:    m => m.tem_zarc_cevada === true || (m.risco_geada_pct != null && m.risco_geada_pct < 30),
+    nota:  m => m.tem_zarc_cevada === true ? 1 : rampaBaixa(m.risco_geada_pct, 0, 30),
+    obs:   m => m.tem_zarc_cevada === true ? 'tratada pelo ZARC (datas indicadas)' : null,
   },
   {
     label: 'Solo (ZARC)', icon: Layers, cor:'#92400e',
@@ -328,6 +332,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
     val: c.valor(municipio),
     pass: c.ok(municipio),
     nota: c.nota(municipio),
+    obs: c.obs?.(municipio) ?? null,
   }));
   const aprovados = criterios.filter(c => c.pass).length;
 
@@ -444,6 +449,14 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 Inapto em cevada, trigo e soja, mesmo com clima favorável na média anual.
               </div>
             )}
+            {!municipio.litoraneo && municipio.tem_zarc_cevada === false && (
+              <div style={{ background:'#fffbeb', border:'1px solid #fde68a', borderRadius:9,
+                padding:'8px 11px', fontSize:10, color:'#92400e', lineHeight:1.5 }}>
+                <strong>Sem zoneamento oficial (ZARC) de cevada.</strong> O MAPA não indica
+                nenhuma época de semeadura de cevada para este município, então o score de
+                cevada fica limitado a Parcialmente Apto (máx. 65).
+              </div>
+            )}
             {/* Resultado geral */}
             <div style={{ background: bg, border:`1.5px solid ${cor}40`,
               borderRadius:10, padding:'11px 14px',
@@ -496,6 +509,9 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                         <span style={{ fontSize:13, fontWeight:700, color:corTier }}>{c.val}</span>
                         <span style={{ fontSize:8, color:'#9CA3AF' }}>{c.faixa}</span>
                       </div>
+                      {c.obs && (
+                        <span style={{ display:'block', marginTop:4, fontSize:7, color:'#16a34a', fontWeight:600 }}>{c.obs}</span>
+                      )}
                       {tier === 'parcial' && (
                         <div style={{ marginTop:5 }}>
                           <div style={{ height:4, background:'#F3F4F6', borderRadius:2, overflow:'hidden' }}>

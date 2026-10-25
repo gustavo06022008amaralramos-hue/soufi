@@ -161,3 +161,18 @@ def test_chuva_no_limite_zarc_superior_zera():
 def test_chuva_borda_inferior_continua_300mm():
     assert sp.notas_graduadas({"precipitacao_acumulada_anual": 400})["chuva"] == 0.0
     assert abs(sp.notas_graduadas({"precipitacao_acumulada_anual": 550})["chuva"] - 0.5) < 1e-9
+
+
+def test_ponderado_sem_zarc_tem_teto_65():
+    m = {"codigo_ibge": "1400456", "uf": "RR", "pct_argila": 40, "temp_media_anual": 17,
+         "precipitacao_acumulada_anual": 1000, "altitude": 900, "risco_geada_pct": 0,
+         "chuva_colheita_mm": 100, "tem_zarc_cevada": False}
+    assert sp.calcular_score_ponderado(m) == 65
+
+
+def test_ponderado_com_zarc_geada_alta_nao_penaliza():
+    base = {"codigo_ibge": "4109401", "uf": "PR", "pct_argila": 40, "temp_media_anual": 17,
+            "precipitacao_acumulada_anual": 1000, "altitude": 900, "risco_geada_pct": 61,
+            "chuva_colheita_mm": 100}
+    assert sp.calcular_score_ponderado({**base, "tem_zarc_cevada": True}) == 100
+    assert sp.calcular_score_ponderado(base) == 85  # sem flag: geada 61% zera os 15% do critério

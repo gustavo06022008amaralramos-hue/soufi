@@ -48,7 +48,7 @@ def buscar_todos():
     while True:
         batch = supabase.table("municipios_aptidao").select(
             "codigo_ibge, uf, pct_argila, temp_media_anual, tipo_solo_zarc, "
-            "precipitacao_acumulada_anual, altitude, risco_geada_pct, chuva_colheita_mm"
+            "precipitacao_acumulada_anual, altitude, risco_geada_pct, chuva_colheita_mm, tem_zarc_cevada"
         ).range(offset, offset + 999).execute()
         if not batch.data:
             break
@@ -73,7 +73,7 @@ def main():
             m.get("temp_media_anual"), m.get("precipitacao_acumulada_anual"),
             m.get("altitude"), m.get("tipo_solo_zarc"),
             m.get("risco_geada_pct"), m.get("chuva_colheita_mm"),
-            m.get("uf"), m.get("codigo_ibge"),
+            m.get("uf"), m.get("codigo_ibge"), m.get("tem_zarc_cevada"),
         )
         score_ponderado = sp.calcular_score_ponderado(m)
 

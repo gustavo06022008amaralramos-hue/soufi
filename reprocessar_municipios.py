@@ -132,7 +132,7 @@ def reprocessar_um(m):
         if len(df_out_nov) > 0 else None
 
     apto, score = aptidao_final(temp_anual, chuva_anual, m["altitude"], tipo_zarc,
-                                geada_pct, colheita_mm, uf, cod)
+                                geada_pct, colheita_mm, uf, cod, m.get("tem_zarc_cevada"))
 
     registro_dados = {
         "pct_argila": pct_argila, "tipo_solo_zarc": tipo_zarc,
@@ -180,7 +180,7 @@ def main():
     registros = []
     for cod in codigos:
         r = supabase.table("municipios_aptidao").select(
-            "codigo_ibge, nome_municipio, uf, lat, lon, altitude, tipo_solo"
+            "codigo_ibge, nome_municipio, uf, lat, lon, altitude, tipo_solo, tem_zarc_cevada"
         ).eq("codigo_ibge", cod).maybe_single().execute()
         if r.data:
             registros.append(r.data)
