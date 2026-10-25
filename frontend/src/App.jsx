@@ -1,18 +1,24 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import AppLayout      from './components/layout/AppLayout.jsx';
 import LoginPage      from './pages/LoginPage.jsx';
-import HomePage       from './pages/HomePage.jsx';
-import ZoneamentoPage from './pages/ZoneamentoPage.jsx';
-import HistoricosPage from './pages/HistoricosPage.jsx';
-import VariedadesPage from './pages/VariedadesPage.jsx';
-import NoticiasPage   from './pages/NoticiasPage.jsx';
-import ParceirosPage      from './pages/ParceirosPage.jsx';
-import OportunidadesPage  from './pages/OportunidadesPage.jsx';
-import ManualPage         from './pages/ManualPage.jsx';
-import CustosPage         from './pages/CustosPage.jsx';
-import CompararPage       from './pages/CompararPage.jsx';
+// Páginas carregadas sob demanda: o bundle único passava de 1,1 MB (Leaflet,
+// Recharts e as páginas grandes iam todos no primeiro carregamento).
+const HomePage          = lazy(() => import('./pages/HomePage.jsx'));
+const ZoneamentoPage    = lazy(() => import('./pages/ZoneamentoPage.jsx'));
+const HistoricosPage    = lazy(() => import('./pages/HistoricosPage.jsx'));
+const VariedadesPage    = lazy(() => import('./pages/VariedadesPage.jsx'));
+const NoticiasPage      = lazy(() => import('./pages/NoticiasPage.jsx'));
+const ParceirosPage     = lazy(() => import('./pages/ParceirosPage.jsx'));
+const OportunidadesPage = lazy(() => import('./pages/OportunidadesPage.jsx'));
+const ManualPage        = lazy(() => import('./pages/ManualPage.jsx'));
+const CustosPage        = lazy(() => import('./pages/CustosPage.jsx'));
+const CompararPage      = lazy(() => import('./pages/CompararPage.jsx'));
+
+function CarregandoPagina() {
+  return <div style={{ padding: 40, textAlign: 'center', fontSize: 12, color: '#9CA3AF' }}>Carregando…</div>;
+}
 
 const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 const RETRY_OFFLINE = 10_000; // re-tenta a cada 10s quando offline
@@ -58,6 +64,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
+        <Suspense fallback={<CarregandoPagina />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<AppLayout apiOnline={apiOnline} onRetry={() => fetchDados()} />}>
@@ -71,9 +78,11 @@ export default function App() {
             <Route path="/oportunidades"  element={<OportunidadesPage municipios={municipios} />} />
             <Route path="/manual"         element={<ManualPage />} />
             <Route path="/custos"         element={<CustosPage />} />
-            <Route path="/comparar"       element={<CompararPage municipios={municipios} />} />            <Route path="*"           element={<Navigate to="/home" replace />} />
+            <Route path="/comparar"       element={<CompararPage municipios={municipios} />} />
+            <Route path="*"           element={<Navigate to="/home" replace />} />
           </Route>
         </Routes>
+        </Suspense>
       </AuthProvider>
     </BrowserRouter>
   );
