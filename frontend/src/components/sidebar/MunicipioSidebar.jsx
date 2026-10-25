@@ -239,7 +239,7 @@ ${log ? `<div class="sec">
 /* ─── Estado vazio ───────────────────────────────────────── */
 function EmptyState() {
   return (
-    <div style={{ width:340, flexShrink:0, height:'100%', background:'#fff',
+    <div className="zon-painel-vazio" style={{ width:340, flexShrink:0, height:'100%', background:'#fff',
       borderLeft:'1px solid #E5E7EB', display:'flex', flexDirection:'column',
       alignItems:'center', justifyContent:'center', padding:'0 32px', gap:16 }}>
       <div style={{ width:64,height:64,borderRadius:18,background:'#F0F7F2',
@@ -331,7 +331,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
   const TABS = ['Aptidão', 'Seguro', 'Logística', 'Solo & Clima'];
 
   return (
-    <div style={{ width:340, flexShrink:0, height:'100%', background:'#fff',
+    <div className="zon-painel" style={{ width:340, flexShrink:0, height:'100%', background:'#fff',
       borderLeft:'1px solid #E5E7EB', display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
       {/* ── HEADER ────────────────────────────────────────── */}

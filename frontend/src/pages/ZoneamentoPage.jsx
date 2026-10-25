@@ -416,7 +416,7 @@ function SearchBar({ municipios, onSelect, campo = 'score_aptidao' }) {
   const semResultado = aberto && query.length >= 2 && resultados.length === 0;
 
   return (
-    <div style={{ position: 'relative', width: 340 }}>
+    <div style={{ position: 'relative', width: 'min(340px, calc(100vw - 32px))' }}>
       <Panel style={{
         display: 'flex', alignItems: 'center', gap: 7, padding: '9px 13px', borderRadius: 12,
         outline: aberto ? '2px solid rgba(45,106,79,0.45)' : 'none', outlineOffset: 1,
@@ -513,6 +513,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
   // oportunidades de seguro — trigo" leva direto pro mapa já em trigo).
   const location = useLocation();
   const [tipoMapa,       setTipoMapa]       = useState('labels');
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false); // só usado no celular
   const [cultura,        setCultura]        = useState(() =>
     ['cevada','trigo','soja'].includes(location.state?.cultura) ? location.state.cultura : 'cevada'
   );
@@ -698,7 +699,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
   const dataKey = `geo-${cultura}-${geojsonComDados?.features?.length??0}-${dadosMap.size}`;
 
   return (
-    <div style={{ display:'flex', height:'calc(100% + 56px)', margin:'-28px -32px', overflow:'hidden' }}>
+    <div style={{ position:'relative', display:'flex', height:'calc(100% + 2 * var(--pad-y))', margin:'calc(-1 * var(--pad-y)) calc(-1 * var(--pad-x))', overflow:'hidden' }}>
 
       {/* ══ Mapa ══ */}
       <div style={{ flex:1, position:'relative', overflow:'hidden', display:'flex', flexDirection:'column' }}>
@@ -728,7 +729,14 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
               sobrepunham em telas mais baixas desde que o seletor de
               Cultura cresceu o painel). Com scroll de segurança caso ainda
               não caiba. */}
-          <div style={{
+          <button className="zon-filtros-btn" onClick={() => setFiltrosAbertos(a => !a)}
+            aria-expanded={filtrosAbertos}
+            style={{ position:'absolute', top:62, left:14, zIndex:1001, alignItems:'center', gap:6,
+              padding:'7px 12px', borderRadius:9, border:'1px solid #E5E7EB', background:'#fff',
+              fontSize:12, fontWeight:600, color:'#1B4332', boxShadow:'0 2px 8px rgba(0,0,0,0.12)', cursor:'pointer' }}>
+            <SlidersHorizontal size={13} /> {filtrosAbertos ? 'Fechar filtros' : 'Filtros e legenda'}
+          </button>
+          <div className={`zon-controles${filtrosAbertos ? ' aberto' : ''}`} style={{
             position:'absolute', top:12, left:14, bottom:12, zIndex:1000,
             display:'flex', flexDirection:'column', gap:12,
             overflowY:'auto', maxWidth:230,

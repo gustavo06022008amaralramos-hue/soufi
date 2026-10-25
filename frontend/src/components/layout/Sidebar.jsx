@@ -21,7 +21,7 @@ const NAV = [
   { to:'/manual',       icon:BookOpen,        label:'Manual'       },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ aberta = false, onNavegar }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [confirm, setConfirm] = useState(false);
@@ -34,7 +34,7 @@ export default function Sidebar() {
   const initials = (user?.nome ?? 'U').split(' ').map(p=>p[0]).slice(0,2).join('').toUpperCase();
 
   return (
-    <aside style={{
+    <aside className={`app-sidebar${aberta ? ' aberta' : ''}`} style={{
       width: 220, flexShrink: 0, height: '100vh',
       background: '#1B4332',
       borderRight: 'none',
@@ -56,7 +56,7 @@ export default function Sidebar() {
       {/* Nav */}
       <nav style={{ flex: 1, padding: '10px 8px', display: 'flex', flexDirection: 'column', gap: 2 }}>
         {NAV.map(({ to, icon: Icon, label, destaque }) => (
-          <NavLink key={to} to={to} style={({ isActive }) => ({
+          <NavLink key={to} to={to} onClick={onNavegar} style={({ isActive }) => ({
             display: 'flex', alignItems: 'center', gap: 10,
             padding: '9px 12px', borderRadius: 8, fontSize: 13,
             fontWeight: isActive ? 600 : 400,

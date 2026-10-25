@@ -1,8 +1,8 @@
 import { Outlet, Navigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Sidebar from './Sidebar.jsx';
 import { useAuth } from '../../context/AuthContext.jsx';
-import { Wifi, WifiOff, RefreshCw, Database } from 'lucide-react';
+import { Wifi, WifiOff, RefreshCw, Database, Menu } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 
@@ -11,6 +11,7 @@ export default function AppLayout({ apiOnline, onRetry }) {
   const [retrying,    setRetrying]    = useState(false);
   const [processados, setProcessados] = useState(null);
   const [latency,     setLatency]     = useState(null);
+  const [menuAberto,  setMenuAberto]  = useState(false);
 
   useEffect(() => {
     if (!apiOnline) return;
@@ -36,7 +37,8 @@ export default function AppLayout({ apiOnline, onRetry }) {
 
   return (
     <div className="app-shell" style={{ display:'flex', overflow:'hidden', background:'var(--bg-deep)' }}>
-      <Sidebar />
+      <Sidebar aberta={menuAberto} onNavegar={() => setMenuAberto(false)} />
+      <div className={`app-backdrop${menuAberto ? ' aberta' : ''}`} onClick={() => setMenuAberto(false)} />
 
       <div style={{ flex:1, display:'flex', flexDirection:'column', overflow:'hidden' }}>
 
@@ -44,15 +46,21 @@ export default function AppLayout({ apiOnline, onRetry }) {
         <div style={{
           height: 44, flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'flex-end',
-          gap: 8, padding: '0 20px',
+          gap: 8, padding: '0 var(--pad-x)',
           background: '#fff',
           borderBottom: '1px solid #E5E7EB',
           boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
         }}>
 
+          <button className="menu-btn" onClick={() => setMenuAberto(true)} aria-label="Abrir menu"
+            style={{ marginRight:'auto', alignItems:'center', justifyContent:'center', width:32, height:32,
+              borderRadius:8, border:'1px solid #E5E7EB', background:'#fff', cursor:'pointer', color:'#1B4332' }}>
+            <Menu size={16} />
+          </button>
+
           {/* Coleta badge */}
           {processados != null && (
-            <div style={{
+            <div className="so-desktop" style={{
               display:'flex', alignItems:'center', gap:5,
               background:'rgba(45,106,79,0.07)', border:'1px solid rgba(45,106,79,0.18)',
               borderRadius:20, padding:'3px 10px',
@@ -102,8 +110,10 @@ export default function AppLayout({ apiOnline, onRetry }) {
           )}
         </div>
 
-        <main style={{ flex:1, overflow:'auto', padding:'28px 32px' }}>
-          <Outlet />
+        <main className="app-main" style={{ flex:1, overflow:'auto' }}>
+          <Suspense fallback={<p style={{ padding: 40, textAlign: 'center', fontSize: 12, color: '#9CA3AF' }}>Carregando…</p>}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
     </div>

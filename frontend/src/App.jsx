@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, lazy, Suspense } from 'react';
+import { useEffect, useState, useCallback, lazy } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext.jsx';
 import AppLayout      from './components/layout/AppLayout.jsx';
@@ -15,10 +15,8 @@ const OportunidadesPage = lazy(() => import('./pages/OportunidadesPage.jsx'));
 const ManualPage        = lazy(() => import('./pages/ManualPage.jsx'));
 const CustosPage        = lazy(() => import('./pages/CustosPage.jsx'));
 const CompararPage      = lazy(() => import('./pages/CompararPage.jsx'));
-
-function CarregandoPagina() {
-  return <div style={{ padding: 40, textAlign: 'center', fontSize: 12, color: '#9CA3AF' }}>Carregando…</div>;
-}
+// O <Suspense> fica no AppLayout, em volta só do <Outlet>, pra barra lateral
+// não sumir enquanto a página carrega.
 
 const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 const RETRY_OFFLINE = 10_000; // re-tenta a cada 10s quando offline
@@ -64,7 +62,6 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Suspense fallback={<CarregandoPagina />}>
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route element={<AppLayout apiOnline={apiOnline} onRetry={() => fetchDados()} />}>
@@ -82,7 +79,6 @@ export default function App() {
             <Route path="*"           element={<Navigate to="/home" replace />} />
           </Route>
         </Routes>
-        </Suspense>
       </AuthProvider>
     </BrowserRouter>
   );
