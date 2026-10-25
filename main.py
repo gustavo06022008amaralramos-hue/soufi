@@ -204,10 +204,8 @@ def municipios_mapa():
             "apto_geral, score_aptidao, "
             "score_trigo, classificacao_trigo, score_soja, classificacao_soja, "
             "dist_guarapuava_km, dist_lages_km, dist_ponta_grossa_km, "
-            "frete_estimado_sc, maltaria_referencia, zona_logistica"
-            # tem_zarc_cevada: FORA temporariamente — migrations/010 ainda não
-            # rodou em produção (coluna não existe, quebra o endpoint inteiro).
-            # Reativar (", tem_zarc_cevada") assim que a migração rodar.
+            "frete_estimado_sc, maltaria_referencia, zona_logistica, "
+            "tem_zarc_cevada"
         )
         PAGE = 1000
         todos = []
