@@ -1,8 +1,10 @@
 import os
 import threading
+import time
 from datetime import date
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from supabase import create_client, Client
 from typing import Optional
 from dotenv import load_dotenv
@@ -50,14 +52,25 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS — permite acesso do frontend Lovable (e qualquer origin em dev)
+# CORS — a API é só leitura e não usa cookies/credenciais, então não precisa de
+# allow_credentials. Por padrão aceita qualquer origin (dev/Vercel/Netlify);
+# em produção defina ALLOWED_ORIGINS="https://a.com,https://b.com" pra restringir.
+_origens = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
+    allow_origins=_origens or ["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "OPTIONS"],
     allow_headers=["*"],
 )
+# /municipios/mapa devolve ~5.5 mil linhas de JSON — gzip reduz bem o payload.
+app.add_middleware(GZipMiddleware, minimum_size=1024)
+
+# Cache em memória do /municipios/mapa: o frontend faz poll a cada 10-20s por
+# usuário e a consulta paginada no Supabase é a rota mais pesada da API.
+MAPA_CACHE_TTL = 60  # segundos
+_mapa_cache = {"ts": 0.0, "dados": None}
+_mapa_lock = threading.Lock()
 
 # ==============================================================================
 # ROTAS
@@ -146,6 +159,9 @@ def municipios_mapa():
     Retorna todos os municípios com coordenadas e dados de aptidão.
     Usado para renderizar o mapa interativo e o simulador de cenários.
     """
+    with _mapa_lock:
+        if _mapa_cache["dados"] is not None and time.time() - _mapa_cache["ts"] < MAPA_CACHE_TTL:
+            return _mapa_cache["dados"]
     try:
         COLS = (
             "codigo_ibge, nome_municipio, uf, lat, lon, altitude, "
@@ -176,10 +192,14 @@ def municipios_mapa():
             if len(batch.data) < PAGE:
                 break
             offset += PAGE
-        return {
+        resposta = {
             "total": len(todos),
             "municipios": todos,
         }
+        with _mapa_lock:
+            _mapa_cache["dados"] = resposta
+            _mapa_cache["ts"] = time.time()
+        return resposta
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
