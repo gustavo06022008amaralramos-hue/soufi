@@ -54,24 +54,13 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS — a API é só leitura e não usa cookies/credenciais, então não precisa de
-# allow_credentials. Por padrão aceita qualquer origin (dev/Vercel/Netlify);
-# em produção defina ALLOWED_ORIGINS="https://a.com,https://b.com" pra restringir.
-_origens = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_origens or ["*"],
-    allow_credentials=False,
-    allow_methods=["GET", "OPTIONS"],
-    allow_headers=["*"],
-)
 # /municipios/mapa devolve ~5.5 mil linhas de JSON — gzip reduz bem o payload.
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 # Rate limiting por IP (janela deslizante em memória, sem dependência extra).
 # Protege o Supabase free tier contra abuso/loop de cliente. O limite é folgado
 # pro uso normal (o front dá poll a cada 10-20s). Ajustável via RATE_LIMIT_POR_MIN.
-RATE_LIMIT_POR_MIN = int(os.getenv("RATE_LIMIT_POR_MIN", "120"))
+RATE_LIMIT_POR_MIN = int(os.getenv("RATE_LIMIT_POR_MIN", "300"))
 _rate_hits: dict = {}
 _rate_lock = threading.Lock()
 
@@ -100,6 +89,20 @@ async def rate_limit(request: Request, call_next):
     return await call_next(request)
 
 
+# CORS — registrado por último pra ser o middleware mais externo: assim até
+# as respostas 429 do rate limit saem com Access-Control-Allow-Origin (antes o
+# navegador via um 429 como "erro de CORS" e o front achava que a API caiu).
+# A API é só leitura e não usa cookies/credenciais, então não precisa de
+# allow_credentials. Por padrão aceita qualquer origin (dev/Vercel/Netlify);
+# em produção defina ALLOWED_ORIGINS="https://a.com,https://b.com" pra restringir.
+_origens = [o.strip() for o in os.getenv("ALLOWED_ORIGINS", "*").split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=_origens or ["*"],
+    allow_credentials=False,
+    allow_methods=["GET", "OPTIONS"],
+    allow_headers=["*"],
+)
 # Municípios litorâneos diretos (IBGE) — o painel explica por que são sempre Inaptos.
 try:
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "municipios_litoraneos_ibge.json"), encoding="utf-8") as _f:
