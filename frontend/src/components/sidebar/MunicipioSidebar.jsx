@@ -113,9 +113,10 @@ const CRITERIOS = [
   },
   {
     label: 'Chuva Colheita', icon: CloudRain, cor:'#0e7490',
-    faixa: '120–400mm', ideal: '≤ 120mm',
+    faixa: '≤ 400mm', ideal: '≤ 120mm',
     valor: m => m.chuva_colheita_mm != null ? `${Math.round(m.chuva_colheita_mm)}mm` : '—',
-    ok:    m => m.chuva_colheita_mm != null && m.chuva_colheita_mm >= 120 && m.chuva_colheita_mm <= 400,
+    // colheita seca é o ideal: só reprova acima de 400mm (risco de GPH)
+    ok:    m => m.chuva_colheita_mm != null && m.chuva_colheita_mm <= 400,
     nota:  m => rampaBaixa(m.chuva_colheita_mm, 120, 280),
   },
 ];
@@ -206,7 +207,7 @@ th{text-align:left;font-size:9px;font-weight:700;color:#6B7280;text-transform:up
     <div class="card"><div class="ct">Altitude</div><div class="cv">${municipio.altitude?.toFixed(0)??'—'}m</div><div class="cu">ZARC: ≥ 800m</div></div>
     <div class="card"><div class="ct">Risco de Geada</div><div class="cv">${municipio.risco_geada_pct?.toFixed(0)??'—'}%</div><div class="cu">ZARC: &lt; 30%</div></div>
     <div class="card"><div class="ct">Solo ZARC</div><div class="cv">${municipio.tipo_solo_zarc?`Tipo ${municipio.tipo_solo_zarc}`:'—'}</div><div class="cu">ZARC: Tipo 2 ou 3</div></div>
-    <div class="card"><div class="ct">Chuva na Colheita</div><div class="cv">${municipio.chuva_colheita_mm?.toFixed(0)??'—'}mm</div><div class="cu">ZARC: 120–400mm</div></div>
+    <div class="card"><div class="ct">Chuva na Colheita</div><div class="cv">${municipio.chuva_colheita_mm?.toFixed(0)??'—'}mm</div><div class="cu">ZARC: ≤ 400mm (ideal ≤ 120mm)</div></div>
   </div>
 </div>
 

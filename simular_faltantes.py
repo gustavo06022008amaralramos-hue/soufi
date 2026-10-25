@@ -20,7 +20,7 @@ def calc_score(temp, prec, alt, geada, solo_zarc, colheita):
         alt >= 700,
         geada >= 20,
         solo_zarc >= 2,
-        120 <= colheita <= 400,
+        colheita <= 400,
     ]
     ok = sum(criterios)
     return round((ok / 6) * 100), bool(ok == 6)

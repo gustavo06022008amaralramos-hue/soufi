@@ -113,7 +113,7 @@ def calcular_aptidao(temp, chuva, alt, tipo_zarc, geada, colheita):
         400.0 <= chuva <= 2000.0,
         alt >= 700.0,
         geada < 30.0,
-        colheita is not None and 120.0 <= colheita <= 400.0,
+        colheita is not None and colheita <= 400.0,
     ]
     return all(criterios), int(round(sum(criterios) / len(criterios) * 100))
 

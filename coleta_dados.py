@@ -369,7 +369,7 @@ def calcular_aptidao(temp_anual, chuva_anual, altitude, tipo_zarc, risco_geada_p
     apto_chuva    = 400.0 <= chuva_anual <= 2000.0
     apto_alt      = altitude >= 800.0
     apto_geada    = risco_geada_pct < 30.0
-    apto_colheita = chuva_colheita_mm is not None and 120.0 <= chuva_colheita_mm <= 400.0
+    apto_colheita = chuva_colheita_mm is not None and chuva_colheita_mm <= 400.0  # colheita seca é o ideal (GPH)
 
     criterios  = [apto_solo, apto_temp, apto_chuva, apto_alt, apto_geada, apto_colheita]
     apto_final = all(criterios)
