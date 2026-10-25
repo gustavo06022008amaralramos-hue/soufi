@@ -859,7 +859,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 <div style={{ display:'flex',gap:12,justifyContent:'center',marginTop:6 }}>
                   {[{cor:'#2563eb',label:'Precipitação (mm)'},{cor:'#d97706',label:'Temperatura (°C)',dash:true}].map(l=>(
                     <div key={l.label} style={{ display:'flex',alignItems:'center',gap:4 }}>
-                      <div style={{ width:16,height:2,background:l.cor,
+                      <div style={{ width:16,height:2,
                         borderTop: l.dash ? '2px dashed '+l.cor : undefined,
                         background: l.dash ? 'none' : l.cor }} />
                       <span style={{ fontSize:9,color:'#6B7280' }}>{l.label}</span>
