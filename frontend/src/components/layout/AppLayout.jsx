@@ -22,7 +22,7 @@ export default function AppLayout({ apiOnline, onRetry }) {
         .catch(() => {});
     };
     buscar();
-    const id = setInterval(buscar, 20_000);
+    const id = setInterval(buscar, 120_000); // contador do topo; coleta já concluída
     return () => clearInterval(id);
   }, [apiOnline]);
 

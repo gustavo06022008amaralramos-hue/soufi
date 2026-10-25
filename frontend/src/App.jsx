@@ -22,7 +22,7 @@ function CarregandoPagina() {
 
 const API = import.meta.env.VITE_API_URL ?? 'http://127.0.0.1:8000';
 const RETRY_OFFLINE = 10_000; // re-tenta a cada 10s quando offline
-const RETRY_ONLINE  = 20_000; // re-verifica a cada 20s quando online (coleta ativa)
+const RETRY_ONLINE  = 600_000; // online: recarrega a cada 10 min (coleta concluída, dado quase estático)
 
 export default function App() {
   const [municipios,  setMunicipios]  = useState([]);

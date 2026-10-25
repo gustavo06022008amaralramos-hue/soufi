@@ -114,6 +114,7 @@ except FileNotFoundError:
 # usuário e a consulta paginada no Supabase é a rota mais pesada da API.
 MAPA_CACHE_TTL = 60  # segundos
 _mapa_cache = {"ts": 0.0, "dados": None}
+_progresso_cache = {"ts": 0.0, "dados": None}  # /coleta/progresso varre a mesma tabela
 _mapa_lock = threading.Lock()
 
 # ==============================================================================
@@ -125,6 +126,9 @@ TOTAL_MUNICIPIOS_BRASIL = 5570  # IBGE 2024
 @app.get("/coleta/progresso", tags=["Coleta"])
 def coleta_progresso():
     """Estatísticas de progresso da coleta de dados climáticos e pedológicos."""
+    with _mapa_lock:
+        if _progresso_cache["dados"] is not None and time.time() - _progresso_cache["ts"] < MAPA_CACHE_TTL:
+            return _progresso_cache["dados"]
     try:
         registros = []
         offset = 0
@@ -144,7 +148,7 @@ def coleta_progresso():
         com_clima     = sum(1 for r in registros if r.get("temp_media_anual") is not None)
         com_score     = sum(1 for r in registros if r.get("score_aptidao") is not None)
         aptos         = sum(1 for r in registros if r.get("apto_geral") is True)
-        return {
+        resposta = {
             "total_brasil":  TOTAL_MUNICIPIOS_BRASIL,
             "processados":   total_db,
             "com_coords":    com_coords,
@@ -152,8 +156,12 @@ def coleta_progresso():
             "com_clima":     com_clima,
             "com_score":     com_score,
             "aptos":         aptos,
-            "progresso_pct": round(total_db / TOTAL_MUNICIPIOS_BRASIL * 100, 2),
+            "progresso_pct": min(100.0, round(total_db / TOTAL_MUNICIPIOS_BRASIL * 100, 2)),
         }
+        with _mapa_lock:
+            _progresso_cache["dados"] = resposta
+            _progresso_cache["ts"] = time.time()
+        return resposta
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
