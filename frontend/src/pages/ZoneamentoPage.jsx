@@ -720,7 +720,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
         {/* Área do mapa */}
         <div style={{ flex:1, position:'relative', overflow:'hidden' }}>
           {/* Busca */}
-          <div style={{ position:'absolute', top:12, left:'50%', transform:'translateX(-50%)', zIndex:1000 }}>
+          <div style={{ position:'absolute', top:12, left:'50%', transform:'translateX(-50%)', zIndex:1002 }}>
             <SearchBar municipios={municipios} onSelect={onSelect} campo={campo} />
           </div>
 
