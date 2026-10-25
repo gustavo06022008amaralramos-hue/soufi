@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Cell, PieChart, Pie,
@@ -6,13 +6,19 @@ import {
 import { Download, Info } from 'lucide-react';
 
 /* ─── Helpers ─────────────────────────────────────────────────── */
-function gerarDistribuicaoUF(municipios) {
+const CULTURAS = [
+  { id: 'cevada', label: 'Cevada', campo: 'score_aptidao' },
+  { id: 'trigo',  label: 'Trigo',  campo: 'score_trigo'   },
+  { id: 'soja',   label: 'Soja',   campo: 'score_soja'    },
+];
+
+function gerarDistribuicaoUF(municipios, campo) {
   const mapa = {};
   municipios.forEach(m => {
     if (!m.uf) return;
     if (!mapa[m.uf]) mapa[m.uf] = { uf: m.uf, total: 0, aptos: 0 };
     mapa[m.uf].total++;
-    if ((m.score_aptidao ?? 0) >= 70) mapa[m.uf].aptos++;
+    if ((m[campo] ?? 0) >= 70) mapa[m.uf].aptos++;
   });
   return Object.values(mapa)
     .filter(x => x.total >= 10)
@@ -21,6 +27,7 @@ function gerarDistribuicaoUF(municipios) {
 }
 
 function exportCSV(data, nome) {
+  if (!data?.length) return;
   const headers = Object.keys(data[0]).join(',');
   const rows = data.map(r => Object.values(r).join(',')).join('\n');
   const blob = new Blob([headers + '\n' + rows], { type: 'text/csv;charset=utf-8;' });
@@ -79,8 +86,11 @@ function KpiCard({ label, val, cor }) {
    ═══════════════════════════════════════════════════════════════ */
 export default function HistoricosPage({ municipios = [] }) {
   const temDados = municipios.length > 0;
+  const [cultura, setCultura] = useState('cevada');
+  const campo = CULTURAS.find(c => c.id === cultura).campo;
+  const nomeCultura = CULTURAS.find(c => c.id === cultura).label;
 
-  const distribUF = useMemo(() => gerarDistribuicaoUF(municipios), [municipios]);
+  const distribUF = useMemo(() => gerarDistribuicaoUF(municipios, campo), [municipios, campo]);
 
   const dadosScore = useMemo(() => {
     const faixas = [
@@ -91,7 +101,7 @@ export default function HistoricosPage({ municipios = [] }) {
       { faixa: '0–32',   label: 'Inapto',     count: 0, cor: '#94a3b8' },
     ];
     municipios.forEach(m => {
-      const s = m.score_aptidao ?? 0;
+      const s = m[campo] ?? 0;
       if      (s >= 83) faixas[0].count++;
       else if (s >= 70) faixas[1].count++;
       else if (s >= 50) faixas[2].count++;
@@ -99,7 +109,7 @@ export default function HistoricosPage({ municipios = [] }) {
       else              faixas[4].count++;
     });
     return faixas;
-  }, [municipios]);
+  }, [municipios, campo]);
 
   const dadosSolo = useMemo(() => {
     const tipos = [
@@ -119,13 +129,13 @@ export default function HistoricosPage({ municipios = [] }) {
 
   const kpis = useMemo(() => {
     if (!temDados) return null;
-    const aptos    = municipios.filter(m => (m.score_aptidao ?? 0) >= 70).length;
-    const parciais = municipios.filter(m => (m.score_aptidao ?? 0) >= 40 && (m.score_aptidao ?? 0) < 70).length;
-    const scores   = municipios.map(m => m.score_aptidao).filter(s => s != null);
+    const aptos    = municipios.filter(m => (m[campo] ?? 0) >= 70).length;
+    const parciais = municipios.filter(m => (m[campo] ?? 0) >= 40 && (m[campo] ?? 0) < 70).length;
+    const scores   = municipios.map(m => m[campo]).filter(s => s != null);
     const scoreMedio = scores.length ? (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1) : '—';
-    const estados = new Set(municipios.filter(m => (m.score_aptidao ?? 0) >= 70).map(m => m.uf)).size;
+    const estados = new Set(municipios.filter(m => (m[campo] ?? 0) >= 70).map(m => m.uf)).size;
     return { total: municipios.length, aptos, parciais, scoreMedio, estados };
-  }, [municipios, temDados]);
+  }, [municipios, temDados, campo]);
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
@@ -141,6 +151,17 @@ export default function HistoricosPage({ municipios = [] }) {
             Calculado a partir dos {temDados ? municipios.length.toLocaleString('pt-BR') : '5.571'} municípios processados — NASA POWER, SoilGrids, IBGE
           </p>
         </div>
+        <div style={{ display: 'flex', gap: 4, background: '#F3F4F6', borderRadius: 9, padding: 3 }}>
+          {CULTURAS.map(c => (
+            <button key={c.id} onClick={() => setCultura(c.id)} style={{
+              padding: '6px 14px', borderRadius: 7, border: 'none', cursor: 'pointer',
+              fontSize: 12, fontWeight: cultura === c.id ? 700 : 500,
+              background: cultura === c.id ? '#fff' : 'transparent',
+              color: cultura === c.id ? '#111827' : '#6B7280',
+              boxShadow: cultura === c.id ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+            }}>{c.label}</button>
+          ))}
+        </div>
       </div>
 
       {!temDados ? (
@@ -152,7 +173,7 @@ export default function HistoricosPage({ municipios = [] }) {
           {/* KPIs reais */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 12, marginBottom: 16 }}>
             <KpiCard label="Municípios processados" val={kpis.total.toLocaleString('pt-BR')} cor="#374151" />
-            <KpiCard label="Aptos (score ≥70)"       val={kpis.aptos.toLocaleString('pt-BR')} cor="#1A7A3C" />
+            <KpiCard label={`Aptos · ${nomeCultura} (≥70)`}       val={kpis.aptos.toLocaleString('pt-BR')} cor="#1A7A3C" />
             <KpiCard label="Parcialmente aptos"       val={kpis.parciais.toLocaleString('pt-BR')} cor="#D4A017" />
             <KpiCard label="Score médio"              val={kpis.scoreMedio} cor="#0284c7" />
             <KpiCard label="Estados com aptos"        val={kpis.estados} cor="#7c3aed" />
@@ -169,8 +190,8 @@ export default function HistoricosPage({ municipios = [] }) {
 
           {/* Distribuição de score + solo */}
           <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 16, marginBottom: 16 }}>
-            <Card title="Distribuição de Score de Aptidão" subtitle="Todos os municípios processados"
-              action={<CsvBtn data={dadosScore} nome="distribuicao-score" />}>
+            <Card title={`Distribuição de Score — ${nomeCultura}`} subtitle="Todos os municípios processados"
+              action={<CsvBtn data={dadosScore} nome={`distribuicao-score-${cultura}`} />}>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={dadosScore} margin={{ top: 4, right: 10, left: -10, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
@@ -209,9 +230,9 @@ export default function HistoricosPage({ municipios = [] }) {
 
           {/* Distribuição por UF */}
           <Card
-            title="Municípios Aptos por Estado (score ≥ 70)"
+            title={`Municípios Aptos por Estado — ${nomeCultura} (score ≥ 70)`}
             subtitle="Top 12 estados por número de municípios aptos"
-            action={<CsvBtn data={distribUF} nome="aptos-por-uf" />}
+            action={<CsvBtn data={distribUF} nome={`aptos-por-uf-${cultura}`} />}
           >
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={distribUF} margin={{ top: 4, right: 10, left: -10, bottom: 0 }}>
