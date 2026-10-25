@@ -1,3 +1,4 @@
+import json
 import os
 import threading
 import time
@@ -98,6 +99,13 @@ async def rate_limit(request: Request, call_next):
                 _rate_hits.pop(k, None)
     return await call_next(request)
 
+
+# Municípios litorâneos diretos (IBGE) — o painel explica por que são sempre Inaptos.
+try:
+    with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "municipios_litoraneos_ibge.json"), encoding="utf-8") as _f:
+        LITORANEOS_IBGE = {str(c) for c in json.load(_f)}
+except FileNotFoundError:
+    LITORANEOS_IBGE = set()
 
 # Cache em memória do /municipios/mapa: o frontend faz poll a cada 10-20s por
 # usuário e a consulta paginada no Supabase é a rota mais pesada da API.
@@ -223,6 +231,8 @@ def municipios_mapa():
             if len(batch.data) < PAGE:
                 break
             offset += PAGE
+        for m in todos:
+            m["litoraneo"] = str(m["codigo_ibge"]) in LITORANEOS_IBGE
         resposta = {
             "total": len(todos),
             "municipios": todos,

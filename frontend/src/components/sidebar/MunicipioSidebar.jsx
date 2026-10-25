@@ -436,6 +436,13 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
         {/* ── Tab 0: APTIDÃO ──────────────────────────────── */}
         {tab === 0 && (
           <>
+            {municipio.litoraneo && (
+              <div style={{ background:'#eff6ff', border:'1px solid #bfdbfe', borderRadius:9,
+                padding:'8px 11px', fontSize:10, color:'#1e40af', lineHeight:1.5 }}>
+                <strong>Município litorâneo (IBGE).</strong> Regra da cooperativa: litoral é sempre
+                Inapto em cevada, trigo e soja, mesmo com clima favorável na média anual.
+              </div>
+            )}
             {/* Resultado geral */}
             <div style={{ background: bg, border:`1.5px solid ${cor}40`,
               borderRadius:10, padding:'11px 14px',
