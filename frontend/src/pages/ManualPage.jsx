@@ -249,9 +249,10 @@ export default function ManualPage() {
             </div>
           ))}
         </div>
-        <Destaque icon={AlertTriangle} cor="#dc2626" title="Regra regional — Nordeste e litoral nunca são Apto">
-          Municípios do Nordeste (AL, BA, CE, MA, PB, PE, PI, RN, SE) e municípios litorâneos diretos
-          (lista oficial do IBGE, "Municípios defrontantes com o mar") nunca aparecem como Apto (verde),
+        <Destaque icon={AlertTriangle} cor="#dc2626" title="Regra regional — litoral é sempre Inapto; Nordeste nunca é Apto">
+          Municípios litorâneos diretos (lista oficial do IBGE, "Municípios defrontantes com o mar") são
+          sempre <strong>Inaptos</strong> — nem Apto nem Parcialmente Apto, em cevada, trigo e soja. Municípios
+          do Nordeste (AL, BA, CE, MA, PB, PE, PI, RN, SE) fora do litoral nunca passam de Parcialmente Apto,
           mesmo que a média climática pareça favorável — decisão explícita porque a produção real de
           cevada cervejeira no Brasil é praticamente toda em PR/SC/RS, e o proxy de score por média anual
           não captura bem regiões sem inverno real. Detalhes na seção Cálculos, mais abaixo.
@@ -580,12 +581,14 @@ Colheita    — "rampa baixa": nota 1.0 até 120mm, decai linear até 0 em 400mm
           <Formula>{`Score = (nº de critérios atendidos ÷ 6) × 100`}</Formula>
         </Calculo>
 
-        <Calculo titulo="3. Regra regional — Nordeste e litoral nunca são Apto" usadoEm="score_aptidao e score_ponderado, todas as telas">
+        <Calculo titulo="3. Regra regional — litoral Inapto; Nordeste nunca Apto" usadoEm="score_aptidao e score_ponderado, todas as telas">
           <p style={{ fontSize: 11, color: '#6B7280' }}>
-            Independente do resultado das fórmulas acima, municípios do Nordeste (AL, BA, CE, MA, PB, PE,
-            PI, RN, SE) ou litorâneos diretos (lista oficial IBGE "Municípios defrontantes com o mar",
-            279 municípios, casada por código IBGE) têm o score limitado a no máximo 65 pontos — nunca
-            passam de "Parcialmente Apto".
+            Independente do resultado das fórmulas acima: municípios litorâneos diretos (lista oficial IBGE
+            "Municípios defrontantes com o mar", 279 municípios, casada por código IBGE) têm o score limitado
+            a no máximo 39 pontos e <code>apto_geral</code> falso — sempre "Inapto", em cevada, trigo e soja
+            (regra da cooperativa: litoral não pode ser nem parcialmente apto). Municípios do Nordeste (AL, BA,
+            CE, MA, PB, PE, PI, RN, SE) fora do litoral ficam limitados a 65 pontos — nunca passam de
+            "Parcialmente Apto".
           </p>
           <Destaque icon={AlertTriangle} cor="#d97706" title="Por quê">
             O critério de geada premia risco de geada baixo — mas cevada é cultivo de inverno, então baixo
