@@ -8,6 +8,7 @@ from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from criterios_cevada import aptidao_final  # fonte única dos critérios
 
 load_dotenv()
 
@@ -363,19 +364,6 @@ def validar_geocodificacao(temp_anual, alt, uf, nome):
 #   Geada   : < 30% dos meses Jul/Ago com T_min ≤ 2°C (risco no espigamento)
 #   Colheita: < 250mm acumulado médio em Out/Nov (risco de germinação na espiga)
 # ==============================================================================
-def calcular_aptidao(temp_anual, chuva_anual, altitude, tipo_zarc, risco_geada_pct, chuva_colheita_mm):
-    apto_solo     = tipo_zarc is not None and tipo_zarc >= 2
-    apto_temp     = 10.0 <= temp_anual <= 22.0
-    apto_chuva    = 400.0 <= chuva_anual <= 2000.0
-    apto_alt      = altitude >= 800.0
-    apto_geada    = risco_geada_pct < 30.0
-    apto_colheita = chuva_colheita_mm is not None and chuva_colheita_mm <= 400.0  # colheita seca é o ideal (GPH)
-
-    criterios  = [apto_solo, apto_temp, apto_chuva, apto_alt, apto_geada, apto_colheita]
-    apto_final = all(criterios)
-    score      = int(round(sum(criterios) / len(criterios) * 100))
-    return apto_final, score
-
 # ==============================================================================
 # 6. PROCESSAR E SALVAR UM MUNICÍPIO NO SUPABASE
 # ==============================================================================
@@ -428,9 +416,10 @@ def processar_municipio(municipio):
         chuva_colheita_mm = None
 
     # Aptidão final
-    apto_geral, score_final = calcular_aptidao(
+    apto_geral, score_final = aptidao_final(
         temp_anual_media, chuva_anual_media, altitude,
-        tipo_zarc, risco_geada_pct, chuva_colheita_mm or 0.0,
+        tipo_zarc, risco_geada_pct, chuva_colheita_mm,
+        uf, cod_ibge,
     )
 
     # Upsert tabela principal

@@ -26,6 +26,7 @@ from dotenv import load_dotenv
 from supabase import create_client
 
 import calcular_score_ponderado as csp
+from criterios_cevada import aptidao_final  # fonte única dos critérios
 import calcular_frete as cf
 
 if sys.platform == "win32":
@@ -106,18 +107,6 @@ def buscar_clima_nasa_power(lat, lon):
         return None
 
 
-def calcular_aptidao(temp, chuva, alt, tipo_zarc, geada, colheita):
-    criterios = [
-        tipo_zarc is not None and tipo_zarc >= 2,
-        10.0 <= temp <= 22.0,
-        400.0 <= chuva <= 2000.0,
-        alt >= 700.0,
-        geada < 30.0,
-        colheita is not None and colheita <= 400.0,
-    ]
-    return all(criterios), int(round(sum(criterios) / len(criterios) * 100))
-
-
 def reprocessar_um(m):
     cod, nome, uf = m["codigo_ibge"], m["nome_municipio"], m["uf"]
     lat, lon = m["lat"], m["lon"]
@@ -142,8 +131,8 @@ def reprocessar_um(m):
     colheita_mm = round(df_out_nov.groupby(df_out_nov.index.year)["PREC_MM"].sum().mean(), 1) \
         if len(df_out_nov) > 0 else None
 
-    apto, score = calcular_aptidao(temp_anual, chuva_anual, m["altitude"], tipo_zarc,
-                                    geada_pct, colheita_mm or 0.0)
+    apto, score = aptidao_final(temp_anual, chuva_anual, m["altitude"], tipo_zarc,
+                                geada_pct, colheita_mm, uf, cod)
 
     registro_dados = {
         "pct_argila": pct_argila, "tipo_solo_zarc": tipo_zarc,

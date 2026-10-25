@@ -22,7 +22,8 @@ from dotenv import load_dotenv
 from supabase import create_client
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-import calcular_score_ponderado as sp  # reusa notas_graduadas/PESOS/regra regional
+import calcular_score_ponderado as sp  # reusa notas_graduadas/PESOS
+from criterios_cevada import aptidao_final  # critérios + regra regional (fonte única)
 
 if sys.platform == "win32":
     sys.stdout.reconfigure(encoding="utf-8")
@@ -39,22 +40,6 @@ def get_client():
     if not hasattr(_thread_local, "client"):
         _thread_local.client = create_client(SUPABASE_URL, SUPABASE_KEY)
     return _thread_local.client
-
-
-def calcular_aptidao(temp_anual, chuva_anual, altitude, tipo_zarc, risco_geada_pct, chuva_colheita_mm):
-    """Copia de coleta_dados.py:calcular_aptidao() -- nao importamos coleta_dados.py
-    direto porque ele tem execucao de coleta completa (rede) no nivel do modulo."""
-    apto_solo     = tipo_zarc is not None and tipo_zarc >= 2
-    apto_temp     = temp_anual is not None and 10.0 <= temp_anual <= 22.0
-    apto_chuva    = chuva_anual is not None and 400.0 <= chuva_anual <= 2000.0
-    apto_alt      = altitude is not None and altitude >= 800.0
-    apto_geada    = risco_geada_pct is not None and risco_geada_pct < 30.0
-    apto_colheita = chuva_colheita_mm is not None and chuva_colheita_mm <= 400.0  # colheita seca é o ideal (GPH)
-
-    criterios  = [apto_solo, apto_temp, apto_chuva, apto_alt, apto_geada, apto_colheita]
-    apto_final = all(criterios)
-    score      = int(round(sum(criterios) / len(criterios) * 100))
-    return apto_final, score
 
 
 def buscar_todos():
@@ -84,14 +69,12 @@ def main():
     print(f"[DB] {total} municípios a recalcular\n")
 
     def atualizar(m):
-        apto_geral, score_aptidao = calcular_aptidao(
+        apto_geral, score_aptidao = aptidao_final(
             m.get("temp_media_anual"), m.get("precipitacao_acumulada_anual"),
             m.get("altitude"), m.get("tipo_solo_zarc"),
             m.get("risco_geada_pct"), m.get("chuva_colheita_mm"),
+            m.get("uf"), m.get("codigo_ibge"),
         )
-        score_aptidao = sp.aplicar_regra_regiao_restrita(score_aptidao, m.get("uf"), m.get("codigo_ibge"))
-        if str(m.get("codigo_ibge")) in sp.LITORANEOS_IBGE:
-            apto_geral = False  # litoral direto nunca é apto (regra 2026-09-20)
         score_ponderado = sp.calcular_score_ponderado(m)
 
         cliente = get_client()

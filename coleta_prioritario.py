@@ -4,6 +4,7 @@ coleta_prioritario.py — Coleta prioritária para estados relevantes para cevad
 Processa PR, SC, RS, GO, MG, SP antes do script principal chegar neles.
 Usa o mesmo checkpoint e Supabase que coleta_dados.py.
 """
+from criterios_cevada import aptidao_final  # fonte única dos critérios
 import time, json, os
 import pandas as pd
 import requests
@@ -192,17 +193,6 @@ def validar_geocodificacao(temp_anual, alt, uf, nome):
         )
     return True, ''
 
-def calcular_aptidao(temp, chuva, alt, tipo_zarc, geada, colheita):
-    c = [
-        tipo_zarc is not None and tipo_zarc >= 2,
-        10.0 <= temp <= 22.0,
-        400.0 <= chuva <= 2000.0,
-        alt >= 700.0,
-        geada < 30.0,
-        colheita is not None and colheita <= 400.0,
-    ]
-    return all(c), int(round(sum(c) / len(c) * 100))
-
 def processar(municipio):
     cod, nome, uf = municipio["codigo_ibge"], municipio["nome_municipio"], municipio["uf"]
 
@@ -232,7 +222,7 @@ def processar(municipio):
     on = df[df["mes"].isin([10,11])]
     colheita = round(on.groupby(on.index.year)["PREC_MM"].sum().mean(), 1) if len(on) > 0 else None
 
-    apto, score = calcular_aptidao(temp_anual, chuva_anual, alt, tipo_zarc, geada, colheita or 0.0)
+    apto, score = aptidao_final(temp_anual, chuva_anual, alt, tipo_zarc, geada, colheita, uf, cod)
 
     # Solo name
     nomes_solo = {1: "Tipo 1 - Arenoso", 2: "Tipo 2 - Textura Média", 3: "Tipo 3 - Argiloso"}
