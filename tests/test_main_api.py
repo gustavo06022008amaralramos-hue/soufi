@@ -104,3 +104,16 @@ def test_rate_limit_responde_429_com_cors(cliente, monkeypatch):
     assert r.status_code == 429
     assert r.headers.get("access-control-allow-origin") == "*"
     assert r.headers.get("retry-after") == "30"
+
+
+def test_erro_interno_nao_expoe_detalhe_do_banco(cliente, monkeypatch):
+    c, _ = cliente
+
+    def quebra():
+        raise RuntimeError('column "tabela_secreta.coluna" does not exist')
+
+    monkeypatch.setattr(main, "get_supabase", quebra)
+    monkeypatch.setattr(main, "DEBUG_ERROS", False)
+    r = c.get("/municipios/mapa")
+    assert r.status_code == 500
+    assert "tabela_secreta" not in r.text

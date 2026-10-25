@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import threading
 import time
@@ -44,6 +45,22 @@ def get_supabase() -> Client:
 # Mantido por compatibilidade com o startup (não usar dentro de endpoints —
 # use get_supabase() em cada request pra ser thread-safe).
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+log = logging.getLogger("soufii.api")
+DEBUG_ERROS = os.getenv("DEBUG_ERROS") == "1"
+
+
+def erro_interno(e: Exception) -> HTTPException:
+    """Registra o erro completo no log (painel do Render) e devolve ao cliente
+    uma mensagem genérica — o texto da exceção pode expor nome de tabela,
+    coluna ou URL interna. Com DEBUG_ERROS=1 o detalhe volta na resposta."""
+    log.exception("Erro interno na API")
+    return HTTPException(
+        status_code=500,
+        detail=str(e) if DEBUG_ERROS else "Erro interno ao consultar a base de dados. Tente novamente em instantes.",
+    )
+
 
 # ==============================================================================
 # APLICAÇÃO FASTAPI
@@ -163,7 +180,7 @@ def coleta_progresso():
             _progresso_cache["ts"] = time.time()
         return resposta
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise erro_interno(e)
 
 
 @app.get("/", tags=["Status"])
@@ -202,7 +219,7 @@ def municipios_aptos(uf: Optional[str] = Query(default=None, description="Filtra
         }
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise erro_interno(e)
 
 
 @app.get("/municipios/mapa", tags=["Municípios"])
@@ -253,7 +270,7 @@ def municipios_mapa():
             _mapa_cache["ts"] = time.time()
         return resposta
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise erro_interno(e)
 
 
 @app.get("/sazonalidade/{codigo_ibge}", tags=["Sazonalidade"])
@@ -295,7 +312,7 @@ def sazonalidade(codigo_ibge: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise erro_interno(e)
 
 
 @app.get("/municipios/top", tags=["Municípios"])
@@ -312,7 +329,7 @@ def municipios_top(limit: int = Query(default=5, ge=1, le=50), uf: str | None = 
         resultado = query.order("score_aptidao", desc=True).limit(limit).execute()
         return {"municipios": resultado.data}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise erro_interno(e)
 
 
 @app.get("/municipios/estatisticas", tags=["Municípios"])
@@ -342,7 +359,7 @@ def municipios_estatisticas():
             "melhor_municipio": f"{melhor['nome_municipio']}/{melhor['uf']}" if melhor else None,
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise erro_interno(e)
 
 
 ZARC_TABELA_POR_CULTURA = {
@@ -394,7 +411,7 @@ def zarc_elegibilidade(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise erro_interno(e)
 
 
 @app.get("/zarc/calendario", tags=["ZARC"])
@@ -440,7 +457,7 @@ def zarc_calendario(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise erro_interno(e)
 
 
 @app.get("/gdd/simulacao", tags=["GDD"])
@@ -495,7 +512,7 @@ def gdd_simulacao(
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise erro_interno(e)
 
 
 if __name__ == "__main__":
