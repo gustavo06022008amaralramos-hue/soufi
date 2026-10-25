@@ -104,7 +104,9 @@ function scoreGeral(m) {
 
 /* ── Linhas de comparação ──────────────────────── */
 const LINHAS = [
-  { label: 'Score ZARC', key: 'score_aptidao', fmt: v => `${v ?? '—'}/100`, maior: 'melhor', cor: v => v >= 70 ? '#1A7A3C' : v >= 40 ? '#D4A017' : '#4A90C4' },
+  { label: 'Score Cevada', key: 'score_aptidao', fmt: v => `${v ?? '—'}/100`, maior: 'melhor', cor: v => v >= 70 ? '#1A7A3C' : v >= 40 ? '#D4A017' : '#4A90C4' },
+  { label: 'Score Trigo', key: 'score_trigo', fmt: v => v != null ? `${v}/100` : '—', maior: 'melhor', cor: v => v >= 70 ? '#1A7A3C' : v >= 40 ? '#D4A017' : '#4A90C4' },
+  { label: 'Score Soja', key: 'score_soja', fmt: v => v != null ? `${v}/100` : '—', maior: 'melhor', cor: v => v >= 70 ? '#1A7A3C' : v >= 40 ? '#D4A017' : '#4A90C4' },
   { label: 'Temperatura média', key: 'temp_media_anual', fmt: v => `${fmt(v,1)}°C`, maior: null },
   { label: 'Precipitação anual', key: 'precipitacao_acumulada_anual', fmt: v => `${fmt(v,0)} mm`, maior: null },
   { label: 'Altitude', key: 'altitude', fmt: v => `${fmt(v,0)} m`, maior: 'melhor' },
@@ -135,7 +137,7 @@ function vencedores(slots, chave) {
 function exportComparativo(slots) {
   const filled = slots.filter(Boolean);
   if (!filled.length) return;
-  const cols = ['nome_municipio', 'uf', 'score_aptidao', 'temp_media_anual', 'precipitacao_acumulada_anual', 'altitude', 'risco_geada_pct', 'dist', 'lucro', 'roi'];
+  const cols = ['nome_municipio', 'uf', 'score_aptidao', 'score_trigo', 'score_soja', 'temp_media_anual', 'precipitacao_acumulada_anual', 'altitude', 'risco_geada_pct', 'dist', 'lucro', 'roi'];
   const headers = cols.join(',');
   const rows = filled.map(m => cols.map(c => {
     const v = m[c];
@@ -205,11 +207,11 @@ export default function CompararPage({ municipios = [] }) {
   });
 
   /* Bar chart — Score e Lucro */
-  const barData = ['Score ZARC', 'ROI (%)', 'Lucro/ha (R$÷100)'].map(label => {
+  const barData = ['Score Cevada', 'ROI (%)', 'Lucro/ha (R$÷100)'].map(label => {
     const obj = { label };
     enriched.forEach((m, i) => {
       if (!m) return;
-      if (label === 'Score ZARC') obj[`s${i}`] = m.score_aptidao ?? 0;
+      if (label === 'Score Cevada') obj[`s${i}`] = m.score_aptidao ?? 0;
       if (label === 'ROI (%)') obj[`s${i}`] = Math.max(0, Math.round(m.roi ?? 0));
       if (label === 'Lucro/ha (R$÷100)') obj[`s${i}`] = Math.max(0, Math.round((m.lucro ?? 0) / 100));
     });
