@@ -2,7 +2,8 @@ import os
 import threading
 import time
 from datetime import date
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from supabase import create_client, Client
@@ -65,6 +66,38 @@ app.add_middleware(
 )
 # /municipios/mapa devolve ~5.5 mil linhas de JSON — gzip reduz bem o payload.
 app.add_middleware(GZipMiddleware, minimum_size=1024)
+
+# Rate limiting por IP (janela deslizante em memória, sem dependência extra).
+# Protege o Supabase free tier contra abuso/loop de cliente. O limite é folgado
+# pro uso normal (o front dá poll a cada 10-20s). Ajustável via RATE_LIMIT_POR_MIN.
+RATE_LIMIT_POR_MIN = int(os.getenv("RATE_LIMIT_POR_MIN", "120"))
+_rate_hits: dict = {}
+_rate_lock = threading.Lock()
+
+
+@app.middleware("http")
+async def rate_limit(request: Request, call_next):
+    if request.method == "OPTIONS" or RATE_LIMIT_POR_MIN <= 0:
+        return await call_next(request)
+    # atrás do proxy do Render o IP real vem em X-Forwarded-For
+    ip = (request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+          or (request.client.host if request.client else "?"))
+    agora = time.time()
+    with _rate_lock:
+        hits = [t for t in _rate_hits.get(ip, []) if agora - t < 60]
+        if len(hits) >= RATE_LIMIT_POR_MIN:
+            _rate_hits[ip] = hits
+            return JSONResponse(
+                {"detail": "Muitas requisições — tente novamente em instantes."},
+                status_code=429, headers={"Retry-After": "30"},
+            )
+        hits.append(agora)
+        _rate_hits[ip] = hits
+        if len(_rate_hits) > 5000:  # evita crescimento ilimitado
+            for k in [k for k, v in _rate_hits.items() if not v or agora - v[-1] > 60]:
+                _rate_hits.pop(k, None)
+    return await call_next(request)
+
 
 # Cache em memória do /municipios/mapa: o frontend faz poll a cada 10-20s por
 # usuário e a consulta paginada no Supabase é a rota mais pesada da API.
