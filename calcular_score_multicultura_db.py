@@ -26,7 +26,7 @@ from dotenv import load_dotenv
 from supabase import create_client
 
 from calcular_aptidao_multicultura import (
-    classificar_aptidao, criterios_binarios_soja, criterios_binarios_trigo,
+    classificacao_trigo, classificar_aptidao, criterios_binarios_soja,
     eh_litoraneo, score_soja, score_trigo,
 )
 
@@ -107,7 +107,7 @@ def main():
         atualizacoes.append({
             "codigo_ibge": m["codigo_ibge"],
             "score_trigo": score_trigo(m, reg_trigo),
-            "classificacao_trigo": classificar_aptidao(criterios_binarios_trigo(m), litoraneo),
+            "classificacao_trigo": classificacao_trigo(m, reg_trigo),
             "score_soja": score_soja(m, reg_soja),
             "classificacao_soja": classificar_aptidao(criterios_binarios_soja(m), litoraneo),
         })

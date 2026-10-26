@@ -119,4 +119,28 @@ def test_score_soja_litoraneo_nunca_passa_do_teto():
 
 def test_score_trigo_nao_litoraneo_nao_e_afetado():
     m_ideal = {"codigo_ibge": "4109401", "pct_argila": 40, "temp_media_anual": 15, "altitude": 900, "risco_geada_pct": 0}
-    assert apt.score_trigo(m_ideal, []) == 85  # sem ZARC (peso 0.15), resto ideal: 0.85*100
+    registros = [{"decendio": d, "nivel_risco": 20} for d in range(1, 37)]
+    assert apt.score_trigo(m_ideal, registros) == 100
+
+
+# ── ZARC oficial de trigo como referência (2026-10-26, com OK do usuário) ─────
+ZARC_TRIGO = [{"decendio": d, "nivel_risco": 20} for d in range(12, 20)]
+
+
+def test_trigo_sem_zarc_tem_teto_65_e_no_maximo_parcial():
+    m = {"codigo_ibge": "1400456", "pct_argila": 40, "temp_media_anual": 15, "altitude": 900, "risco_geada_pct": 0}
+    assert apt.score_trigo(m, []) == 65
+    assert apt.classificacao_trigo(m, []) == "Parcial"
+
+
+def test_trigo_com_zarc_geada_alta_nao_reprova():
+    # Guarapuava real: geada 61% na média anual
+    m = {"codigo_ibge": "4109401", "pct_argila": 60, "temp_media_anual": 17, "altitude": 1090, "risco_geada_pct": 61}
+    assert apt.criterios_binarios_trigo(m, ZARC_TRIGO)[3] is True
+    assert apt.classificacao_trigo(m, ZARC_TRIGO) == "Apta"
+    assert apt.notas_trigo(m, ZARC_TRIGO)["geada"] == 1.0
+
+
+def test_trigo_sem_registros_mantem_criterio_de_geada():
+    m = {"codigo_ibge": "4109401", "pct_argila": 60, "temp_media_anual": 17, "altitude": 1090, "risco_geada_pct": 61}
+    assert apt.criterios_binarios_trigo(m)[3] is False

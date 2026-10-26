@@ -56,7 +56,9 @@ caracteristicas-da-especie-e-relacoes-com-o-ambiente/exigencias-climaticas):
 Reaproveita as funções de nota graduada (_plato/_rampa_alta/_rampa_baixa)
 de calcular_score_ponderado.py — mesma matemática, sem duplicar.
 """
-from calcular_score_ponderado import _plato, _rampa_alta, _rampa_baixa, LITORANEOS_IBGE, TETO_SCORE_LITORAL
+from calcular_score_ponderado import (
+    _plato, _rampa_alta, _rampa_baixa, LITORANEOS_IBGE, TETO_SCORE_LITORAL, TETO_SCORE_SEM_ZARC,
+)
 
 
 def eh_litoraneo(codigo_ibge):
@@ -107,7 +109,10 @@ def notas_trigo(m, registros_zarc):
     nota_solo     = 0.0 if pct_argila is None else max(0.0, min(1.0, pct_argila / 35.0))
     nota_temp     = _plato(temp, 9.0, 25.0, 3.0)
     nota_altitude = _rampa_alta(alt, 800.0, 50.0)
-    nota_geada    = _rampa_baixa(geada, 0.0, 20.0)
+    # Com ZARC oficial de trigo, a geada já é tratada pelo zoneamento (geada no
+    # espigamento, ZARC de cereais de inverno — MAPA 2023/24): a média anual não
+    # penaliza de novo. Mesma regra da cevada (calcular_score_ponderado.py).
+    nota_geada    = 1.0 if registros_zarc else _rampa_baixa(geada, 0.0, 20.0)
     nota_z        = nota_zarc(registros_zarc)
 
     return {"solo": nota_solo, "temp": nota_temp, "altitude": nota_altitude, "geada": nota_geada, "zarc": nota_z}
@@ -126,6 +131,8 @@ def score_trigo(m, registros_zarc):
     score = int(round(sum(PESOS_TRIGO[k] * notas[k] for k in PESOS_TRIGO) * 100))
     if eh_litoraneo(m.get("codigo_ibge")):
         score = min(score, TETO_SCORE_LITORAL)
+    if not registros_zarc:  # sem ZARC oficial de trigo: nunca Apto
+        score = min(score, TETO_SCORE_SEM_ZARC)
     return score
 
 
@@ -158,7 +165,8 @@ def classificar_aptidao(criterios_aprovados, litoraneo=False):
     return "Inapta"
 
 
-def criterios_binarios_trigo(m):
+def criterios_binarios_trigo(m, registros_zarc=None):
+    """`registros_zarc` com algum registro = município zoneado: geada atendida."""
     pct_argila = m.get("pct_argila")
     temp       = m.get("temp_media_anual")
     alt        = m.get("altitude")
@@ -167,8 +175,15 @@ def criterios_binarios_trigo(m):
         pct_argila is not None and pct_argila >= 15.0,   # ao menos Tipo 2 (textura média)
         temp is not None and 9.0 <= temp <= 25.0,
         alt is not None and alt >= 800.0,
-        geada is not None and geada < 20.0,
+        bool(registros_zarc) or (geada is not None and geada < 20.0),
     ]
+
+
+def classificacao_trigo(m, registros_zarc):
+    """Apta/Parcial/Inapta do trigo: sem nenhum registro no ZARC oficial de
+    trigo, no máximo Parcial (mesma regra do teto de score)."""
+    c = classificar_aptidao(criterios_binarios_trigo(m, registros_zarc), eh_litoraneo(m.get("codigo_ibge")))
+    return "Parcial" if c == "Apta" and not registros_zarc else c
 
 
 def criterios_binarios_soja(m):
