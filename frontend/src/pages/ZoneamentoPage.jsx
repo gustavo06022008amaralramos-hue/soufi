@@ -803,6 +803,7 @@ export default function ZoneamentoPage({ municipios=[], loadingMapa=false }) {
         sazonalidade={sazonalidade}
         loading={loadingSazon}
         onClose={() => onSelect(null)}
+        cultura={cultura}
       />
     </div>
   );

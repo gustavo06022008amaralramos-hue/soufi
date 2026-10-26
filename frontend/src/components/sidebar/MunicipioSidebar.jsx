@@ -272,7 +272,7 @@ function EmptyState() {
 }
 
 /* ─── Componente principal ───────────────────────────────── */
-export default function MunicipioSidebar({ municipio, sazonalidade, loading, onClose }) {
+export default function MunicipioSidebar({ municipio, sazonalidade, loading, onClose, cultura = 'cevada' }) {
   const [tab, setTab] = useState(0);
   const [precoSaca,   setPrecoSaca]   = useState(95);
   const [freteTonKm,  setFreteTonKm]  = useState(0.32);
@@ -295,7 +295,9 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
      fases. Cevada, trigo ou soja (ver /zarc/elegibilidade?cultura=). Busca
      sob demanda, só quando a aba Seguro está aberta, e refaz quando a data
      simulada ou a cultura mudam. */
-  const [culturaSim,  setCulturaSim]  = useState('cevada');
+  const [culturaSim,  setCulturaSim]  = useState(cultura);
+  // acompanha a cultura escolhida no mapa
+  useEffect(() => { setCulturaSim(cultura); }, [cultura]);
   const [dataPlantio, setDataPlantio] = useState(() => `${new Date().getFullYear()}-06-15`);
   const [zarcReal,    setZarcReal]    = useState(null);
   const [zarcLoading, setZarcLoading] = useState(false);
@@ -457,7 +459,30 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 cevada fica limitado a Parcialmente Apto (máx. 65).
               </div>
             )}
-            {/* Resultado geral */}
+            {/* Aptidão nas 3 culturas — a do mapa em destaque */}
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:6 }}>
+              {[
+                { k:'cevada', score: municipio.score_aptidao,
+                  cls: (municipio.score_aptidao ?? 0) >= 70 ? 'Apta' : (municipio.score_aptidao ?? 0) >= 40 ? 'Parcial' : 'Inapta' },
+                { k:'trigo',  score: municipio.score_trigo, cls: municipio.classificacao_trigo },
+                { k:'soja',   score: municipio.score_soja,  cls: municipio.classificacao_soja },
+              ].map(({ k, score, cls }) => {
+                const ativo = k === cultura;
+                const corCls = cls === 'Apta' ? '#16a34a' : cls === 'Parcial' ? '#d97706' : '#6B7280';
+                return (
+                  <div key={k} title={`${CULTURAS_SIM[k].label}: score ${score ?? '—'}/100 · ${cls ?? 'sem dado'}`}
+                    style={{ borderRadius:8, padding:'6px 8px', textAlign:'center',
+                      border: ativo ? `1.5px solid ${CULTURAS_SIM[k].cor}` : '1px solid #E5E7EB',
+                      background: ativo ? `${CULTURAS_SIM[k].cor}14` : '#fff' }}>
+                    <p style={{ fontSize:9, color:'#6B7280', fontWeight: ativo ? 700 : 500 }}>{CULTURAS_SIM[k].label}</p>
+                    <p style={{ fontSize:15, fontWeight:800, color: corCls, lineHeight:1.2 }}>{score ?? '—'}</p>
+                    <p style={{ fontSize:8, color: corCls, fontWeight:600 }}>{cls ?? '—'}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Resultado geral (cevada — critérios ZARC/EMBRAPA abaixo) */}
             <div style={{ background: bg, border:`1.5px solid ${cor}40`,
               borderRadius:10, padding:'11px 14px',
               display:'flex', alignItems:'center', gap:10 }}>
