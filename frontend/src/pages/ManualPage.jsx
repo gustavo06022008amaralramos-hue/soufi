@@ -604,6 +604,32 @@ Colheita    — "rampa baixa": nota 1.0 até 120mm, decai linear até 0 em 400mm
           </Destaque>
         </Calculo>
 
+        <Calculo titulo="3b. Trigo e soja" usadoEm="seletor de cultura do mapa, Dashboard, Históricos, Comparador">
+          <Formula>{`Trigo — Score = Σ (peso × nota 0–1) × 100
+  Solo      20%  nota = %argila ÷ 35 (máx. 1,0)
+  Temp.     25%  platô 9–25°C, tolerância 3°C
+  Altitude  20%  ≥ 800m, tolerância 50m
+  Geada     20%  0% ideal, zera em 20% de risco
+  ZARC      15%  nota do ZARC oficial de trigo (abaixo)
+
+Soja  — Score = Σ (peso × nota 0–1) × 100
+  Temp.     40%  platô 20–30°C, tolerância 10°C
+  ZARC      60%  nota do ZARC oficial de soja
+
+Nota ZARC = melhor risco do município × 0,7 + cobertura × 0,3
+  melhor risco: 20% → 1,0 · 30% → 0,7 · 40% → 0,4 (Tábua de Risco do MAPA)
+  cobertura   : decêndios do ano com indicação de semeadura ÷ 36
+  sem nenhum registro → 0`}</Formula>
+          <p style={{ fontSize: 11, color: '#6B7280' }}>
+            Classificação (Apta / Parcial / Inapta) pela contagem de critérios binários reprovados: nenhum =
+            Apta, até 2 = Parcial, mais de 2 = Inapta. No trigo, a mesma referência do ZARC usada na cevada:
+            município <strong>sem ZARC oficial de trigo</strong> fica limitado a 65 pontos e no máximo
+            Parcial; <strong>com ZARC</strong>, a geada pela média anual não penaliza, porque o ZARC de
+            cereais de inverno já avalia a geada no espigamento. Litoral é sempre Inapto nas três culturas.
+          </p>
+          <p style={{ fontSize: 10, color: '#9CA3AF' }}>Fonte do código: calcular_aptidao_multicultura.py — testado com pytest.</p>
+        </Calculo>
+
         <Calculo titulo="4. Logística e frete" usadoEm="painel do município, oportunidades, comparador">
           <Formula>{`Distância rodovia (km) = distância em linha reta (haversine) × 1,35
 Preço bruto (R$/ton)  = (preço da saca ÷ 60kg) × 1000
