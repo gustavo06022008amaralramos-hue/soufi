@@ -1,3 +1,4 @@
+import functools
 import json
 import logging
 import os
@@ -40,6 +41,25 @@ def get_supabase() -> Client:
     if not hasattr(_thread_local, "client"):
         _thread_local.client = create_client(SUPABASE_URL, SUPABASE_KEY)
     return _thread_local.client
+
+
+def com_reconexao(endpoint):
+    """Se o endpoint falhar com 500, descarta o client Supabase desta thread e
+    tenta uma vez de novo com conexão nova. O client fica guardado por thread
+    e a conexão HTTP dele morre depois de hibernação/queda de rede (visto em
+    dev: /municipios/mapa respondeu 500 seguido logo após a máquina dormir)."""
+    @functools.wraps(endpoint)
+    def envolvido(*args, **kwargs):
+        try:
+            return endpoint(*args, **kwargs)
+        except HTTPException as e:
+            if e.status_code != 500:
+                raise
+            if hasattr(_thread_local, "client"):
+                del _thread_local.client
+            log.warning("Repetindo %s com conexão nova ao Supabase", endpoint.__name__)
+            return endpoint(*args, **kwargs)
+    return envolvido
 
 
 # Mantido por compatibilidade com o startup (não usar dentro de endpoints —
@@ -141,6 +161,7 @@ _mapa_lock = threading.Lock()
 TOTAL_MUNICIPIOS_BRASIL = 5570  # IBGE 2024
 
 @app.get("/coleta/progresso", tags=["Coleta"])
+@com_reconexao
 def coleta_progresso():
     """Estatísticas de progresso da coleta de dados climáticos e pedológicos."""
     with _mapa_lock:
@@ -194,6 +215,7 @@ def status():
 
 
 @app.get("/municipios/aptos", tags=["Municípios"])
+@com_reconexao
 def municipios_aptos(uf: Optional[str] = Query(default=None, description="Filtrar por UF (ex: PR, SP, MG)")):
     """
     Retorna municípios com apto_geral = true.
@@ -223,6 +245,7 @@ def municipios_aptos(uf: Optional[str] = Query(default=None, description="Filtra
 
 
 @app.get("/municipios/mapa", tags=["Municípios"])
+@com_reconexao
 def municipios_mapa():
     """
     Retorna todos os municípios com coordenadas e dados de aptidão.
@@ -274,6 +297,7 @@ def municipios_mapa():
 
 
 @app.get("/sazonalidade/{codigo_ibge}", tags=["Sazonalidade"])
+@com_reconexao
 def sazonalidade(codigo_ibge: str):
     """
     Retorna os 12 meses de dados climáticos e aptidão mensal de um município.
@@ -316,6 +340,7 @@ def sazonalidade(codigo_ibge: str):
 
 
 @app.get("/municipios/top", tags=["Municípios"])
+@com_reconexao
 def municipios_top(limit: int = Query(default=5, ge=1, le=50), uf: str | None = Query(default=None)):
     """Retorna os municípios com maior score de aptidão. Opcionalmente filtra por UF."""
     try:
@@ -333,6 +358,7 @@ def municipios_top(limit: int = Query(default=5, ge=1, le=50), uf: str | None = 
 
 
 @app.get("/municipios/estatisticas", tags=["Municípios"])
+@com_reconexao
 def municipios_estatisticas():
     """Estatísticas gerais rápidas: contagens por score sem carregar todos os dados."""
     try:
@@ -370,6 +396,7 @@ ZARC_TABELA_POR_CULTURA = {
 
 
 @app.get("/zarc/elegibilidade", tags=["ZARC"])
+@com_reconexao
 def zarc_elegibilidade(
     codigo_ibge: int = Query(...),
     data_plantio: date = Query(..., description="Data de semeio pretendida, formato YYYY-MM-DD"),
@@ -415,6 +442,7 @@ def zarc_elegibilidade(
 
 
 @app.get("/zarc/calendario", tags=["ZARC"])
+@com_reconexao
 def zarc_calendario(
     codigo_ibge: int = Query(...),
     cultura: str = Query(default="cevada", description="'cevada', 'trigo' ou 'soja'."),
@@ -461,6 +489,7 @@ def zarc_calendario(
 
 
 @app.get("/gdd/simulacao", tags=["GDD"])
+@com_reconexao
 def gdd_simulacao(
     codigo_ibge: int = Query(...),
     data_semeio: date = Query(..., description="Data de semeio simulada, formato YYYY-MM-DD"),

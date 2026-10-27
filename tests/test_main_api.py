@@ -117,3 +117,19 @@ def test_erro_interno_nao_expoe_detalhe_do_banco(cliente, monkeypatch):
     r = c.get("/municipios/mapa")
     assert r.status_code == 500
     assert "tabela_secreta" not in r.text
+
+
+def test_falha_de_conexao_e_repetida_com_client_novo(cliente, monkeypatch):
+    c, falso = cliente
+    chamadas = {"n": 0}
+
+    def instavel():
+        chamadas["n"] += 1
+        if chamadas["n"] == 1:
+            raise ConnectionResetError("conexão morta após hibernar")
+        return falso
+
+    monkeypatch.setattr(main, "get_supabase", instavel)
+    r = c.get("/municipios/mapa")
+    assert r.status_code == 200
+    assert chamadas["n"] >= 2
