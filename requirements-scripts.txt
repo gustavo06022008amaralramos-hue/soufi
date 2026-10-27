@@ -1,0 +1,5 @@
+# Dependências só dos scripts de coleta/manutenção (não da API no Render)
+-r requirements.txt
+numpy
+tifffile          # coletar_solo_poligono.py (GeoTIFF do SoilGrids)
+psycopg[binary]   # rodar_migracoes.py
