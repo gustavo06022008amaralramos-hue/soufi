@@ -108,6 +108,16 @@ body {
     z-index: 2500; border-left: none !important;
   }
   .zon-painel-vazio { display: none !important; }
+
+  /* Grades com colunas fixas no estilo inline (repeat(4,1fr), 1.2fr 1fr…)
+     estouravam a largura do celular: viram grade fluida. Linhas de cabeçalho
+     com space-between podem quebrar. Tabelas rolam dentro do próprio bloco. */
+  .app-main [style*="grid-template-columns"] {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+  }
+  .app-main [style*="justify-content: space-between"] { flex-wrap: wrap; gap: 8px; }
+  .app-main table { display: block; overflow-x: auto; max-width: 100%; }
+  .app-main { overflow-x: hidden; }
   .so-desktop { display: none !important; }
 }
 @media (prefers-reduced-motion: reduce) {

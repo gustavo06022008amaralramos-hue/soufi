@@ -361,7 +361,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
                 </div>
                 <span style={{ fontSize:46 }}>{weather.icon}</span>
               </div>
-              <div style={{ display:'flex', gap:14 }}>
+              <div style={{ display:'flex', gap:14, flexWrap:'wrap' }}>
                 {[
                   { icon:Thermometer, label:'Sensação', val:`${weather.feels}°C`, cor:'#D97706' },
                   { icon:Droplets,    label:'Umidade',  val:`${weather.humidity}%`, cor:'#2563EB' },
