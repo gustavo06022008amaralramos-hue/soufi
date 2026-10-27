@@ -219,13 +219,34 @@ def aquecer_cache():
     threading.Thread(target=_aquecer, daemon=True).start()
 
 
+def _commit_atual():
+    """Commit em execução: Render/Vercel informam por variável de ambiente;
+    localmente, pelo git. Serve para conferir se um deploy entrou de fato."""
+    for var in ("RENDER_GIT_COMMIT", "VERCEL_GIT_COMMIT_SHA", "GIT_COMMIT"):
+        if os.getenv(var):
+            return os.getenv(var)[:7]
+    try:
+        import subprocess
+        return subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True,
+                              timeout=3, cwd=os.path.dirname(os.path.abspath(__file__))).stdout.strip() or None
+    except Exception:
+        return None
+
+
+COMMIT = _commit_atual()
+INICIADA_EM = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
 @app.get("/", tags=["Status"])
 def status():
-    """Verifica se a API está online."""
+    """Verifica se a API está online e qual versão do código está rodando."""
     return {
         "status": "online",
         "projeto": "SOUFII - Aptidão Agrária",
         "versao": "1.0.0",
+        "commit": COMMIT,
+        "iniciada_em": INICIADA_EM,
+        "rotas": len([r for r in app.routes if getattr(r, "methods", None) and "GET" in r.methods]),
     }
 
 

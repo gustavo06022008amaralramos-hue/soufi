@@ -133,3 +133,11 @@ def test_falha_de_conexao_e_repetida_com_client_novo(cliente, monkeypatch):
     r = c.get("/municipios/mapa")
     assert r.status_code == 200
     assert chamadas["n"] >= 2
+
+
+def test_status_informa_commit_e_rotas(cliente, monkeypatch):
+    c, _ = cliente
+    monkeypatch.setattr(main, "COMMIT", "abc1234")
+    d = c.get("/").json()
+    assert d["status"] == "online" and d["commit"] == "abc1234"
+    assert d["rotas"] >= 10   # versão antiga em produção tinha só 7
