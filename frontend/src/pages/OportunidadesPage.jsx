@@ -94,7 +94,10 @@ function calcViabilidade(m, precoSaca, freteTonKm) {
   const roi          = custo_total > 0 ? (lucro_ha / custo_total) * 100 : 0;
 
   const temZarcReal = m.tem_zarc_cevada ?? UFS_COM_SEGURO.has(m.uf);
-  const temSeguro   = temZarcReal && (m.score_aptidao ?? 0) >= 70;
+  // Seguro rural (PSR/PROAGRO) exige indicação no ZARC — não depende de o
+  // município ser Apto no SOUFII. Antes exigia score >= 70, e com o teto de 65
+  // para quem não tem ZARC o KPI virou a mesma contagem dos Parciais.
+  const temSeguro   = temZarcReal;
   const scoreSeguro = temSeguro ? 30 : (m.score_aptidao ?? 0) >= 40 ? 85 : 0;
 
   // ── Hard Filter ──────────────────────────────────────────────
@@ -261,7 +264,7 @@ const TABS = [
   { label: 'Mapa de Cobertura',  icon: Map,            desc: 'Mesma classificação do ranking, em mapa — veja onde os municípios prioritários se concentram.' },
   { label: 'Break-even',         icon: Wallet,         desc: 'Quanto cada município precisa produzir pra cobrir o custo — contexto rápido, não substitui a calculadora completa.' },
   { label: 'Manejos',            icon: CalendarClock,  desc: 'Cultivar indicada e janela de semeio para os municípios mais bem ranqueados.' },
-  { label: 'Expansão de Seguro', icon: ShieldCheck,    desc: 'Municípios aptos sem PSR/PROAGRO ativo, priorizando quem já faz fronteira com área segurada.' },
+  { label: 'Expansão de Seguro', icon: ShieldCheck,    desc: 'Municípios com score ≥ 40 sem ZARC de cevada (sem acesso a PSR/PROAGRO), priorizando quem faz fronteira com área zoneada.' },
 ];
 
 /* ─── Componente principal ───────────────────────────────────── */
@@ -479,7 +482,7 @@ export default function OportunidadesPage({ municipios = [] }) {
       {/* ── KPIs ── */}
       <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:12, marginBottom:20 }}>
         <KpiCard icon={Leaf}    label="Aptos ZARC"         value={kpis.aptos}   sub={ufFiltro==='Todos' ? 'score ≥ 70' : `score ≥ 70 em ${ufFiltro}`}            cor="#16a34a" total={dadosUF.length} />
-        <KpiCard icon={Shield}  label="Oport. de Seguro"   value={kpis.semSeg}  sub={ufFiltro==='Todos' ? 'aptos sem PSR ativo' : `sem PSR em ${ufFiltro}`}   cor="#7c3aed" total={dadosUF.length} />
+        <KpiCard icon={Shield}  label="Oport. de Seguro"   value={kpis.semSeg}  sub={ufFiltro==='Todos' ? 'score ≥ 40 sem ZARC (sem PSR)' : `sem ZARC em ${ufFiltro}`}   cor="#7c3aed" total={dadosUF.length} />
         <KpiCard icon={Truck}   label="Logística Viável"   value={kpis.viaveis} sub="até 500 km da maltaria mais próxima" cor="#2563eb" total={dadosUF.length} />
         <KpiCard icon={Star}    label="Prioridade 1"       value={kpis.prio1}   sub="score combinado ≥ 75"  cor="#d97706" total={dadosUF.length} />
       </div>
@@ -1057,12 +1060,12 @@ export default function OportunidadesPage({ municipios = [] }) {
             <Shield size={18} color="#7c3aed" style={{ flexShrink:0, marginTop:2 }} />
             <div>
               <p style={{ fontSize:12, fontWeight:700, color:'#4c1d95', marginBottom:3 }}>
-                Municípios Aptos ZARC sem Cobertura PSR/PROAGRO
+                Municípios fora do ZARC de cevada com clima favorável
               </p>
               <p style={{ fontSize:11, color:'#5b21b6', lineHeight:1.6 }}>
-                Municípios abaixo têm aptidão ZARC confirmada mas sem seguro ativo.
+                Municípios abaixo têm clima ao menos parcialmente favorável (score ≥ 40), mas nenhuma indicação no ZARC oficial de cevada — por isso não acessam o seguro rural subsidiado (PSR/PROAGRO).
                 Os marcados com <strong>★ Fronteira</strong> fazem divisa geoespacial (≤ 100km) com municípios
-                que já possuem alta cobertura de seguro — prioridade máxima para expansão PSR.
+                que já têm ZARC de cevada (área zoneada) — candidatos mais próximos a uma ampliação do zoneamento e do PSR.
               </p>
             </div>
           </div>
@@ -1075,7 +1078,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                   {ufFiltro !== 'Todos' ? `Nenhuma oportunidade de expansão de seguro em ${ufFiltro}` : 'Nenhuma oportunidade de expansão de seguro'}
                 </p>
                 <p style={{ fontSize:11, color:'#9CA3AF' }}>
-                  {ufFiltro !== 'Todos' ? 'Troque o estado no filtro do topo ou selecione "Todos os estados".' : 'Sem municípios aptos sem seguro no momento.'}
+                  {ufFiltro !== 'Todos' ? 'Troque o estado no filtro do topo ou selecione "Todos os estados".' : 'Nenhum município com score ≥ 40 fora do ZARC no momento.'}
                 </p>
               </div>
             )}
