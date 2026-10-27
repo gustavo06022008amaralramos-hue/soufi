@@ -46,6 +46,13 @@ def no_bbox(lat, lon, uf):
         return False
     return bb[0] <= lat <= bb[1] and bb[2] <= lon <= bb[3]
 
+def _elevacao(res):
+    """Altitude do geocoder; None se não vier (antes virava 0 m e "sem dado"
+    passava por altitude real)."""
+    v = res.get("elevation")
+    return float(v) if v is not None else None
+
+
 def geocode(nome, uf):
     estado = UF_ESTADO.get(uf, "")
     for query in [f"{nome} {uf}", f"{nome} {estado}", nome]:
@@ -73,7 +80,7 @@ def geocode(nome, uf):
             if estado and estado.lower() in admin1.lower():
                 lat, lon = res["latitude"], res["longitude"]
                 if ok(lat, lon):
-                    return lat, lon, float(res.get("elevation") or 0)
+                    return lat, lon, _elevacao(res)
 
         if uf:
             for res in resultados:
@@ -81,7 +88,7 @@ def geocode(nome, uf):
                     continue
                 lat, lon = res["latitude"], res["longitude"]
                 if ok(lat, lon):
-                    return lat, lon, float(res.get("elevation") or 0)
+                    return lat, lon, _elevacao(res)
 
     return None, None, None
 
@@ -133,8 +140,8 @@ def main():
 
         new_lat, new_lon, new_alt = geocode(nome, uf)
 
-        if new_lat is None:
-            print("FALHA (geocoder sem resultado)")
+        if new_lat is None or new_alt is None:
+            print("FALHA (geocoder sem resultado ou sem altitude)")
             falhas += 1
             time.sleep(SLEEP)
             continue

@@ -168,7 +168,7 @@ def buscar_coordenadas(nome, uf=None):
             if uf and estado_nome and estado_nome.lower() in admin1.lower():
                 lat = r["latitude"]; lon = r["longitude"]
                 if _coords_no_estado(lat, lon, uf):
-                    return {"lat": lat, "lon": lon, "altitude": float(r.get("elevation") or 0)}
+                    return {"lat": lat, "lon": lon, "altitude": _altitude(lat, lon, r.get("elevation"))}
 
         # Passa 2: qualquer resultado BR dentro do bounding box
         if uf:
@@ -177,13 +177,13 @@ def buscar_coordenadas(nome, uf=None):
                     continue
                 lat = r["latitude"]; lon = r["longitude"]
                 if _coords_no_estado(lat, lon, uf):
-                    return {"lat": lat, "lon": lon, "altitude": float(r.get("elevation") or 0)}
+                    return {"lat": lat, "lon": lon, "altitude": _altitude(lat, lon, r.get("elevation"))}
 
         # Passa 3: primeiro resultado BR sem validação de estado
         for r in resultados:
             if r.get("country_code") == "BR":
-                return {"lat": r["latitude"], "lon": r["longitude"],
-                        "altitude": float(r.get("elevation") or 0)}
+                lat = r["latitude"]; lon = r["longitude"]
+                return {"lat": lat, "lon": lon, "altitude": _altitude(lat, lon, r.get("elevation"))}
 
     # Tentativa extra: nome alternativo do dicionário
     nome_alt = NOMES_ALT.get(nome)
@@ -195,7 +195,7 @@ def buscar_coordenadas(nome, uf=None):
                 if r.get("country_code") == "BR":
                     lat = r["latitude"]; lon = r["longitude"]
                     if not uf or _coords_no_estado(lat, lon, uf):
-                        return {"lat": lat, "lon": lon, "altitude": float(r.get("elevation") or 0)}
+                        return {"lat": lat, "lon": lon, "altitude": _altitude(lat, lon, r.get("elevation"))}
 
     # Fallback final: Nominatim / OpenStreetMap (melhor cobertura de municípios pequenos)
     try:
@@ -211,17 +211,24 @@ def buscar_coordenadas(nome, uf=None):
             for item in r_nom.json():
                 lat = float(item["lat"]); lon = float(item["lon"])
                 if not uf or _coords_no_estado(lat, lon, uf):
-                    # Busca altitude via Open-Meteo elevation API
-                    elev_r = requests.get(
-                        f"https://api.open-meteo.com/v1/elevation?latitude={lat}&longitude={lon}",
-                        timeout=10)
-                    alt = 0.0
-                    if elev_r.status_code == 200:
-                        alt = float(elev_r.json().get("elevation", [0])[0])
-                    return {"lat": lat, "lon": lon, "altitude": alt}
+                    return {"lat": lat, "lon": lon, "altitude": _altitude(lat, lon, None)}
     except Exception:
         pass
     return None
+
+def _altitude(lat, lon, elevacao_geocoder):
+    """Altitude em metros. Usa a do geocoder se vier; senão consulta a API de
+    elevação do Open-Meteo. Sem dado devolve None — antes caía para 0 m, e
+    "sem dado" virava altitude real (ex.: Bacuri/MA e Chaves/PA ficaram com
+    0 m no banco; as sedes reais estão a 45 m e 5 m)."""
+    if elevacao_geocoder is not None:
+        return float(elevacao_geocoder)
+    r = requisicao_com_retry("https://api.open-meteo.com/v1/elevation",
+                             params={"latitude": lat, "longitude": lon}, timeout=10)
+    if r is None or r.status_code != 200:
+        return None
+    valores = r.json().get("elevation") or []
+    return float(valores[0]) if valores and valores[0] is not None else None
 
 # ==============================================================================
 # 3. SOLO — SoilGrids v2.0 Properties API
@@ -377,6 +384,8 @@ def processar_municipio(municipio):
     if coords is None:
         return False, "coordenadas não encontradas"
     lat, lon, altitude = coords["lat"], coords["lon"], coords["altitude"]
+    if altitude is None:
+        return False, "altitude não encontrada"
 
     # Solo ZARC (SoilGrids — teor de argila)
     pct_argila, tipo_zarc, nome_solo = buscar_solo_zarc(lat, lon)

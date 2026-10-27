@@ -68,6 +68,13 @@ BBOX_UF = {
     "TO":(-13.5,-5.2,-50.8,-45.7),
 }
 
+def _elevacao(res):
+    """Altitude do geocoder; None se não vier (antes virava 0 m e "sem dado"
+    passava por altitude real)."""
+    v = res.get("elevation")
+    return float(v) if v is not None else None
+
+
 def buscar_coordenadas(nome, uf=None):
     estado_nome = UF_ESTADO.get(uf, "") if uf else ""
     for query in ([f"{nome} {uf}", nome] if uf else [nome]):
@@ -85,19 +92,19 @@ def buscar_coordenadas(nome, uf=None):
             if uf and estado_nome and estado_nome.lower() in res.get("admin1","").lower():
                 lat, lon = res["latitude"], res["longitude"]
                 if ok_bbox(lat, lon):
-                    return {"lat": float(lat), "lon": float(lon), "altitude": float(res.get("elevation") or 0)}
+                    return {"lat": float(lat), "lon": float(lon), "altitude": _elevacao(res)}
         # Passa 2: só bbox
         if uf:
             for res in resultados:
                 if res.get("country_code") != "BR": continue
                 lat, lon = res["latitude"], res["longitude"]
                 if ok_bbox(lat, lon):
-                    return {"lat": float(lat), "lon": float(lon), "altitude": float(res.get("elevation") or 0)}
+                    return {"lat": float(lat), "lon": float(lon), "altitude": _elevacao(res)}
         # Passa 3: primeiro BR
         for res in resultados:
             if res.get("country_code") == "BR":
                 return {"lat": float(res["latitude"]), "lon": float(res["longitude"]),
-                        "altitude": float(res.get("elevation") or 0)}
+                        "altitude": _elevacao(res)}
     return None
 
 def buscar_solo_zarc(lat, lon):
@@ -200,6 +207,8 @@ def processar(municipio):
     if not coords:
         return False, "sem coordenadas"
     lat, lon, alt = coords["lat"], coords["lon"], coords["altitude"]
+    if alt is None:
+        return False, "sem altitude"
 
     pct_argila, tipo_zarc = buscar_solo_zarc(lat, lon)
     df = buscar_clima(lat, lon)
