@@ -12,6 +12,8 @@ import pandas as pd
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
+from criterios_cevada import aptidao_final  # fonte única dos critérios
+
 load_dotenv()
 supabase: Client = create_client(os.getenv("SUPABASE_URL"), os.getenv("SUPABASE_KEY"))
 
@@ -52,26 +54,21 @@ def buscar_clima(lat, lon):
         return None
 
 
-def calcular_aptidao(tipo_zarc, temp, chuva, alt, geada, colheita):
-    c = [
-        tipo_zarc is not None and tipo_zarc >= 2,
-        temp is not None and 10.0 <= temp <= 22.0,
-        chuva is not None and 400.0 <= chuva <= 2000.0,
-        alt is not None and alt >= 700.0,
-        geada is not None and geada < 30.0,
-        colheita is not None and colheita < 350.0,
-    ]
-    return all(c), int(round(sum(c) / len(c) * 100))
-
-
 def main():
     print("Buscando todos os municipios no banco...")
-    r = supabase.table("municipios_aptidao") \
-        .select("codigo_ibge, nome_municipio, uf, lat, lon, altitude, tipo_solo_zarc, pct_argila, tipo_solo") \
-        .not_.is_("lat", "null") \
-        .execute()
-
-    todos = r.data or []
+    # Paginado: sem .range() o Supabase devolve no máximo 1000 linhas, e a
+    # correção mm/dia -> mm/mês original deixou 92 municípios para trás.
+    todos, offset = [], 0
+    while True:
+        lote = (supabase.table("municipios_aptidao")
+                .select("codigo_ibge, nome_municipio, uf, lat, lon, altitude, tipo_solo_zarc, "
+                        "pct_argila, tipo_solo, tem_zarc_cevada")
+                .not_.is_("lat", "null")
+                .range(offset, offset + 999).execute().data or [])
+        todos.extend(lote)
+        if len(lote) < 1000:
+            break
+        offset += 1000
     print(f"Total a reprocessar: {len(todos)} municipios")
     print(f"Tempo estimado: ~{len(todos) * SLEEP / 60:.0f} min\n")
 
@@ -111,7 +108,8 @@ def main():
         colheita = round(on.groupby(on.index.year)["PREC_MM"].sum().mean(), 1) if len(on) > 0 else None
 
         tipo_zarc = m.get("tipo_solo_zarc")
-        apto, score = calcular_aptidao(tipo_zarc, temp_anual, chuva_anual, alt, geada, colheita)
+        apto, score = aptidao_final(temp_anual, chuva_anual, alt, tipo_zarc, geada, colheita,
+                                    uf, cod, m.get("tem_zarc_cevada"))
 
         supabase.table("municipios_aptidao").update({
             "temp_media_anual":               round(temp_anual, 2),
