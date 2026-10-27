@@ -136,7 +136,7 @@ function KpiCard({ icon: Icon, label, value, sub, cor='#1B4332', bg='#F0F7F2', b
       </div>
       <p style={{ fontSize:'clamp(18px, 1.9vw, 24px)', fontWeight:800, color:cor, lineHeight:1.1,
         whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' }}>{value}</p>
-      {sub && <p style={{ fontSize:10, color:'#9CA3AF', marginTop:4 }}>{sub}</p>}
+      {sub && <p style={{ fontSize:10, color:'#6B7280', marginTop:4 }}>{sub}</p>}
     </div>
   );
 }
@@ -153,8 +153,8 @@ function SliderRow({ label, value, onChange, min, max, step, fmt: fmtFn, cor='#2
         style={{ accentColor: cor }}
       />
       <div style={{ display:'flex', justifyContent:'space-between', marginTop:2 }}>
-        <span style={{ fontSize:9, color:'#9CA3AF' }}>{fmtFn(min)}</span>
-        <span style={{ fontSize:9, color:'#9CA3AF' }}>{fmtFn(max)}</span>
+        <span style={{ fontSize:9, color:'#6B7280' }}>{fmtFn(min)}</span>
+        <span style={{ fontSize:9, color:'#6B7280' }}>{fmtFn(max)}</span>
       </div>
     </div>
   );
@@ -253,7 +253,7 @@ export default function CustosPage() {
             <div style={{ width:6, height:26, borderRadius:4, background:'linear-gradient(180deg,#16a34a,#0284c7)' }} />
             <h1 style={{ fontSize:20, fontWeight:800, color:'#111827' }}>Análise de Custos & Viabilidade</h1>
           </div>
-          <p style={{ fontSize:11, color:'#9CA3AF', marginLeft:16 }}>
+          <p style={{ fontSize:11, color:'#6B7280', marginLeft:16 }}>
             Simulação de custo/receita por estado · valores de referência internos (ajustáveis) — não há
             tabela pública de custo de produção por hectare para cevada cervejeira; ajuste conforme sua realidade
           </p>
@@ -370,7 +370,7 @@ export default function CustosPage() {
                 <span style={{ width:8, height:8, borderRadius:2, background:d.cor, flexShrink:0 }} />
                 <span style={{ fontSize:11, color:'#374151', flex:1 }}>{d.label}</span>
                 <span style={{ fontSize:11, fontWeight:700, color:'#374151' }}>{fmtR(d.valor_ha)}/ha</span>
-                <span style={{ fontSize:10, color:'#9CA3AF', width:34, textAlign:'right' }}>{fmt(d.pct, 0)}%</span>
+                <span style={{ fontSize:10, color:'#6B7280', width:34, textAlign:'right' }}>{fmt(d.pct, 0)}%</span>
               </div>
             ))}
           </div>
@@ -414,7 +414,7 @@ export default function CustosPage() {
               { label:'Margem de contribuição', val: `${fmt(r.margem, 1)}%`, cor: r.margem >= 15 ? '#1A7A3C' : '#D4A017' },
             ].map(d => (
               <div key={d.label} style={{ background:'#F9FAFB', borderRadius:8, padding:'10px 12px' }}>
-                <p style={{ fontSize:9, color:'#9CA3AF', marginBottom:3, textTransform:'uppercase', letterSpacing:0.6 }}>{d.label}</p>
+                <p style={{ fontSize:9, color:'#6B7280', marginBottom:3, textTransform:'uppercase', letterSpacing:0.6 }}>{d.label}</p>
                 <p style={{ fontSize:14, fontWeight:800, color:d.cor }}>{d.val}</p>
               </div>
             ))}
@@ -443,7 +443,7 @@ export default function CustosPage() {
                       <Icon size={14} color={c.cor} />
                       <span style={{ fontSize:12, fontWeight:700, color:c.cor }}>{c.label}</span>
                     </div>
-                    <span style={{ fontSize:10, color:'#9CA3AF' }}>
+                    <span style={{ fontSize:10, color:'#6B7280' }}>
                       Prod.: {fmt(prodTha * c.fatorProd, 1)} t/ha · Preço: {fmtR(preco * c.fatorPreco)}/sc
                     </span>
                   </div>
@@ -454,7 +454,7 @@ export default function CustosPage() {
                       { label:'ROI', val: `${fmt(c.roi,1)}%`, destaque: true },
                     ].map(d => (
                       <div key={d.label} style={{ textAlign:'center' }}>
-                        <p style={{ fontSize:9, color:'#9CA3AF', marginBottom:2 }}>{d.label}</p>
+                        <p style={{ fontSize:9, color:'#6B7280', marginBottom:2 }}>{d.label}</p>
                         <p style={{ fontSize:13, fontWeight:800, color: d.destaque ? (c.lucro >= 0 ? c.cor : '#DC2626') : '#374151' }}>{d.val}</p>
                       </div>
                     ))}
@@ -477,9 +477,9 @@ export default function CustosPage() {
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={curvaPreco} margin={{ top:4, right:16, left:0, bottom:0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-              <XAxis dataKey="preco" tick={{ fontSize:10, fill:'#9CA3AF' }} axisLine={false} tickLine={false}
+              <XAxis dataKey="preco" tick={{ fontSize:10, fill:'#6B7280' }} axisLine={false} tickLine={false}
                 tickFormatter={v=>`R$${v}`} />
-              <YAxis tick={{ fontSize:10, fill:'#9CA3AF' }} axisLine={false} tickLine={false}
+              <YAxis tick={{ fontSize:10, fill:'#6B7280' }} axisLine={false} tickLine={false}
                 tickFormatter={v => v >= 0 ? `+${(v/1000).toFixed(0)}k` : `${(v/1000).toFixed(0)}k`} />
               <Tooltip contentStyle={{ fontSize:11, borderRadius:8, border:'1px solid #E5E7EB' }}
                 formatter={(v,n) => [fmtR(v), n === 'lucro' ? 'Lucro' : 'ROI%']}
@@ -502,13 +502,13 @@ export default function CustosPage() {
           <span style={{ width:3, height:16, background:'linear-gradient(180deg,#7c3aed,#1B4332)', borderRadius:2, display:'inline-block' }} />
           Linhas de Crédito Rural — Custeio Agrícola
         </p>
-        <p style={{ fontSize:10, color:'#9CA3AF', marginBottom:16, marginLeft:10 }}>Taxas e condições vigentes para a safra 2025/26 · Fonte: BACEN/MAPA</p>
+        <p style={{ fontSize:10, color:'#6B7280', marginBottom:16, marginLeft:10 }}>Taxas e condições vigentes para a safra 2025/26 · Fonte: BACEN/MAPA</p>
         <div style={{ overflowX:'auto' }}>
           <table style={{ width:'100%', borderCollapse:'collapse', fontSize:11 }}>
             <thead>
               <tr style={{ background:'#F9FAFB' }}>
                 {['Linha de Crédito','Taxa a.a.','Prazo','Público-alvo','Limite','Fonte','Selecionar'].map(h => (
-                  <th key={h} style={{ padding:'9px 12px', fontSize:9, fontWeight:700, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.8, textAlign:'left', borderBottom:'1px solid #E5E7EB' }}>{h}</th>
+                  <th key={h} style={{ padding:'9px 12px', fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.8, textAlign:'left', borderBottom:'1px solid #E5E7EB' }}>{h}</th>
                 ))}
               </tr>
             </thead>
@@ -520,7 +520,7 @@ export default function CustosPage() {
                   <td style={{ padding:'9px 12px', color:'#374151' }}>{l.prazo} meses</td>
                   <td style={{ padding:'9px 12px', color:'#6B7280' }}>{l.publico}</td>
                   <td style={{ padding:'9px 12px', fontWeight:600, color:'#1B4332' }}>{l.limite}</td>
-                  <td style={{ padding:'9px 12px', color:'#9CA3AF' }}>{l.fonte}</td>
+                  <td style={{ padding:'9px 12px', color:'#6B7280' }}>{l.fonte}</td>
                   <td style={{ padding:'9px 12px' }}>
                     <button onClick={() => { setLinhaCredito(i); setTaxaAnual(l.taxa); setPrazoMeses(l.prazo); }} style={{
                       fontSize:10, fontWeight:700, padding:'3px 10px', borderRadius:6, cursor:'pointer',
@@ -547,7 +547,7 @@ export default function CustosPage() {
             <span style={{ width:3, height:16, background:'linear-gradient(180deg,#7c3aed,#0284c7)', borderRadius:2, display:'inline-block' }} />
             Simulador de Financiamento
           </p>
-          <p style={{ fontSize:10, color:'#9CA3AF', marginBottom:18, marginLeft:10 }}>Custo total da lavoura: {fmtR(r.custo_total)}</p>
+          <p style={{ fontSize:10, color:'#6B7280', marginBottom:18, marginLeft:10 }}>Custo total da lavoura: {fmtR(r.custo_total)}</p>
 
           <div style={{ display:'flex', flexDirection:'column', gap:18 }}>
             <SliderRow label="Entrada (%)" value={entradaPct} onChange={setEntradaPct} min={0} max={60} step={5} fmt={v=>`${v}%`} cor="#7c3aed" />
@@ -567,7 +567,7 @@ export default function CustosPage() {
                   <Ic size={14} color={cor} />
                 </div>
                 <div>
-                  <p style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7, marginBottom:2 }}>{label}</p>
+                  <p style={{ fontSize:9, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.7, marginBottom:2 }}>{label}</p>
                   <p style={{ fontSize:14, fontWeight:800, color:cor }}>{val}</p>
                 </div>
               </div>
@@ -598,7 +598,7 @@ export default function CustosPage() {
             <span style={{ width:3, height:16, background:'linear-gradient(180deg,#0284c7,#7c3aed)', borderRadius:2, display:'inline-block' }} />
             Tabela Price — Primeiras Parcelas
           </p>
-          <p style={{ fontSize:10, color:'#9CA3AF', marginBottom:16, marginLeft:10 }}>
+          <p style={{ fontSize:10, color:'#6B7280', marginBottom:16, marginLeft:10 }}>
             Taxa {taxaAnual.toFixed(1)}% a.a. · {prazoMeses} parcelas · Sistema de Amortização Constante (Price)
           </p>
           <div style={{ overflowX:'auto' }}>
@@ -606,7 +606,7 @@ export default function CustosPage() {
               <thead>
                 <tr>
                   {['Mês','Parcela','Juros','Amortização','Saldo'].map(h => (
-                    <th key={h} style={{ padding:'8px 10px', fontSize:9, fontWeight:700, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7, borderBottom:'1px solid #E5E7EB', textAlign:'right', background:'#F9FAFB' }}>{h}</th>
+                    <th key={h} style={{ padding:'8px 10px', fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.7, borderBottom:'1px solid #E5E7EB', textAlign:'right', background:'#F9FAFB' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -622,7 +622,7 @@ export default function CustosPage() {
                 ))}
                 {prazoMeses > 8 && (
                   <tr>
-                    <td colSpan={5} style={{ padding:'8px 10px', textAlign:'center', fontSize:10, color:'#9CA3AF', fontStyle:'italic' }}>
+                    <td colSpan={5} style={{ padding:'8px 10px', textAlign:'center', fontSize:10, color:'#6B7280', fontStyle:'italic' }}>
                       ... mais {prazoMeses - 8} parcelas restantes (total {fmtR(financ.totalPago)})
                     </td>
                   </tr>
@@ -633,12 +633,12 @@ export default function CustosPage() {
 
           {/* Gráfico barras: composição mensal (juros vs amort) */}
           <div style={{ marginTop:14 }}>
-            <p style={{ fontSize:10, color:'#9CA3AF', marginBottom:8 }}>Composição das parcelas (juros × amortização)</p>
+            <p style={{ fontSize:10, color:'#6B7280', marginBottom:8 }}>Composição das parcelas (juros × amortização)</p>
             <ResponsiveContainer width="100%" height={120}>
               <BarChart data={financ.rows} margin={{ top:0, right:0, left:0, bottom:0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-                <XAxis dataKey="mes" tick={{ fontSize:9, fill:'#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={v=>`${v}°`} />
-                <YAxis tick={{ fontSize:9, fill:'#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}k`} width={34} />
+                <XAxis dataKey="mes" tick={{ fontSize:9, fill:'#6B7280' }} axisLine={false} tickLine={false} tickFormatter={v=>`${v}°`} />
+                <YAxis tick={{ fontSize:9, fill:'#6B7280' }} axisLine={false} tickLine={false} tickFormatter={v=>`${(v/1000).toFixed(0)}k`} width={34} />
                 <Tooltip contentStyle={{ fontSize:10, borderRadius:7, border:'1px solid #E5E7EB' }}
                   formatter={(v, n) => [fmtR(v), n === 'juros' ? 'Juros' : 'Amortização']} labelFormatter={v=>`Parcela ${v}`} />
                 <Bar dataKey="juros" stackId="a" fill="#DC2626" radius={[0,0,0,0]} name="juros" />
@@ -657,7 +657,7 @@ export default function CustosPage() {
           <BarChart data={comparativo} margin={{ top:4, right:16, left:0, bottom:0 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
             <XAxis dataKey="uf" tick={{ fontSize:11, fill:'#6B7280' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize:10, fill:'#9CA3AF' }} axisLine={false} tickLine={false}
+            <YAxis tick={{ fontSize:10, fill:'#6B7280' }} axisLine={false} tickLine={false}
               tickFormatter={v => `${(v/1000).toFixed(0)}k`} />
             <Tooltip contentStyle={{ fontSize:11, borderRadius:8, border:'1px solid #E5E7EB' }}
               formatter={(v, n) => [fmtR(v), n === 'lucro' ? 'Lucro' : 'ROI%']}
@@ -681,7 +681,7 @@ export default function CustosPage() {
               <p style={{ fontSize:9, color: d.lucro >= 0 ? '#1A7A3C' : '#DC2626', fontWeight:600 }}>
                 {d.lucro >= 0 ? '+' : ''}{fmt(d.roi, 0)}% ROI
               </p>
-              <p style={{ fontSize:8, color:'#9CA3AF' }}>{fmt(d.prod, 1)} t/ha</p>
+              <p style={{ fontSize:8, color:'#6B7280' }}>{fmt(d.prod, 1)} t/ha</p>
             </div>
           ))}
         </div>

@@ -38,7 +38,7 @@ function exportCSV(data, nome) {
 }
 
 /* ─── Layout helpers ──────────────────────────────────────────── */
-const TICK = { fontSize: 10, fill: '#9CA3AF' };
+const TICK = { fontSize: 10, fill: '#6B7280' };
 
 function Card({ title, subtitle, action, children }) {
   return (
@@ -46,7 +46,7 @@ function Card({ title, subtitle, action, children }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
           <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 2 }}>{title}</p>
-          {subtitle && <p style={{ fontSize: 10, color: '#9CA3AF' }}>{subtitle}</p>}
+          {subtitle && <p style={{ fontSize: 10, color: '#6B7280' }}>{subtitle}</p>}
         </div>
         {action}
       </div>
@@ -70,7 +70,7 @@ function CsvBtn({ data, nome }) {
 function KpiCard({ label, val, cor }) {
   return (
     <div style={{ background: '#F9FAFB', borderRadius: 9, padding: '12px 14px' }}>
-      <p style={{ fontSize: 9, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 4 }}>{label}</p>
+      <p style={{ fontSize: 9, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.7, marginBottom: 4 }}>{label}</p>
       <p style={{ fontSize: 17, fontWeight: 800, color: cor }}>{val}</p>
     </div>
   );
@@ -149,7 +149,7 @@ export default function HistoricosPage({ municipios = [] }) {
             <div style={{ width: 6, height: 26, borderRadius: 4, background: 'linear-gradient(180deg,#16a34a,#0284c7)' }} />
             <h1 style={{ fontSize: 20, fontWeight: 800, color: '#111827' }}>Estatísticas da Base SOUFII</h1>
           </div>
-          <p style={{ fontSize: 11, color: '#9CA3AF', marginLeft: 16 }}>
+          <p style={{ fontSize: 11, color: '#6B7280', marginLeft: 16 }}>
             Calculado a partir dos {temDados ? municipios.length.toLocaleString('pt-BR') : '5.571'} municípios processados — NASA POWER, SoilGrids, IBGE
           </p>
         </div>
@@ -167,7 +167,7 @@ export default function HistoricosPage({ municipios = [] }) {
       </div>
 
       {!temDados ? (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#9CA3AF' }}>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#6B7280' }}>
           <p>Carregando dados da base...</p>
         </div>
       ) : (

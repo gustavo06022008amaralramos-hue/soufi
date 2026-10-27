@@ -291,18 +291,18 @@ function ControlPanel({ cultura, setCultura, tipoMapa, setTipoMapa, filtroUF, se
           </label>
         </div>
         <div style={{ display:'flex', alignItems:'center', gap:7 }}>
-          <span style={{ fontSize:9, color:'#9CA3AF' }}>0</span>
+          <span style={{ fontSize:9, color:'#6B7280' }}>0</span>
           <input type="range" min={0} max={100} step={1} value={filtroScoreMin}
             onChange={e => setFiltroScoreMin(+e.target.value)}
             style={{ flex:1 }}
           />
-          <span style={{ fontSize:9, color:'#9CA3AF' }}>100</span>
+          <span style={{ fontSize:9, color:'#6B7280' }}>100</span>
           <span style={{
             fontSize:10, fontWeight:800, color:'#fff', background:'#1A7A3C',
             borderRadius:20, padding:'2px 8px', minWidth:22, textAlign:'center',
           }}>{filtroScoreMin}</span>
         </div>
-        <div style={{ display:'flex', justifyContent:'space-between', fontSize:9, color:'#9CA3AF', marginTop:3 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', fontSize:9, color:'#6B7280', marginTop:3 }}>
           <span>todos</span><span>apenas aptos</span>
         </div>
       </div>
@@ -339,7 +339,7 @@ function Legend({ counts }) {
         );
       })}
       <div style={{ marginTop:6, paddingTop:2 }}>
-        <span style={{ fontSize:9, color:'#9CA3AF' }}>{total.toLocaleString('pt-BR')} exibidos</span>
+        <span style={{ fontSize:9, color:'#6B7280' }}>{total.toLocaleString('pt-BR')} exibidos</span>
       </div>
     </Panel>
   );
@@ -434,7 +434,7 @@ function SearchBar({ municipios, onSelect, campo = 'score_aptidao' }) {
           ? <button onClick={limpar} aria-label="Limpar busca" style={{ background:'none',border:'none',cursor:'pointer',padding:0,display:'flex' }}>
               <X size={13} color="#6B7280" />
             </button>
-          : <kbd style={{ fontSize:9, color:'#9CA3AF', background:'#F3F4F6',
+          : <kbd style={{ fontSize:9, color:'#6B7280', background:'#F3F4F6',
               border:'1px solid #E5E7EB', borderRadius:4, padding:'1px 5px' }}>/</kbd>
         }
       </Panel>
@@ -447,7 +447,7 @@ function SearchBar({ municipios, onSelect, campo = 'score_aptidao' }) {
           boxShadow: '0 12px 36px rgba(0,0,0,0.14)',
           maxHeight: 340, overflowY: 'auto', zIndex: 2000,
         }}>
-          <div style={{ padding:'6px 12px 4px', fontSize:9, color:'#9CA3AF',
+          <div style={{ padding:'6px 12px 4px', fontSize:9, color:'#6B7280',
             textTransform:'uppercase', letterSpacing:1, borderBottom:'1px solid #F3F4F6' }}>
             {resultados.length} resultado{resultados.length !== 1 ? 's' : ''} · ↑↓ navegar · Enter selecionar
           </div>
@@ -472,9 +472,9 @@ function SearchBar({ municipios, onSelect, campo = 'score_aptidao' }) {
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 12, fontWeight: 600, color: '#1a1a1a', lineHeight: 1.2 }}>
                     {m.nome_municipio}
-                    <span style={{ fontSize:10, fontWeight:400, color:'#9CA3AF', marginLeft:6 }}>{m.uf}</span>
+                    <span style={{ fontSize:10, fontWeight:400, color:'#6B7280', marginLeft:6 }}>{m.uf}</span>
                   </p>
-                  <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 1 }}>
+                  <p style={{ fontSize: 10, color: '#6B7280', marginTop: 1 }}>
                     {t != null ? `${t.toFixed(1)}°C` : '—'}
                     {alt != null ? ` · ${Math.round(alt)}m` : ''}
                     {' · '}IBGE {m.codigo_ibge}
@@ -496,7 +496,7 @@ function SearchBar({ municipios, onSelect, campo = 'score_aptidao' }) {
       {semResultado && (
         <Panel style={{ position:'absolute', top:'calc(100% + 6px)', left:0, right:0,
           padding:'12px 14px', zIndex:2000 }}>
-          <p style={{ fontSize:12, color:'#9CA3AF', textAlign:'center' }}>
+          <p style={{ fontSize:12, color:'#6B7280', textAlign:'center' }}>
             Nenhum município encontrado para "<strong>{query}</strong>"
           </p>
         </Panel>

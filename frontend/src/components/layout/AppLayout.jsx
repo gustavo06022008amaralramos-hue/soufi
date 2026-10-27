@@ -108,7 +108,7 @@ export default function AppLayout({ apiOnline, onRetry }) {
         </div>
 
         <main className="app-main" style={{ flex:1, overflow:'auto' }}>
-          <Suspense fallback={<p style={{ padding: 40, textAlign: 'center', fontSize: 12, color: '#9CA3AF' }}>Carregando…</p>}>
+          <Suspense fallback={<p style={{ padding: 40, textAlign: 'center', fontSize: 12, color: '#6B7280' }}>Carregando…</p>}>
             <Outlet />
           </Suspense>
         </main>

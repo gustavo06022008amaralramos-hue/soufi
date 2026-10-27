@@ -295,13 +295,13 @@ export default function HomePage({ municipios = [], apiOnline }) {
                       <p style={{ fontSize:22, fontWeight:800, color:info.cor, lineHeight:1 }}>
                         {k.temDado ? k.aptos.toLocaleString('pt-BR') : '—'}
                       </p>
-                      <p style={{ fontSize:9, color:'#9CA3AF', marginTop:3 }}>aptos</p>
+                      <p style={{ fontSize:9, color:'#6B7280', marginTop:3 }}>aptos</p>
                     </div>
                     <div>
-                      <p style={{ fontSize:22, fontWeight:800, color:'#9CA3AF', lineHeight:1 }}>
+                      <p style={{ fontSize:22, fontWeight:800, color:'#6B7280', lineHeight:1 }}>
                         {k.temDado ? k.parciais.toLocaleString('pt-BR') : '—'}
                       </p>
-                      <p style={{ fontSize:9, color:'#9CA3AF', marginTop:3 }}>parc. aptos</p>
+                      <p style={{ fontSize:9, color:'#6B7280', marginTop:3 }}>parc. aptos</p>
                     </div>
                   </div>
                   <div style={{ height:4, background: info.bg, borderRadius:2, overflow:'hidden' }}>
@@ -372,7 +372,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
                       <Ic size={12} color={cor} />
                     </div>
                     <div>
-                      <p style={{ fontSize:9, color:'#9CA3AF' }}>{label}</p>
+                      <p style={{ fontSize:9, color:'#6B7280' }}>{label}</p>
                       <p style={{ fontSize:12, fontWeight:600, color:'#374151' }}>{val}</p>
                     </div>
                   </div>
@@ -381,7 +381,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
             </div>
           ) : (
             <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:12, padding:'18px 20px', flex:1, display:'flex', alignItems:'center', justifyContent:'center' }}>
-              <p style={{ fontSize:12, color:'#9CA3AF' }}>Clima indisponível</p>
+              <p style={{ fontSize:12, color:'#6B7280' }}>Clima indisponível</p>
             </div>
           )}
 
@@ -429,14 +429,14 @@ export default function HomePage({ municipios = [], apiOnline }) {
           {top5.length === 0 ? (
             <div style={{ textAlign:'center', padding:'24px 0' }}>
               <div style={{ width:24, height:24, border:'2px solid #E5E7EB', borderTopColor:'#2D6A4F', borderRadius:'50%', animation:'spin 0.8s linear infinite', margin:'0 auto 8px' }} />
-              <p style={{ fontSize:12, color:'#9CA3AF' }}>Carregando...</p>
+              <p style={{ fontSize:12, color:'#6B7280' }}>Carregando...</p>
             </div>
           ) : (
             <div style={{ display:'flex', flexDirection:'column', gap:0 }}>
               {/* Header */}
               <div style={{ display:'grid', gridTemplateColumns:'24px 1fr 48px 72px', gap:8, padding:'0 0 7px', borderBottom:'1px solid #F3F4F6' }}>
                 {['#','Município','Score','Classe'].map(h => (
-                  <p key={h} style={{ fontSize:9, fontWeight:700, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.8 }}>{h}</p>
+                  <p key={h} style={{ fontSize:9, fontWeight:700, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.8 }}>{h}</p>
                 ))}
               </div>
               {top5.map((m,i) => {
@@ -447,10 +447,10 @@ export default function HomePage({ municipios = [], apiOnline }) {
                     padding:'9px 0', borderBottom:i<top5.length-1?'1px solid #F9FAFB':'none',
                     alignItems:'center',
                   }}>
-                    <span style={{ fontSize:11, color:'#9CA3AF', fontWeight:600 }}>#{i+1}</span>
+                    <span style={{ fontSize:11, color:'#6B7280', fontWeight:600 }}>#{i+1}</span>
                     <div>
                       <p style={{ fontSize:12, fontWeight:600, color:'#374151', lineHeight:1.2 }}>{m.nome_municipio}</p>
-                      <p style={{ fontSize:10, color:'#9CA3AF' }}>{m.uf}</p>
+                      <p style={{ fontSize:10, color:'#6B7280' }}>{m.uf}</p>
                     </div>
                     <span style={{ fontSize:13, fontWeight:800, color:cor }}>{m.score_aptidao}</span>
                     <span style={{ fontSize:9, fontWeight:600, color:cor, background:`${cor}15`, border:`1px solid ${cor}30`, borderRadius:5, padding:'2px 6px', textAlign:'center' }}>
@@ -490,7 +490,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
                     <span style={{ fontSize:9, fontWeight:600, color:badge.cor, background:badge.bg, borderRadius:4, padding:'2px 7px' }}>
                       {n.categoria}
                     </span>
-                    <span style={{ fontSize:9, color:'#9CA3AF' }}>{n.fonte}</span>
+                    <span style={{ fontSize:9, color:'#6B7280' }}>{n.fonte}</span>
                   </div>
                   <p style={{ fontSize:12, fontWeight:600, color:'#374151', lineHeight:1.45, marginBottom:4 }}>{n.titulo}</p>
                   <p style={{ fontSize:11, color:'#6B7280', lineHeight:1.5 }}>{n.resumo}</p>
@@ -559,7 +559,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
             <span style={{ fontSize:22 }}>{emoji}</span>
             <div>
               <p style={{ fontSize:12, fontWeight:700, color:'#374151' }}>{label}</p>
-              <p style={{ fontSize:9, color:'#9CA3AF' }}>{sub}</p>
+              <p style={{ fontSize:9, color:'#6B7280' }}>{sub}</p>
             </div>
           </button>
         ))}

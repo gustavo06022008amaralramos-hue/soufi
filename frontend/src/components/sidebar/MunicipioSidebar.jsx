@@ -161,7 +161,7 @@ function printFicha(municipio, log, criterios, aprovados) {
         <span style="color:${c.pass?'#16a34a':'#dc2626'};font-weight:700;margin-right:6px;">${c.pass?'✓':'✗'}</span>${c.label}
       </td>
       <td style="padding:7px 10px;border-bottom:1px solid #f0f0f0;font-weight:700;color:${c.pass?'#16a34a':'#dc2626'};">${c.val}</td>
-      <td style="padding:7px 10px;border-bottom:1px solid #f0f0f0;color:#9CA3AF;font-size:11px;">${c.faixa}</td>
+      <td style="padding:7px 10px;border-bottom:1px solid #f0f0f0;color:#6B7280;font-size:11px;">${c.faixa}</td>
     </tr>`).join('');
 
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
@@ -176,7 +176,7 @@ h1{font-size:22px;font-weight:800;color:#1a1a1a;}
 .badge{font-size:12px;font-weight:800;color:${cor};background:${cor}18;border:1.5px solid ${cor}40;border-radius:8px;padding:5px 14px;}
 .circle{width:58px;height:58px;border-radius:50%;border:3px solid ${cor};background:${cor}10;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;}
 .snum{font-size:19px;font-weight:800;color:${cor};line-height:1;}
-.ssub{font-size:9px;color:#9CA3AF;}
+.ssub{font-size:9px;color:#6B7280;}
 .sec{margin-bottom:18px;}
 .stitle{font-size:10px;font-weight:800;color:#1B4332;text-transform:uppercase;letter-spacing:1.2px;padding-bottom:7px;border-bottom:1.5px solid #E5E7EB;margin-bottom:10px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:4px;}
@@ -184,11 +184,11 @@ h1{font-size:22px;font-weight:800;color:#1a1a1a;}
 .card{background:#F9FAFB;border:1px solid #E5E7EB;border-radius:9px;padding:11px 12px;}
 .ct{font-size:9px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;}
 .cv{font-size:18px;font-weight:800;color:#1a1a1a;line-height:1.1;}
-.cu{font-size:10px;color:#9CA3AF;margin-top:2px;}
+.cu{font-size:10px;color:#6B7280;margin-top:2px;}
 table{width:100%;border-collapse:collapse;}
 th{text-align:left;font-size:9px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.8px;padding:7px 10px;background:#F9FAFB;border-bottom:1px solid #E5E7EB;}
 .foot{margin-top:28px;padding-top:10px;border-top:1px solid #E5E7EB;display:flex;justify-content:space-between;}
-.foot p{font-size:9px;color:#9CA3AF;}
+.foot p{font-size:9px;color:#6B7280;}
 @media print{body{padding:16px;}}
 </style></head><body>
 <div class="hdr">
@@ -393,7 +393,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
             <div style={{ position:'absolute',inset:0,display:'flex',flexDirection:'column',
               alignItems:'center',justifyContent:'center' }}>
               <span style={{ fontSize:17,fontWeight:800,color:cor,lineHeight:1 }}>{score}</span>
-              <span style={{ fontSize:8,color:'#9CA3AF' }}>/100</span>
+              <span style={{ fontSize:8,color:'#6B7280' }}>/100</span>
             </div>
           </div>
 
@@ -410,7 +410,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 padding:'5px 8px', display:'flex', alignItems:'center', gap:5 }}>
                 <Icon size={10} color={c} style={{ flexShrink:0 }} />
                 <div style={{ minWidth:0 }}>
-                  <p style={{ fontSize:8,color:'#9CA3AF',lineHeight:1 }}>{label}</p>
+                  <p style={{ fontSize:8,color:'#6B7280',lineHeight:1 }}>{label}</p>
                   <p style={{ fontSize:12,fontWeight:700,color:c,lineHeight:1.2 }}>{val}</p>
                 </div>
               </div>
@@ -500,7 +500,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
               </div>
               <div style={{ marginLeft:'auto', textAlign:'right' }}>
                 <p style={{ fontSize:22,fontWeight:800,color:cor,lineHeight:1 }}>{score}</p>
-                <p style={{ fontSize:9,color:'#9CA3AF' }}>pontos</p>
+                <p style={{ fontSize:9,color:'#6B7280' }}>pontos</p>
               </div>
             </div>
 
@@ -532,7 +532,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                       </div>
                       <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', gap:4 }}>
                         <span style={{ fontSize:13, fontWeight:700, color:corTier }}>{c.val}</span>
-                        <span style={{ fontSize:8, color:'#9CA3AF' }}>{c.faixa}</span>
+                        <span style={{ fontSize:8, color:'#6B7280' }}>{c.faixa}</span>
                       </div>
                       {c.obs && (
                         <span style={{ display:'block', marginTop:4, fontSize:7, color:'#16a34a', fontWeight:600 }}>{c.obs}</span>
@@ -620,7 +620,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 </div>
                 <input type="date" value={dataPlantio} onChange={e => setDataPlantio(e.target.value)}
                   style={{ width:'100%', padding:'6px 10px', borderRadius:7, border:'1px solid #E5E7EB', fontSize:12, color:'#374151' }} />
-                <p style={{ fontSize:9, color:'#9CA3AF', marginTop:5 }}>
+                <p style={{ fontSize:9, color:'#6B7280', marginTop:5 }}>
                   ZARC oficial de {c.nome} é publicado por decêndio (períodos de ~10 dias) — mude a data pra ver como a elegibilidade muda ao longo da janela de semeio.
                 </p>
               </div>
@@ -637,21 +637,21 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                   <div style={{ display:'flex', gap:8 }}>
                     <div style={{ flex:1, background:'#FFFBEB', borderRadius:8, padding:'8px 10px', textAlign:'center' }}>
                       <p style={{ fontSize:18, fontWeight:800, color:'#d97706', lineHeight:1 }}>{gddReal.gdd_acumulado}</p>
-                      <p style={{ fontSize:8, color:'#9CA3AF', marginTop:2 }}>°D acumulados (Tb={gddReal.tb}°C)</p>
+                      <p style={{ fontSize:8, color:'#6B7280', marginTop:2 }}>°D acumulados (Tb={gddReal.tb}°C)</p>
                     </div>
                     <div style={{ flex:1, background: gddReal.dias_com_geada > 0 ? '#fef2f2' : '#f0fdf4', borderRadius:8, padding:'8px 10px', textAlign:'center' }}>
                       <p style={{ fontSize:18, fontWeight:800, color: gddReal.dias_com_geada > 0 ? '#dc2626' : '#16a34a', lineHeight:1 }}>{gddReal.dias_com_geada}</p>
-                      <p style={{ fontSize:8, color:'#9CA3AF', marginTop:2 }}>dias com geada (Tmín≤4°C)</p>
+                      <p style={{ fontSize:8, color:'#6B7280', marginTop:2 }}>dias com geada (Tmín≤4°C)</p>
                     </div>
                   </div>
-                  <p style={{ fontSize:9, color:'#9CA3AF', marginTop:8 }}>
+                  <p style={{ fontSize:9, color:'#6B7280', marginTop:8 }}>
                     Clima real observado (NASA POWER) de {new Date(dataPlantio+'T00:00:00').toLocaleDateString('pt-BR')} até {new Date(gddReal.ultimo_dia+'T00:00:00').toLocaleDateString('pt-BR')} ({gddReal.dias_com_dado} dias). Não há dado além de hoje — GDD não é previsão.
                   </p>
                 </div>
               )}
               {gddReal && !gddReal.disponivel && (
                 <div style={{ background:'#F9FAFB', border:'1px solid #E5E7EB', borderRadius:10, padding:'10px 14px' }}>
-                  <p style={{ fontSize:10, color:'#9CA3AF' }}>{gddReal.motivo}</p>
+                  <p style={{ fontSize:10, color:'#6B7280' }}>{gddReal.motivo}</p>
                 </div>
               )}
 
@@ -700,7 +700,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                     {gruposOrdenados.map(g => (
                       <div key={g.grupo} style={{ display:'flex', alignItems:'center', gap:8, background:'#fff', borderRadius:7, padding:'6px 10px' }}>
                         <span style={{ fontSize:11, fontWeight:700, color:'#374151', flex:1 }}>{g.grupo}</span>
-                        <span style={{ fontSize:9, color:'#9CA3AF' }}>melhor solo: {g.solo_ad}</span>
+                        <span style={{ fontSize:9, color:'#6B7280' }}>melhor solo: {g.solo_ad}</span>
                         <span style={{
                           fontSize:10, fontWeight:800, padding:'2px 8px', borderRadius:20,
                           background: g.nivel_risco === 20 ? '#f0fdf4' : g.nivel_risco === 30 ? '#fffbeb' : '#fef2f2',
@@ -709,7 +709,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                       </div>
                     ))}
                   </div>
-                  <p style={{ fontSize:9, color:'#9CA3AF', marginTop:8 }}>
+                  <p style={{ fontSize:9, color:'#6B7280', marginTop:8 }}>
                     Fonte: {gruposOrdenados[0]?.portaria ?? 'Portaria ZARC/MAPA'} — Tábua de Risco, dados.agricultura.gov.br
                   </p>
                 </div>
@@ -743,11 +743,11 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 <ExternalLink size={13} color="#374151" style={{ flexShrink:0 }} />
                 <div style={{ flex:1 }}>
                   <p style={{ fontSize:11, fontWeight:600, color:'#374151' }}>Painel de Indicação de Riscos — MAPA</p>
-                  <p style={{ fontSize:9, color:'#9CA3AF' }}>Consulta oficial de elegibilidade PROAGRO/PSR por município</p>
+                  <p style={{ fontSize:9, color:'#6B7280' }}>Consulta oficial de elegibilidade PROAGRO/PSR por município</p>
                 </div>
               </a>
 
-              <p style={{ fontSize:9, color:'#9CA3AF', lineHeight:1.5 }}>
+              <p style={{ fontSize:9, color:'#6B7280', lineHeight:1.5 }}>
                 Fonte: Tábua de Risco ZARC de {c.nome}, MAPA (dados.agricultura.gov.br), safra 2025/2026
               </p>
             </>
@@ -768,7 +768,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
               </div>
               <div style={{ textAlign:'right' }}>
                 <p style={{ fontSize:20,fontWeight:800,color:'#374151',lineHeight:1 }}>{log.dist}</p>
-                <p style={{ fontSize:9,color:'#9CA3AF' }}>km est.</p>
+                <p style={{ fontSize:9,color:'#6B7280' }}>km est.</p>
               </div>
             </div>
 
@@ -797,7 +797,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 <div key={m.label} style={{ background:m.bg,borderRadius:9,padding:'9px 10px' }}>
                   <p style={{ fontSize:9,color:'#6B7280',marginBottom:3 }}>{m.label}</p>
                   <p style={{ fontSize:13,fontWeight:700,color:m.cor,lineHeight:1 }}>
-                    {m.val}<span style={{ fontSize:8,fontWeight:400,color:'#9CA3AF' }}>{m.sub}</span>
+                    {m.val}<span style={{ fontSize:8,fontWeight:400,color:'#6B7280' }}>{m.sub}</span>
                   </p>
                 </div>
               ))}
@@ -825,7 +825,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 </div>
               ))}
             </div>
-            <p style={{ fontSize:9,color:'#9CA3AF',lineHeight:1.5 }}>
+            <p style={{ fontSize:9,color:'#6B7280',lineHeight:1.5 }}>
               Distância real até a maltaria de referência mais próxima entre as 3 (Cooperativa Agrária, AmBev Lages, Cargill Ponta Grossa) — via fator rodoviário 1,35× sobre linha reta.
             </p>
           </>
@@ -871,7 +871,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                       <div style={{ height:'100%',width:`${Math.min(municipio.pct_argila,100)}%`,
                         background:si.cor,borderRadius:4,transition:'width 0.8s ease' }} />
                     </div>
-                    <div style={{ display:'flex',justifyContent:'space-between',fontSize:8,color:'#9CA3AF',marginTop:3 }}>
+                    <div style={{ display:'flex',justifyContent:'space-between',fontSize:8,color:'#6B7280',marginTop:3 }}>
                       <span>0%</span><span style={{ color:'#f59e0b' }}>15%</span>
                       <span style={{ color:'#10b981' }}>35%</span><span>100%</span>
                     </div>
@@ -900,9 +900,9 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
-                    <XAxis dataKey="mes" tick={{ fontSize:9,fill:'#9CA3AF' }} axisLine={false} tickLine={false}
+                    <XAxis dataKey="mes" tick={{ fontSize:9,fill:'#6B7280' }} axisLine={false} tickLine={false}
                       tickFormatter={m => ['','Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'][m]} />
-                    <YAxis yAxisId="p" tick={{ fontSize:8,fill:'#9CA3AF' }} axisLine={false} tickLine={false} />
+                    <YAxis yAxisId="p" tick={{ fontSize:8,fill:'#6B7280' }} axisLine={false} tickLine={false} />
                     <YAxis yAxisId="t" orientation="right" tick={{ fontSize:8,fill:'#d97706' }} axisLine={false} tickLine={false} domain={[0,40]} />
                     <Tooltip
                       contentStyle={{ fontSize:10,borderRadius:8,border:'1px solid #E5E7EB' }}
@@ -927,7 +927,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
             ) : loading ? (
               <div style={{ background:'#F9FAFB',borderRadius:10,height:160,
                 display:'flex',alignItems:'center',justifyContent:'center' }}>
-                <p style={{ fontSize:11,color:'#9CA3AF' }}>Carregando dados climáticos...</p>
+                <p style={{ fontSize:11,color:'#6B7280' }}>Carregando dados climáticos...</p>
               </div>
             ) : (
               <div style={{ background:'#F9FAFB',border:'1px solid #E5E7EB',borderRadius:10,padding:'13px 14px' }}>

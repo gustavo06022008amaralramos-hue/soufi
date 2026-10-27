@@ -246,7 +246,7 @@ export default function CompararPage({ municipios = [] }) {
             <div style={{ width: 6, height: 26, borderRadius: 4, background: 'linear-gradient(180deg,#1B4332,#0284c7)' }} />
             <h1 style={{ fontSize: 20, fontWeight: 800, color: '#111827' }}>Comparador de Municípios</h1>
           </div>
-          <p style={{ fontSize: 11, color: '#9CA3AF', marginLeft: 16 }}>
+          <p style={{ fontSize: 11, color: '#6B7280', marginLeft: 16 }}>
             Compare até 3 municípios lado a lado — aptidão ZARC, logística, viabilidade econômica e ROI estimado
           </p>
         </div>
@@ -257,7 +257,7 @@ export default function CompararPage({ municipios = [] }) {
             <input type="number" min={50} max={150} step={1} value={precoSaca}
               onChange={e => setPreco(Number(e.target.value))}
               style={{ width: 60, border: 'none', background: 'transparent', fontSize: 13, fontWeight: 700, color: '#1B4332', outline: 'none', textAlign: 'center' }} />
-            <span style={{ fontSize: 11, color: '#9CA3AF' }}>R$/sc</span>
+            <span style={{ fontSize: 11, color: '#6B7280' }}>R$/sc</span>
           </div>
           <button onClick={() => exportComparativo(enriched)} disabled={!preenchidos.length} style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '7px 14px',
@@ -300,7 +300,7 @@ export default function CompararPage({ municipios = [] }) {
                     {m ? `${m.nome_municipio} / ${m.uf}` : `Município ${idx + 1}`}
                   </span>
                 </div>
-                {m && <button onClick={() => removerSlot(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF', display: 'flex' }}><X size={14} /></button>}
+                {m && <button onClick={() => removerSlot(idx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B7280', display: 'flex' }}><X size={14} /></button>}
               </div>
 
               {/* Conteúdo do slot */}
@@ -318,7 +318,7 @@ export default function CompararPage({ municipios = [] }) {
                         <span style={{ fontSize: 8, color: cor, fontWeight: 600 }}>pts</span>
                       </div>
                       <div>
-                        <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 3 }}>Score Combinado</p>
+                        <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 3 }}>Score Combinado</p>
                         <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
                           <span style={{ fontSize: 9, fontWeight: 700, color: m.score_aptidao >= 70 ? '#1A7A3C' : m.score_aptidao >= 40 ? '#D4A017' : '#4A90C4', background: m.score_aptidao >= 70 ? '#F0FDF4' : m.score_aptidao >= 40 ? '#FFFBEB' : '#EFF6FF', borderRadius: 5, padding: '2px 6px', border: `1px solid ${m.score_aptidao >= 70 ? '#1A7A3C' : m.score_aptidao >= 40 ? '#D4A017' : '#4A90C4'}30` }}>
                             ZARC {m.score_aptidao ?? '—'}/100
@@ -340,7 +340,7 @@ export default function CompararPage({ municipios = [] }) {
                         { label: 'Precipit.', val: `${fmt(m.precipitacao_acumulada_anual, 0)} mm`, cor: '#374151' },
                       ].map(d => (
                         <div key={d.label} style={{ background: '#F9FAFB', borderRadius: 7, padding: '7px 9px' }}>
-                          <p style={{ fontSize: 9, color: '#9CA3AF', marginBottom: 2 }}>{d.label}</p>
+                          <p style={{ fontSize: 9, color: '#6B7280', marginBottom: 2 }}>{d.label}</p>
                           <p style={{ fontSize: 12, fontWeight: 700, color: d.cor }}>{d.val}</p>
                         </div>
                       ))}
@@ -393,19 +393,19 @@ export default function CompararPage({ municipios = [] }) {
                             </div>
                             <div>
                               <p style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{s.nome_municipio}</p>
-                              <p style={{ fontSize: 10, color: '#9CA3AF' }}>{s.uf} · alt. {s.altitude?.toFixed(0) ?? '—'}m</p>
+                              <p style={{ fontSize: 10, color: '#6B7280' }}>{s.uf} · alt. {s.altitude?.toFixed(0) ?? '—'}m</p>
                             </div>
                           </button>
                         ))}
                       </div>
                     )}
                     {municipios.length > 0 && busca[idx].length < 2 && (
-                      <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 8, textAlign: 'center' }}>
+                      <p style={{ fontSize: 10, color: '#6B7280', marginTop: 8, textAlign: 'center' }}>
                         Digite pelo menos 2 letras para buscar
                       </p>
                     )}
                     {!municipios.length && (
-                      <p style={{ fontSize: 10, color: '#9CA3AF', marginTop: 8, textAlign: 'center' }}>
+                      <p style={{ fontSize: 10, color: '#6B7280', marginTop: 8, textAlign: 'center' }}>
                         Aguardando carregamento dos dados...
                       </p>
                     )}
@@ -418,7 +418,7 @@ export default function CompararPage({ municipios = [] }) {
       </div>
 
       {preenchidos.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '60px 0', color: '#9CA3AF' }}>
+        <div style={{ textAlign: 'center', padding: '60px 0', color: '#6B7280' }}>
           <GitCompare size={48} style={{ margin: '0 auto 16px', display: 'block', opacity: 0.25 }} />
           <p style={{ fontSize: 14, fontWeight: 600, marginBottom: 6 }}>Nenhum município selecionado</p>
           <p style={{ fontSize: 12 }}>Use os campos acima para buscar e adicionar até 3 municípios para comparar.</p>
@@ -443,7 +443,7 @@ export default function CompararPage({ municipios = [] }) {
                 <Trophy size={22} color="#fff" />
               </div>
               <div>
-                <p style={{ fontSize: 11, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>
+                <p style={{ fontSize: 11, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>
                   Melhor Município ({vencedor.criterios} de {criteriosComparaveis} critérios)
                 </p>
                 <p style={{ fontSize: 18, fontWeight: 800, color: CORES_SLOT[vencedor.idx] }}>
@@ -465,7 +465,7 @@ export default function CompararPage({ municipios = [] }) {
             {/* Radar */}
             <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '18px 20px' }}>
               <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Perfil Comparativo (Radar)</p>
-              <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 14 }}>Dimensões normalizadas 0–100</p>
+              <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 14 }}>Dimensões normalizadas 0–100</p>
               <ResponsiveContainer width="100%" height={260}>
                 <RadarChart data={radarData} margin={{ top: 6, right: 24, bottom: 6, left: 24 }}>
                   <PolarGrid stroke="#E5E7EB" />
@@ -484,12 +484,12 @@ export default function CompararPage({ municipios = [] }) {
             {/* Bar chart */}
             <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, padding: '18px 20px' }}>
               <p style={{ fontSize: 13, fontWeight: 700, color: '#111827', marginBottom: 4 }}>Score, ROI e Lucro Comparados</p>
-              <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 14 }}>Lucro dividido por 100 para escala visual</p>
+              <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 14 }}>Lucro dividido por 100 para escala visual</p>
               <ResponsiveContainer width="100%" height={260}>
                 <BarChart data={barData} margin={{ top: 4, right: 8, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
                   <XAxis dataKey="label" tick={{ fontSize: 10, fill: '#6B7280' }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontSize: 10, fill: '#9CA3AF' }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 10, fill: '#6B7280' }} axisLine={false} tickLine={false} />
                   <Tooltip contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #E5E7EB' }} />
                   <Legend wrapperStyle={{ fontSize: 11, paddingTop: 8 }} />
                   {enriched.map((m, i) => m ? (
@@ -505,13 +505,13 @@ export default function CompararPage({ municipios = [] }) {
           <div style={{ background: '#fff', border: '1px solid #E5E7EB', borderRadius: 14, overflow: 'hidden', marginBottom: 14 }}>
             <div style={{ padding: '16px 20px', borderBottom: '1px solid #E5E7EB' }}>
               <p style={{ fontSize: 13, fontWeight: 700, color: '#111827' }}>Tabela Comparativa Detalhada</p>
-              <p style={{ fontSize: 10, color: '#9CA3AF' }}>Verde = melhor nesta dimensão · Vermelho = pior</p>
+              <p style={{ fontSize: 10, color: '#6B7280' }}>Verde = melhor nesta dimensão · Vermelho = pior</p>
             </div>
             <div style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
                   <tr style={{ background: '#F9FAFB' }}>
-                    <th style={{ padding: '10px 14px', fontSize: 10, fontWeight: 700, color: '#9CA3AF', textTransform: 'uppercase', letterSpacing: 0.8, textAlign: 'left', borderBottom: '1px solid #E5E7EB', width: 180 }}>
+                    <th style={{ padding: '10px 14px', fontSize: 10, fontWeight: 700, color: '#6B7280', textTransform: 'uppercase', letterSpacing: 0.8, textAlign: 'left', borderBottom: '1px solid #E5E7EB', width: 180 }}>
                       Critério
                     </th>
                     {enriched.map((m, i) => m ? (
@@ -616,7 +616,7 @@ export default function CompararPage({ municipios = [] }) {
                     }}>{p}</p>
                   ))}
                   <div style={{ marginTop: 10, paddingTop: 10, borderTop: `1px solid ${CORES_SLOT[idx]}20` }}>
-                    <p style={{ fontSize: 10, color: '#9CA3AF' }}>
+                    <p style={{ fontSize: 10, color: '#6B7280' }}>
                       Score geral: <strong style={{ color: CORES_SLOT[idx] }}>{scoreGeral(m)}/100</strong>
                       {idx === vencedor?.idx ? ' 🏆 Vencedor' : ''}
                     </p>

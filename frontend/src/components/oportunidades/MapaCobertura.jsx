@@ -57,7 +57,7 @@ export default function MapaCobertura({ dados = [], onSelect, selected }) {
           );
         })}
         <div style={{ borderTop: '1px solid #F3F4F6', marginTop: 8, paddingTop: 8 }}>
-          <p style={{ fontSize: 9, color: '#9CA3AF' }}>Clique em um município para detalhes</p>
+          <p style={{ fontSize: 9, color: '#6B7280' }}>Clique em um município para detalhes</p>
         </div>
       </div>
 

@@ -181,7 +181,7 @@ function KpiCard({ icon: Icon, label, value, sub, cor, total }) {
           <p style={{ fontSize:25, fontWeight:800, color:'#111827', lineHeight:1 }}>{value.toLocaleString('pt-BR')}</p>
         </div>
       </div>
-      {sub && <p style={{ fontSize:10.5, color:'#9CA3AF', marginTop:8, position:'relative' }}>{sub}</p>}
+      {sub && <p style={{ fontSize:10.5, color:'#6B7280', marginTop:8, position:'relative' }}>{sub}</p>}
       {pct != null && (
         <div style={{ marginTop:8, height:4, borderRadius:99, background:'#F3F4F6', overflow:'hidden', position:'relative' }}>
           <div style={{ width:`${pct}%`, height:'100%', background:cor, borderRadius:99, transition:'width 0.4s' }} />
@@ -232,12 +232,12 @@ function BreakevenChart({ custoTotal, precoLiqTon, prodEsperada, breakeven }) {
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" vertical={false} />
         <XAxis
-          dataKey="prod" tick={{ fontSize:9, fill:'#9CA3AF' }} axisLine={false} tickLine={false}
+          dataKey="prod" tick={{ fontSize:9, fill:'#6B7280' }} axisLine={false} tickLine={false}
           tickFormatter={v => `${v}t`}
-          label={{ value:'Produtividade (t/ha)', position:'insideBottom', offset:-6, fontSize:9, fill:'#9CA3AF' }}
+          label={{ value:'Produtividade (t/ha)', position:'insideBottom', offset:-6, fontSize:9, fill:'#6B7280' }}
         />
         <YAxis
-          tick={{ fontSize:9, fill:'#9CA3AF' }} axisLine={false} tickLine={false}
+          tick={{ fontSize:9, fill:'#6B7280' }} axisLine={false} tickLine={false}
           tickFormatter={v => `R$${(v/1000).toFixed(0)}k`}
         />
         <Tooltip
@@ -492,7 +492,7 @@ export default function OportunidadesPage({ municipios = [] }) {
         <div style={{ padding:'14px 18px', display:'flex', alignItems:'center', gap:16, flexWrap:'wrap' }}>
           {/* UF dropdown em vez de 27 botões */}
           <div>
-            <label style={{ display:'block', fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.6, marginBottom:3 }}>Estado</label>
+            <label style={{ display:'block', fontSize:9, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.6, marginBottom:3 }}>Estado</label>
             <select value={ufFiltro} onChange={e => setUfFiltro(e.target.value)} style={{
               padding:'6px 10px', borderRadius:8, fontSize:12, border:'1px solid #E5E7EB',
               color:'#111827', background:'#F9FAFB', cursor:'pointer', outline:'none', fontWeight:600,
@@ -504,7 +504,7 @@ export default function OportunidadesPage({ municipios = [] }) {
           {/* Score mínimo */}
           <div style={{ minWidth:160 }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
-              <span style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.6 }}>Score mín. combinado</span>
+              <span style={{ fontSize:9, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.6 }}>Score mín. combinado</span>
               <span style={{ fontSize:11, fontWeight:700, color:'#111827' }}>{scoreMin}</span>
             </div>
             <input type="range" min={0} max={90} step={5} value={scoreMin}
@@ -515,7 +515,7 @@ export default function OportunidadesPage({ municipios = [] }) {
           {/* Distância máxima */}
           <div style={{ minWidth:160 }}>
             <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
-              <span style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.6 }}>Distância máx.</span>
+              <span style={{ fontSize:9, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.6 }}>Distância máx.</span>
               <span style={{ fontSize:11, fontWeight:700, color:'#111827' }}>{distMax} km</span>
             </div>
             <input type="range" min={100} max={2000} step={50} value={distMax}
@@ -559,7 +559,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                   style={{ width:'100%', accentColor:'#1B4332', height:4 }} />
               </div>
             ))}
-            <p style={{ gridColumn:'1 / -1', fontSize:10, color:'#9CA3AF' }}>
+            <p style={{ gridColumn:'1 / -1', fontSize:10, color:'#6B7280' }}>
               Esses dois valores recalculam frete, lucro e ROI de todos os municípios em tempo real — os demais filtros só reduzem a lista exibida.
             </p>
           </div>
@@ -611,7 +611,7 @@ export default function OportunidadesPage({ municipios = [] }) {
             <div style={{ padding:'32px 20px', textAlign:'center' }}>
               <AlertTriangle size={20} color="#9CA3AF" style={{ marginBottom:8 }} />
               <p style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4 }}>Nenhum município encontrado com esses filtros</p>
-              <p style={{ fontSize:11, color:'#9CA3AF' }}>
+              <p style={{ fontSize:11, color:'#6B7280' }}>
                 {ufFiltro !== 'Todos' ? `Nenhum município em ${ufFiltro} atende score mínimo ${scoreMin} e distância até ${distMax}km — ` : ''}
                 tente reduzir o score mínimo ou aumentar a distância máxima.
               </p>
@@ -644,7 +644,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                     <td style={{ padding:'11px 12px', fontSize:12, fontWeight:600, color:'#111827' }}>
                       {i < 3 && <span style={{ marginRight:6 }}>{['🥇','🥈','🥉'][i]}</span>}
                       {m.nome_municipio}
-                      <span style={{ fontSize:10, fontWeight:600, color:'#9CA3AF', marginLeft:6 }}>{m.uf}</span>
+                      <span style={{ fontSize:10, fontWeight:600, color:'#6B7280', marginLeft:6 }}>{m.uf}</span>
                       {m.hasHighFrostRisk && <AlertTriangle size={10} color="#ca8a04" style={{ marginLeft:5 }} />}
                     </td>
                     <td style={{ padding:'11px 12px', fontSize:12, fontWeight:700, color: m.score_aptidao >= 70 ? '#16a34a' : '#ca8a04' }}>
@@ -693,7 +693,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                 }}>
                   <div>
                     <p style={{ fontSize:16, fontWeight:800, color:'#111827' }}>
-                      {detalhe.nome_municipio} <span style={{ color:'#9CA3AF', fontWeight:500 }}>· {detalhe.uf}</span>
+                      {detalhe.nome_municipio} <span style={{ color:'#6B7280', fontWeight:500 }}>· {detalhe.uf}</span>
                     </p>
                     <p style={{ fontSize:11, color:'#6B7280', marginTop:2 }}>IBGE {detalhe.codigo_ibge} · {detalhe.dist} km · {detalhe.maltaria}</p>
                   </div>
@@ -749,7 +749,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                       <span style={{ fontSize:11, fontWeight: bold ? 700 : 500, color:cor }}>R$ {val?.toLocaleString('pt-BR') ?? '—'}/ha</span>
                     </div>
                   ))}
-                  <p style={{ fontSize:10, color:'#9CA3AF', marginTop:6 }}>
+                  <p style={{ fontSize:10, color:'#6B7280', marginTop:6 }}>
                     Prod. estimada: {detalhe.prod_tha} t/ha · Break-even: {detalhe.breakeven_tha?.toFixed(2)} t/ha
                   </p>
                 </div>
@@ -765,7 +765,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                         <Ic size={12} color="#16a34a" />
                       </div>
                       <div>
-                        <p style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7 }}>{label}</p>
+                        <p style={{ fontSize:9, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.7 }}>{label}</p>
                         <p style={{ fontSize:11, color:'#374151', fontWeight:500 }}>{val}</p>
                       </div>
                     </div>
@@ -856,7 +856,7 @@ export default function OportunidadesPage({ municipios = [] }) {
             <ResponsiveContainer width="100%" height={240}>
               <BarChart data={dadosCusto} layout="vertical" margin={{ left:10, right:30 }}>
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#F3F4F6" />
-                <XAxis type="number" tick={{ fontSize:10, fill:'#9CA3AF' }} axisLine={false} tickLine={false} tickFormatter={v => `R$${v}`} />
+                <XAxis type="number" tick={{ fontSize:10, fill:'#6B7280' }} axisLine={false} tickLine={false} tickFormatter={v => `R$${v}`} />
                 <YAxis type="category" dataKey="uf" tick={{ fontSize:11, fill:'#374151', fontWeight:600 }} axisLine={false} tickLine={false} width={30} />
                 <Tooltip formatter={v => [`R$ ${Math.round(v)}/ha`, 'Lucro médio']} contentStyle={{ fontSize:11, borderRadius:8 }} />
                 <Bar dataKey="lucro_medio" radius={[0,6,6,0]}>
@@ -887,7 +887,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                 { label:'Break-even necessário', val:`${(breakevenCtx / Math.max(filtrados[0]?.liquido ?? precoLiqReal, 100)).toFixed(2)} t/ha` },
               ].map(({ label, val, cor }) => (
                 <div key={label} style={{ background:'#F9FAFB', borderRadius:8, padding:'10px 12px' }}>
-                  <p style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7, marginBottom:3 }}>{label}</p>
+                  <p style={{ fontSize:9, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.7, marginBottom:3 }}>{label}</p>
                   <p style={{ fontSize:13, fontWeight:700, color: cor ?? '#111827' }}>{val}</p>
                 </div>
               ))}
@@ -912,7 +912,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                 return itens.map(({ label, val, cor }) => (
                   <div key={label} style={{ background:'#F9FAFB', borderRadius:10, padding:'14px 16px' }}>
                     <div style={{ width:28, height:4, borderRadius:2, background:cor, marginBottom:10 }} />
-                    <p style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7, marginBottom:4 }}>{label}</p>
+                    <p style={{ fontSize:9, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.7, marginBottom:4 }}>{label}</p>
                     <p style={{ fontSize:16, fontWeight:800, color:'#111827' }}>R$ {val}</p>
                     <p style={{ fontSize:10, color:'#6B7280', marginTop:2 }}>{(val/total*100).toFixed(0)}% do custo</p>
                   </div>
@@ -930,7 +930,7 @@ export default function OportunidadesPage({ municipios = [] }) {
             <div style={{ background:'#fff', border:'1px solid #E5E7EB', borderRadius:14, padding:'32px 20px', textAlign:'center' }}>
               <AlertTriangle size={20} color="#9CA3AF" style={{ marginBottom:8 }} />
               <p style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4 }}>Nenhum município para recomendar manejo</p>
-              <p style={{ fontSize:11, color:'#9CA3AF' }}>Ajuste o estado, score mínimo ou distância máxima no topo da página.</p>
+              <p style={{ fontSize:11, color:'#6B7280' }}>Ajuste o estado, score mínimo ou distância máxima no topo da página.</p>
             </div>
           )}
           {/* Seletor de município — busca por nome, não lista tudo de uma vez */}
@@ -957,7 +957,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                     title="Limpar seleção"
                     style={{
                       position:'absolute', right:6, top:'50%', transform:'translateY(-50%)',
-                      background:'none', border:'none', cursor:'pointer', color:'#9CA3AF',
+                      background:'none', border:'none', cursor:'pointer', color:'#6B7280',
                       padding:4, display:'flex',
                     }}>
                     <X size={12} />
@@ -971,7 +971,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                     maxHeight:280, overflowY:'auto',
                   }}>
                     {sugestoesManejo.length === 0 ? (
-                      <p style={{ fontSize:11, color:'#9CA3AF', padding:'10px 12px' }}>Nenhum município encontrado com esses filtros.</p>
+                      <p style={{ fontSize:11, color:'#6B7280', padding:'10px 12px' }}>Nenhum município encontrado com esses filtros.</p>
                     ) : sugestoesManejo.map(m => (
                       <button key={m.codigo_ibge}
                         onClick={() => selecionarManejo(m)}
@@ -986,9 +986,9 @@ export default function OportunidadesPage({ municipios = [] }) {
                       >
                         <div style={{ minWidth:0 }}>
                           <p style={{ fontSize:12, fontWeight:600, color:'#374151' }}>
-                            {m.nome_municipio} <span style={{ color:'#9CA3AF', fontWeight:500 }}>/ {m.uf}</span>
+                            {m.nome_municipio} <span style={{ color:'#6B7280', fontWeight:500 }}>/ {m.uf}</span>
                           </p>
-                          <p style={{ fontSize:10, color:'#9CA3AF' }}>{m.dist} km · {m.maltaria} · R$ {Math.round(m.lucro_ha).toLocaleString('pt-BR')}/ha</p>
+                          <p style={{ fontSize:10, color:'#6B7280' }}>{m.dist} km · {m.maltaria} · R$ {Math.round(m.lucro_ha).toLocaleString('pt-BR')}/ha</p>
                         </div>
                         <ScoreBadge score={m.scoreComb} compact />
                       </button>
@@ -997,7 +997,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                 )}
               </div>
               {buscaManejo.length === 0 && (
-                <span style={{ fontSize:10, color:'#9CA3AF' }}>{filtrados.length.toLocaleString('pt-BR')} municípios disponíveis — digite pra buscar</span>
+                <span style={{ fontSize:10, color:'#6B7280' }}>{filtrados.length.toLocaleString('pt-BR')} municípios disponíveis — digite pra buscar</span>
               )}
             </div>
           )}
@@ -1034,7 +1034,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                     <div key={label} style={{ display:'flex', gap:8, marginBottom:7, alignItems:'flex-start' }}>
                       <Ic size={11} color="#6B7280" style={{ marginTop:2, flexShrink:0 }} />
                       <div>
-                        <span style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7 }}>{label} </span>
+                        <span style={{ fontSize:9, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.7 }}>{label} </span>
                         <span style={{ fontSize:11, color:'#374151', fontWeight:500 }}>{val}</span>
                       </div>
                     </div>
@@ -1077,7 +1077,7 @@ export default function OportunidadesPage({ municipios = [] }) {
                 <p style={{ fontSize:12, fontWeight:600, color:'#374151', marginBottom:4 }}>
                   {ufFiltro !== 'Todos' ? `Nenhuma oportunidade de expansão de seguro em ${ufFiltro}` : 'Nenhuma oportunidade de expansão de seguro'}
                 </p>
-                <p style={{ fontSize:11, color:'#9CA3AF' }}>
+                <p style={{ fontSize:11, color:'#6B7280' }}>
                   {ufFiltro !== 'Todos' ? 'Troque o estado no filtro do topo ou selecione "Todos os estados".' : 'Nenhum município com score ≥ 40 fora do ZARC no momento.'}
                 </p>
               </div>

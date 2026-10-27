@@ -194,7 +194,7 @@ export default function ManualPage() {
           apoiando a Cooperativa Agrária na tomada de decisão sobre novos contratos de compra e
           programas de fomento.
         </Destaque>
-        <p style={{ fontSize: 11, color: '#9CA3AF', lineHeight: 1.6 }}>
+        <p style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.6 }}>
           Telas disponíveis no menu: <strong>Dashboard</strong> (visão geral), <strong>Zoneamento</strong> (mapa),
           <strong> Históricos</strong> (estatísticas), <strong>Custos &amp; ROI</strong>, <strong>Comparador</strong>,
           <strong> Variedades</strong>, <strong>Fontes</strong>, <strong>Parceiros</strong>,
@@ -453,7 +453,7 @@ Preço líquido = preço bruto − frete estimado`}</Formula>
               <Truck size={11} color={v.cor} />
               <div>
                 <p style={{ fontSize: 11, fontWeight: 700, color: v.cor }}>{v.label}</p>
-                <p style={{ fontSize: 10, color: '#9CA3AF' }}>{v.d}</p>
+                <p style={{ fontSize: 10, color: '#6B7280' }}>{v.d}</p>
               </div>
             </div>
           ))}
@@ -520,7 +520,7 @@ Preço líquido = preço bruto − frete estimado`}</Formula>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '9px 12px', background: `${cv.cor}0a` }}>
                 <div>
                   <span style={{ fontSize: 13, fontWeight: 800, color: cv.cor }}>{cv.nome}</span>
-                  <span style={{ fontSize: 10, color: '#9CA3AF', marginLeft: 8 }}>{cv.tipo}</span>
+                  <span style={{ fontSize: 10, color: '#6B7280', marginLeft: 8 }}>{cv.tipo}</span>
                 </div>
               </div>
               <p style={{ fontSize: 11, color: '#6B7280', lineHeight: 1.5, padding: '8px 12px' }}>{cv.desc}</p>
@@ -574,7 +574,7 @@ Geada       — "rampa baixa": nota 1.0 em 0%, decai linear até 0 em 30% de ris
               (nota 1.0 direto se o município tem ZARC oficial de cevada)
 Solo        — nota = %argila ÷ 35, limitada a 1.0 (35%+ argila = Tipo 3 = nota máxima)
 Colheita    — "rampa baixa": nota 1.0 até 120mm, decai linear até 0 em 400mm (tolerância 280mm)`}</Formula>
-          <p style={{ fontSize: 10, color: '#9CA3AF' }}>Fonte do código: calcular_score_ponderado.py — testado com casos automatizados (pytest).</p>
+          <p style={{ fontSize: 10, color: '#6B7280' }}>Fonte do código: calcular_score_ponderado.py — testado com casos automatizados (pytest).</p>
         </Calculo>
 
         <Calculo titulo="2. Score de aptidão binário (score_aptidao)" usadoEm="mapa, dashboard, comparador, oportunidades">
@@ -627,7 +627,7 @@ Nota ZARC = melhor risco do município × 0,7 + cobertura × 0,3
             Parcial; <strong>com ZARC</strong>, a geada pela média anual não penaliza, porque o ZARC de
             cereais de inverno já avalia a geada no espigamento. Litoral é sempre Inapto nas três culturas.
           </p>
-          <p style={{ fontSize: 10, color: '#9CA3AF' }}>Fonte do código: calcular_aptidao_multicultura.py — testado com pytest.</p>
+          <p style={{ fontSize: 10, color: '#6B7280' }}>Fonte do código: calcular_aptidao_multicultura.py — testado com pytest.</p>
         </Calculo>
 
         <Calculo titulo="4. Logística e frete" usadoEm="painel do município, oportunidades, comparador">
@@ -636,7 +636,7 @@ Preço bruto (R$/ton)  = (preço da saca ÷ 60kg) × 1000
 Frete (R$/ton)        = distância × taxa de frete (padrão R$0,32/ton·km)
 Preço líquido (R$/ton)= preço bruto − frete
 Preço líquido (R$/sc) = preço líquido × 60 ÷ 1000`}</Formula>
-          <p style={{ fontSize: 10, color: '#9CA3AF' }}>
+          <p style={{ fontSize: 10, color: '#6B7280' }}>
             Destino fixo: sede real da Cooperativa Agrária em Entre Rios, Guarapuava/PR (-25,5630, -51,4898).
             O fator 1,35 aproxima a distância rodoviária real a partir da distância em linha reta.
           </p>
@@ -666,7 +666,7 @@ Produtividade de equilíbrio  = Custo total/ha × 60 ÷ (preço da saca × 1000)
 Filtros rígidos, aplicados depois:
   Score ZARC < 40           → Prioridade = 0 (inapto pra cevada, não importa o resto)
   Geada > 40% e ZARC < 70   → Prioridade × 0,60 (penaliza risco alto de geada)`}</Formula>
-          <p style={{ fontSize: 10, color: '#9CA3AF' }}>
+          <p style={{ fontSize: 10, color: '#6B7280' }}>
             O componente de Seguro dá nota mais alta pra município apto <strong>sem</strong> seguro ainda —
             de propósito, porque essa tela é sobre onde vale a pena <em>expandir</em> cobertura, não sobre
             quem já está coberto.
@@ -743,7 +743,7 @@ Filtros rígidos, aplicados depois:
         textAlign: 'center', padding: '20px 0', marginTop: 8,
         borderTop: '1px solid #E5E7EB',
       }}>
-        <p style={{ fontSize: 12, color: '#9CA3AF' }}>
+        <p style={{ fontSize: 12, color: '#6B7280' }}>
           SOUFII · Cooperativa Agrária · FAPA · EMBRAPA Trigo · UNICENTRO
         </p>
         <p style={{ fontSize: 10, color: '#D1D5DB', marginTop: 4 }}>

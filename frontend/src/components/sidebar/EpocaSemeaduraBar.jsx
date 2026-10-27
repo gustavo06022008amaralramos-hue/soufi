@@ -65,7 +65,7 @@ export default function EpocaSemeaduraBar({ codigoIbge, cultura, decendioAtual }
       {/* Rótulos de mês */}
       <div style={{ display:'flex', marginBottom:8 }}>
         {MESES.map(m => (
-          <span key={m} style={{ flex:1, fontSize:8, color:'#9CA3AF', textAlign:'center' }}>{m}</span>
+          <span key={m} style={{ flex:1, fontSize:8, color:'#6B7280', textAlign:'center' }}>{m}</span>
         ))}
       </div>
 
@@ -79,7 +79,7 @@ export default function EpocaSemeaduraBar({ codigoIbge, cultura, decendioAtual }
         ))}
       </div>
 
-      <p style={{ fontSize:8, color:'#9CA3AF', marginTop:8, lineHeight:1.4 }}>
+      <p style={{ fontSize:8, color:'#6B7280', marginTop:8, lineHeight:1.4 }}>
         Melhor risco disponível em cada decêndio, entre qualquer grupo de ciclo/solo/manejo —
         Tábua de Risco ZARC, MAPA, safra {dados.safra}.
       </p>

@@ -430,7 +430,7 @@ function CadastroCultivar({ onClose, onSave }) {
           <p style={{ fontSize: 17, fontWeight: 800, color: '#1B4332' }}>Cadastrar cultivar</p>
           <button onClick={onClose} style={{ background: '#F3F4F6', border: '1px solid #E5E7EB', borderRadius: 8, padding: 7, cursor: 'pointer', color: '#6B7280', display: 'flex' }}><X size={14} /></button>
         </div>
-        <p style={{ fontSize: 11, color: '#9CA3AF', marginBottom: 18 }}>
+        <p style={{ fontSize: 11, color: '#6B7280', marginBottom: 18 }}>
           Salvo só neste navegador, separado do catálogo oficial verificado — aparece marcado como "cadastro próprio" e já entra no recomendador de cultivares.
         </p>
 
@@ -609,7 +609,7 @@ export default function VariedadesPage() {
             <Wand2 size={14} color="#1B4332" />
             <p style={{ fontSize: 13, fontWeight: 700, color: '#1B4332' }}>Verificador de Aptidão</p>
           </div>
-          <p style={{ fontSize: 10, color: '#9CA3AF', marginBottom: 16, marginLeft: 22 }}>
+          <p style={{ fontSize: 10, color: '#6B7280', marginBottom: 16, marginLeft: 22 }}>
             Informe as condições do seu município e, se quiser, o estado — os critérios climáticos são os
             mesmos para todas as cultivares (não há tabela oficial com faixa climática diferente por
             cultivar); o que muda entre elas, e o que a recomendação abaixo usa de verdade, é a zona
@@ -673,7 +673,7 @@ export default function VariedadesPage() {
                 {c.ok ? <CheckCircle size={11} color="#16a34a" /> : <XCircle size={11} color="#dc2626" />}
                 <div style={{ minWidth: 0 }}>
                   <p style={{ fontSize: 9, color: '#6B7280' }}>{c.label}</p>
-                  <p style={{ fontSize: 9, color: '#9CA3AF' }}>{c.faixa}</p>
+                  <p style={{ fontSize: 9, color: '#6B7280' }}>{c.faixa}</p>
                 </div>
               </div>
             ))}
@@ -706,7 +706,7 @@ export default function VariedadesPage() {
                     {!oficial && <span style={{ fontSize:7, fontWeight:800, color:'#6B7280', background:'#F3F4F6', border:'1px solid #E5E7EB', borderRadius:20, padding:'1px 5px' }}>PRÓPRIA</span>}
                   </div>
                   <p style={{ fontSize:16, fontWeight:800, color:'#111827', marginBottom:2 }}>{dias} dias</p>
-                  <p style={{ fontSize:9, color:'#9CA3AF', marginBottom:6 }}>até maturação · {c.obtentor}</p>
+                  <p style={{ fontSize:9, color:'#6B7280', marginBottom:6 }}>até maturação · {c.obtentor}</p>
                   <p style={{ fontSize:10, color:'#6B7280', lineHeight:1.5 }}>
                     {rUf !== 'Todos' && zonaOk && `Zona indicada pra ${rUf}. `}
                     {rUf !== 'Todos' && !zonaOk && `Sem indicação documentada pra ${rUf}. `}
@@ -746,7 +746,7 @@ export default function VariedadesPage() {
             ))}
             {/* Resultado */}
             <div style={{ display:'flex', flexDirection:'column', justifyContent:'center', gap:6, background:'#EFF6FF', borderRadius:10, padding:'12px 14px', border:'1px solid rgba(2,132,199,0.2)' }}>
-              <p style={{ fontSize:9, color:'#9CA3AF', textTransform:'uppercase', letterSpacing:0.7 }}>Resultado</p>
+              <p style={{ fontSize:9, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.7 }}>Resultado</p>
               <p style={{ fontSize:18, fontWeight:900, color:'#0284c7', lineHeight:1 }}>{semKgHa.kgHa} kg/ha</p>
               <p style={{ fontSize:12, fontWeight:600, color:'#374151' }}>{semKgHa.total} kg total</p>
               <p style={{ fontSize:10, color:'#6B7280' }}>{semKgHa.sacos} sacos × 50 kg</p>
