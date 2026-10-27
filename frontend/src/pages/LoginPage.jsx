@@ -136,7 +136,7 @@ export default function LoginPage() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 36 }}>
           {[
             { n: '5.571',  label: 'Municípios',   sub: 'analisados', cor: '#86efac' },
-            { n: '30+',    label: 'Anos de dados', sub: 'NASA POWER', cor: '#6ee7b7' },
+            { n: '32',     label: 'Anos de dados', sub: 'NASA POWER 1993–2024', cor: '#6ee7b7' },
             { n: '6',      label: 'Critérios',     sub: 'ZARC/EMBRAPA',cor:'#34d399' },
             { n: '100%',   label: 'Cobertura',     sub: 'nacional',   cor: '#10b981' },
           ].map(s => (
