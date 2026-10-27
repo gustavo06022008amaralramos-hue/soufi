@@ -197,7 +197,7 @@ export default function ManualPage() {
         <p style={{ fontSize: 11, color: '#9CA3AF', lineHeight: 1.6 }}>
           Telas disponíveis no menu: <strong>Dashboard</strong> (visão geral), <strong>Zoneamento</strong> (mapa),
           <strong> Históricos</strong> (estatísticas), <strong>Custos &amp; ROI</strong>, <strong>Comparador</strong>,
-          <strong> Variedades</strong>, <strong>Notícias</strong>, <strong>Parceiros</strong>,
+          <strong> Variedades</strong>, <strong>Fontes</strong>, <strong>Parceiros</strong>,
           <strong> Oportunidades</strong> e este <strong>Manual</strong>.
         </p>
       </Section>

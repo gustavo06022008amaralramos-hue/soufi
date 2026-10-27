@@ -70,6 +70,17 @@ body {
   .app-shell { height: 100dvh; }
 }
 
+/* ── Zoneamento em telas médias (notebook): o painel vazio do município
+   tomava 340px do mapa; abaixo de 1280px ele some e o painel com município
+   selecionado abre por cima do mapa, à direita, sem espremê-lo. ── */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .zon-painel-vazio { display: none !important; }
+  .zon-painel {
+    position: absolute !important; top: 0; right: 0; bottom: 0; z-index: 2500;
+    box-shadow: -8px 0 24px rgba(0,0,0,0.12);
+  }
+}
+
 /* ── Layout responsivo: abaixo de 768px a barra lateral vira gaveta ── */
 :root { --pad-y: 28px; --pad-x: 32px; }
 .app-main { padding: var(--pad-y) var(--pad-x); }
