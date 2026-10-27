@@ -93,19 +93,21 @@ export default function HistoricosPage({ municipios = [] }) {
   const distribUF = useMemo(() => gerarDistribuicaoUF(municipios, campo), [municipios, campo]);
 
   const dadosScore = useMemo(() => {
+    // Mesmos cortes da classificação do mapa (Apto ≥70, Parcial 40–69,
+    // Inapto <40), cada classe dividida em 2 para mostrar a distribuição.
     const faixas = [
-      { faixa: '83–100', label: 'Excelente',  count: 0, cor: '#16a34a' },
-      { faixa: '70–82',  label: 'Apto',       count: 0, cor: '#65a30d' },
-      { faixa: '50–69',  label: 'Marginal',   count: 0, cor: '#ca8a04' },
-      { faixa: '33–49',  label: 'Risco',      count: 0, cor: '#ea6c0a' },
-      { faixa: '0–32',   label: 'Inapto',     count: 0, cor: '#94a3b8' },
+      { faixa: '85–100', label: 'Apto',    count: 0, cor: '#1A7A3C' },
+      { faixa: '70–84',  label: 'Apto',    count: 0, cor: '#4f9d63' },
+      { faixa: '55–69',  label: 'Parcial', count: 0, cor: '#D4A017' },
+      { faixa: '40–54',  label: 'Parcial', count: 0, cor: '#e6c25c' },
+      { faixa: '0–39',   label: 'Inapto',  count: 0, cor: '#4A90C4' },
     ];
     municipios.forEach(m => {
       const s = m[campo] ?? 0;
-      if      (s >= 83) faixas[0].count++;
+      if      (s >= 85) faixas[0].count++;
       else if (s >= 70) faixas[1].count++;
-      else if (s >= 50) faixas[2].count++;
-      else if (s >= 33) faixas[3].count++;
+      else if (s >= 55) faixas[2].count++;
+      else if (s >= 40) faixas[3].count++;
       else              faixas[4].count++;
     });
     return faixas;

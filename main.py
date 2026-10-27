@@ -149,7 +149,9 @@ except FileNotFoundError:
 
 # Cache em memória do /municipios/mapa: o frontend faz poll a cada 10-20s por
 # usuário e a consulta paginada no Supabase é a rota mais pesada da API.
-MAPA_CACHE_TTL = 60  # segundos
+# 10 min: os dados só mudam quando os scripts de recálculo rodam, e uma
+# consulta fria pagina 5,5 mil linhas no Supabase (~5 s).
+MAPA_CACHE_TTL = 600  # segundos
 _mapa_cache = {"ts": 0.0, "dados": None}
 _progresso_cache = {"ts": 0.0, "dados": None}  # /coleta/progresso varre a mesma tabela
 _mapa_lock = threading.Lock()
@@ -202,6 +204,19 @@ def coleta_progresso():
         return resposta
     except Exception as e:
         raise erro_interno(e)
+
+
+@app.on_event("startup")
+def aquecer_cache():
+    """Preenche o cache das rotas pesadas logo que a API sobe (numa thread,
+    sem atrasar o start): o primeiro usuário não espera a consulta fria."""
+    def _aquecer():
+        for rota in (municipios_mapa, coleta_progresso):
+            try:
+                rota()
+            except Exception:
+                log.exception("Falha ao aquecer o cache de %s", rota.__name__)
+    threading.Thread(target=_aquecer, daemon=True).start()
 
 
 @app.get("/", tags=["Status"])

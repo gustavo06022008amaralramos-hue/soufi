@@ -73,31 +73,28 @@ export default function AppLayout({ apiOnline, onRetry }) {
             </div>
           )}
 
-          {/* API status */}
-          <div style={{
-            display:'flex', alignItems:'center', gap:5,
-            background: apiOnline ? 'rgba(26,122,60,0.07)' : 'rgba(220,38,38,0.07)',
-            border:`1px solid ${apiOnline ? 'rgba(26,122,60,0.2)' : 'rgba(220,38,38,0.2)'}`,
-            borderRadius:20, padding:'3px 10px',
-          }}>
-            {apiOnline
-              ? <Wifi    size={10} color="#1A7A3C" />
-              : <WifiOff size={10} color="#DC2626" />}
-            <span style={{ fontSize:10, fontWeight:500, color: apiOnline ? '#1A7A3C' : '#DC2626' }}>
-              {apiOnline === null ? 'Verificando...'
-               : apiOnline
-                 ? `API Online${latency ? ` · ${latency}ms` : ''}`
-                 : 'API Offline'}
-            </span>
-            <span style={{
-              width:5, height:5, borderRadius:'50%',
-              background: apiOnline ? '#1A7A3C' : apiOnline === null ? '#D4A017' : '#DC2626',
-              animation: apiOnline ? 'pulse 2s infinite' : 'none',
-            }} />
-          </div>
+          {/* API status — 3 estados: conectando (neutro), online, offline */}
+          {(() => {
+            const est = apiOnline === null
+              ? { cor:'#6B7280', fundo:'rgba(107,114,128,0.07)', borda:'rgba(107,114,128,0.2)', texto:'Conectando…', Icone:RefreshCw, girando:true }
+              : apiOnline
+                ? { cor:'#1A7A3C', fundo:'rgba(26,122,60,0.07)', borda:'rgba(26,122,60,0.2)', texto:`API online${latency ? ` · ${latency} ms` : ''}`, Icone:Wifi }
+                : { cor:'#DC2626', fundo:'rgba(220,38,38,0.07)', borda:'rgba(220,38,38,0.2)', texto:'API offline', Icone:WifiOff };
+            return (
+              <div role="status" aria-live="polite" style={{
+                display:'flex', alignItems:'center', gap:5,
+                background: est.fundo, border:`1px solid ${est.borda}`,
+                borderRadius:20, padding:'3px 10px',
+              }}>
+                <est.Icone size={10} color={est.cor} style={{ animation: est.girando ? 'spin 1s linear infinite' : 'none' }} />
+                <span style={{ fontSize:10, fontWeight:500, color: est.cor }}>{est.texto}</span>
+                {apiOnline && <span style={{ width:5, height:5, borderRadius:'50%', background:est.cor, animation:'pulse 2s infinite' }} />}
+              </div>
+            );
+          })()}
 
-          {/* Reconectar */}
-          {!apiOnline && (
+          {/* Reconectar — só quando a API está de fato offline */}
+          {apiOnline === false && (
             <button onClick={handleRetry} style={{
               display:'flex', alignItems:'center', gap:5,
               padding:'4px 10px', borderRadius:20, cursor:'pointer',
@@ -105,7 +102,7 @@ export default function AppLayout({ apiOnline, onRetry }) {
               color:'#2D6A4F', fontSize:10, fontWeight:500,
             }}>
               <RefreshCw size={10} style={{ animation: retrying ? 'spin 0.7s linear infinite' : 'none' }} />
-              {retrying ? 'Reconectando...' : 'Reconectar'}
+              {retrying ? 'Reconectando…' : 'Reconectar'}
             </button>
           )}
         </div>

@@ -325,7 +325,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
           <p style={{ fontSize:13, fontWeight:700, color:'#1B4332', marginBottom:16, letterSpacing:'-0.3px' }}>Como funciona</p>
           <div style={{ display:'flex', flexDirection:'column', gap:14 }}>
             {[
-              { n:'01', title:'Coleta climática', desc:'30 anos de dados mensais NASA POWER — temperatura, precipitação e risco de geada para cada município.' },
+              { n:'01', title:'Coleta climática', desc:'32 anos (1993–2024) de dados mensais NASA POWER — temperatura, precipitação e risco de geada para cada município.' },
               { n:'02', title:'Análise de solo', desc:'Teor de argila via SoilGrids (ISRIC) e classificação ZARC Tipo 1/2/3 para cevada cervejeira.' },
               { n:'03', title:'Score de aptidão', desc:'6 critérios ZARC/EMBRAPA calculam um score 0–100. Score ≥ 70 = Apto; 40–69 = Parcialmente Apto.' },
             ].map(p => (
@@ -390,10 +390,13 @@ export default function HomePage({ municipios = [], apiOnline }) {
             <p style={{ fontSize:11, fontWeight:700, color:'#1B4332', marginBottom:10 }}>Critérios ZARC (cevada)</p>
             <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
               {[
-                { label:'Temperatura',    val:'10 – 22°C' },
-                { label:'Precipitação',   val:'400 – 1200mm/ano' },
-                { label:'Altitude',       val:'≥ 800m' },
-                { label:'Solo ZARC',      val:'Tipo 2 ou 3' },
+                // mesmas faixas de criterios_cevada.py (fonte única)
+                { label:'Temperatura',      val:'10 – 22 °C' },
+                { label:'Precipitação',     val:'400 – 2000 mm/ano' },
+                { label:'Altitude',         val:'≥ 800 m' },
+                { label:'Risco de geada',   val:'< 30% ou ZARC' },
+                { label:'Solo ZARC',        val:'Tipo 2 ou 3' },
+                { label:'Chuva na colheita',val:'≤ 400 mm' },
               ].map(c => (
                 <div key={c.label} style={{ display:'flex', justifyContent:'space-between', alignItems:'center' }}>
                   <div style={{ display:'flex', alignItems:'center', gap:6 }}>
@@ -567,7 +570,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
         <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
           <div>
             <p style={{ fontSize:13, fontWeight:700, color:'#1B4332' }}>Cobertura Nacional — 5.571 Municípios</p>
-            <p style={{ fontSize:11, color:'#6B7280' }}>IBGE · Open-Meteo · SoilGrids · NASA POWER · 30 anos de dados climáticos</p>
+            <p style={{ fontSize:11, color:'#6B7280' }}>IBGE · Open-Meteo · SoilGrids · NASA POWER · 32 anos de dados climáticos (1993–2024)</p>
           </div>
           <div style={{ display:'flex', alignItems:'center', gap:5, background:'rgba(45,106,79,0.07)', border:'1px solid rgba(45,106,79,0.18)', borderRadius:20, padding:'4px 12px' }}>
             <span style={{ width:6, height:6, borderRadius:'50%', background:'#2D6A4F', display:'inline-block' }} />
