@@ -371,7 +371,7 @@ export default function MunicipioSidebar({ municipio, sazonalidade, loading, onC
                 padding:5,borderRadius:7,display:'flex',alignItems:'center' }}>
               <FileText size={13} />
             </button>
-            <button onClick={onClose} style={{ background:'rgba(255,255,255,0.8)',
+            <button onClick={onClose} aria-label="Fechar painel do município" title="Fechar" style={{ background:'rgba(255,255,255,0.8)',
               border:'1px solid #E5E7EB',cursor:'pointer',color:'#6B7280',
               padding:5,borderRadius:7,display:'flex',alignItems:'center' }}>
               <X size={13} />

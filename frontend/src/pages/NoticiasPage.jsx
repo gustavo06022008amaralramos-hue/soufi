@@ -85,7 +85,7 @@ export default function NoticiasPage() {
           <Search size={13} color="var(--text-faint)" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }} />
           <input
             value={busca} onChange={e => setBusca(e.target.value)}
-            placeholder="Buscar fonte..."
+            aria-label="Buscar fonte" placeholder="Buscar fonte..."
             style={{
               width: '100%', padding: '8px 10px 8px 30px',
               background: 'var(--bg-card)', border: '1px solid var(--border2)',

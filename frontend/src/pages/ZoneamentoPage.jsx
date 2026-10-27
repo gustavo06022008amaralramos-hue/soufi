@@ -427,11 +427,11 @@ function SearchBar({ municipios, onSelect, campo = 'score_aptidao' }) {
           onFocus={() => setAberto(true)}
           onBlur={() => setTimeout(() => setAberto(false), 160)}
           onKeyDown={onKey}
-          placeholder="Buscar município, UF ou código IBGE..."
+          aria-label="Buscar município, UF ou código IBGE" placeholder="Buscar município, UF ou código IBGE..."
           style={{ flex: 1, background: 'none', border: 'none', outline: 'none', fontSize: 12, color: '#374151' }}
         />
         {query
-          ? <button onClick={limpar} style={{ background:'none',border:'none',cursor:'pointer',padding:0,display:'flex' }}>
+          ? <button onClick={limpar} aria-label="Limpar busca" style={{ background:'none',border:'none',cursor:'pointer',padding:0,display:'flex' }}>
               <X size={13} color="#6B7280" />
             </button>
           : <kbd style={{ fontSize:9, color:'#9CA3AF', background:'#F3F4F6',

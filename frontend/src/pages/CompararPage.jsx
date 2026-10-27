@@ -355,7 +355,7 @@ export default function CompararPage({ municipios = [] }) {
                         value={busca[idx]}
                         onChange={e => { const b = [...busca]; b[idx] = e.target.value; setBusca(b); setAberto(idx); }}
                         onFocus={() => setAberto(idx)}
-                        placeholder={municipios.length ? 'Buscar município...' : 'Aguardando dados...'}
+                        aria-label="Buscar município para comparar" placeholder={municipios.length ? 'Buscar município...' : 'Aguardando dados...'}
                         disabled={!municipios.length}
                         style={{
                           width: '100%', padding: '9px 12px 9px 32px',
