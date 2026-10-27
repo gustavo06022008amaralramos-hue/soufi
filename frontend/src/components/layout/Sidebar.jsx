@@ -15,7 +15,7 @@ const NAV = [
   { to:'/custos',       icon:Calculator,      label:'Custos & ROI', destaque: true },
   { to:'/comparar',     icon:GitCompare,      label:'Comparador',   destaque: true },
   { to:'/variedades',   icon:Leaf,            label:'Variedades'   },
-  { to:'/noticias',     icon:Newspaper,       label:'Notícias'     },
+  { to:'/noticias',     icon:Newspaper,       label:'Fontes'       },
   { to:'/parceiros',    icon:Handshake,       label:'Parceiros'    },
   { to:'/oportunidades',icon:TrendingUp,      label:'Oportunidades'},
   { to:'/manual',       icon:BookOpen,        label:'Manual'       },

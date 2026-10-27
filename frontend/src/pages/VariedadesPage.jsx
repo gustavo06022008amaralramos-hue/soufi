@@ -37,7 +37,7 @@ function checarAptidao(cond) {
     { label: 'Temperatura', ok: cond.temp >= z.tempMin && cond.temp <= z.tempMax, faixa: `${z.tempMin}–${z.tempMax}°C` },
     { label: 'Precipitação', ok: cond.prec >= z.chuvaMin && cond.prec <= z.chuvaMax, faixa: `${z.chuvaMin}–${z.chuvaMax}mm` },
     { label: 'Altitude', ok: cond.alt >= z.altitude, faixa: `≥${z.altitude}m` },
-    { label: 'Risco de geada', ok: cond.geada <= z.maxGeada, faixa: `≤${z.maxGeada}%` },
+    { label: 'Risco de geada', ok: cond.geada < z.maxGeada, faixa: `<${z.maxGeada}%` },
     { label: 'Teor de argila', ok: cond.argila >= z.argila, faixa: `≥${z.argila}%` },
   ];
   const aprovados = criterios.filter(c => c.ok).length;
@@ -561,22 +561,22 @@ export default function VariedadesPage() {
 
   return (
     <div style={{ maxWidth: 1100, margin: '0 auto' }}>
-      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-        <div>
+      <div style={{ marginBottom: 20, display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ minWidth: 240 }}>
           <h1 style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 4 }}>Variedades</h1>
           <p style={{ fontSize: 12, color: 'var(--text-faint)' }}>Catálogo de cultivares Agrária / Embrapa para cevada cervejeira</p>
         </div>
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
           {/* Botões de ferramentas */}
           <button onClick={() => { setRecomAtivo(v => !v); setCalcAtivo(false); }} style={{
-            display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 11, fontWeight: 600,
             background: recomAtivo ? '#1B4332' : 'rgba(27,67,50,0.07)', color: recomAtivo ? '#fff' : '#1B4332',
             border: '1px solid rgba(27,67,50,0.25)', transition: 'all 0.15s',
           }}>
             <Wand2 size={12} /> Recomendador
           </button>
           <button onClick={() => { setCalcAtivo(v => !v); setRecomAtivo(false); }} style={{
-            display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', fontSize: 11, fontWeight: 600,
+            display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap', fontSize: 11, fontWeight: 600,
             background: calcAtivo ? '#0284c7' : 'rgba(2,132,199,0.07)', color: calcAtivo ? '#fff' : '#0284c7',
             border: '1px solid rgba(2,132,199,0.25)', transition: 'all 0.15s',
           }}>
@@ -594,7 +594,7 @@ export default function VariedadesPage() {
           ))}
           <div style={{ width: 1, height: 20, background: '#E5E7EB' }} />
           <button onClick={() => setCadastroAberto(true)} style={{
-            display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: 5, padding: '6px 12px', borderRadius: 8, cursor: 'pointer', whiteSpace: 'nowrap',
             fontSize: 11, fontWeight: 600, background: '#fff', color: '#374151', border: '1px dashed #9CA3AF',
           }}>
             <Plus size={12} /> Cadastrar cultivar

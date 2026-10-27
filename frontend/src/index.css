@@ -451,3 +451,8 @@ input[type=range]:disabled { opacity: 0.35; cursor: not-allowed; }
   z-index: 9999;
 }
 [data-tooltip]:hover::after { opacity: 1; }
+
+/* Acessibilidade: sem animações para quem pede menos movimento no sistema */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}

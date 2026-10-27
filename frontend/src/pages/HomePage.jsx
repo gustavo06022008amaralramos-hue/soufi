@@ -468,7 +468,7 @@ export default function HomePage({ municipios = [], apiOnline }) {
           <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:14 }}>
             <div style={{ display:'flex', alignItems:'center', gap:7 }}>
               <Newspaper size={13} color="#374151" />
-              <p style={{ fontSize:13, fontWeight:700, color:'#1B4332' }}>Últimas Notícias</p>
+              <p style={{ fontSize:13, fontWeight:700, color:'#1B4332' }}>Fontes de pesquisa</p>
             </div>
             <button onClick={()=>navigate('/noticias')} style={{
               background:'none', border:'none', fontSize:11, color:'#2D6A4F',

@@ -142,62 +142,54 @@ function LogoImage({ src, nome, cor }) {
 }
 
 function PartnerCard({ p }) {
+  const sombra = p.destaque ? `var(--shadow-lg), 0 0 0 1px ${p.border}` : 'var(--shadow)';
   return (
     <div style={{
       background: 'var(--bg-card)', border: `1px solid ${p.destaque ? p.border : 'var(--border)'}`,
-      borderRadius: 16, padding: '20px 22px',
-      boxShadow: p.destaque ? `var(--shadow-lg), 0 0 0 1px ${p.border}` : 'var(--shadow)',
-      transition: 'all 0.2s', display: 'flex', gap: 16, alignItems: 'flex-start',
-      gridColumn: p.destaque ? 'span 2' : undefined,
+      borderRadius: 16, padding: '18px 20px', boxShadow: sombra,
+      transition: 'transform 0.2s, box-shadow 0.2s', display: 'flex', flexDirection: 'column', gap: 12,
+      gridColumn: p.destaque ? '1 / -1' : undefined,
     }}
     onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `var(--shadow-lg), 0 0 0 1px ${p.border}`; }}
-    onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = p.destaque ? `var(--shadow-lg), 0 0 0 1px ${p.border}` : 'var(--shadow)'; }}
+    onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = sombra; }}
     >
-      <LogoImage src={p.logo} nome={p.nome} cor={p.cor} />
-
-      <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6, flexWrap: 'wrap' }}>
+      {/* Cabeçalho: logo · categoria + nome · link */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+        <LogoImage src={p.logo} nome={p.nome} cor={p.cor} />
+        <div style={{ flex: 1, minWidth: 0 }}>
           <span style={{
-            fontSize: 9, fontWeight: 700, padding: '3px 9px', borderRadius: 20,
+            display: 'inline-block', fontSize: 9, fontWeight: 700, padding: '3px 9px', borderRadius: 20,
             background: p.bg, color: p.cor, border: `1px solid ${p.border}`,
-            textTransform: 'uppercase', letterSpacing: 0.8,
-          }}>{p.categoria}</span>
-          {p.destaque && (
-            <span style={{
-              fontSize: 9, fontWeight: 700, padding: '3px 9px', borderRadius: 20,
-              background: 'rgba(26,107,66,0.1)', color: 'var(--cyan)',
-              border: '1px solid rgba(26,107,66,0.25)',
-            }}>⭐ Parceiro Principal</span>
-          )}
+            textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 5,
+          }}>{p.destaque ? '⭐ ' : ''}{p.categoria}</span>
+          <h3 style={{ fontSize: 16, fontWeight: 800, color: p.cor, lineHeight: 1.25 }}>{p.nome}</h3>
         </div>
-
-        <h3 style={{ fontSize: 16, fontWeight: 800, color: p.cor, marginBottom: 6 }}>{p.nome}</h3>
-        <p style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.55, marginBottom: 10 }}>{p.descricao}</p>
-
-        <div style={{
-          display: 'flex', alignItems: 'center', gap: 7,
-          padding: '6px 10px', borderRadius: 8, background: p.bg,
-          border: `1px solid ${p.border}`,
-        }}>
-          <p.icon size={11} color={p.cor} />
-          <p style={{ fontSize: 11, color: p.cor, fontWeight: 500 }}>{p.papel}</p>
-        </div>
+        {p.link && (
+          <a href={p.link} target="_blank" rel="noopener noreferrer" aria-label={`Site de ${p.nome}`} style={{
+            display: 'flex', alignItems: 'center', gap: 4,
+            padding: '6px 10px', borderRadius: 8, fontSize: 11,
+            background: p.bg, border: `1px solid ${p.border}`,
+            color: p.cor, textDecoration: 'none', fontWeight: 500,
+            transition: 'opacity 0.15s', flexShrink: 0, alignSelf: 'flex-start',
+          }}
+          onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
+          onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          >
+            <ExternalLink size={11} />Site
+          </a>
+        )}
       </div>
 
-      {p.link && (
-        <a href={p.link} target="_blank" rel="noopener noreferrer" style={{
-          display: 'flex', alignItems: 'center', gap: 4,
-          padding: '6px 10px', borderRadius: 8, fontSize: 11,
-          background: p.bg, border: `1px solid ${p.border}`,
-          color: p.cor, textDecoration: 'none', fontWeight: 500,
-          transition: 'opacity 0.15s', flexShrink: 0, alignSelf: 'flex-start',
-        }}
-        onMouseEnter={e => e.currentTarget.style.opacity = '0.75'}
-        onMouseLeave={e => e.currentTarget.style.opacity = '1'}
-        >
-          <ExternalLink size={11} />Site
-        </a>
-      )}
+      <p style={{ fontSize: 12.5, color: 'var(--text-muted)', lineHeight: 1.6, maxWidth: '70ch' }}>{p.descricao}</p>
+
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: 7, marginTop: 'auto',
+        padding: '6px 10px', borderRadius: 8, background: p.bg,
+        border: `1px solid ${p.border}`,
+      }}>
+        <p.icon size={11} color={p.cor} style={{ flexShrink: 0 }} />
+        <p style={{ fontSize: 11, color: p.cor, fontWeight: 500 }}>{p.papel}</p>
+      </div>
     </div>
   );
 }
@@ -220,7 +212,7 @@ export default function ParceirosPage() {
       {/* Grid de parceiros */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(2, 1fr)',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
         gap: 14,
       }}>
         {PARCEIROS.map(p => <PartnerCard key={p.id} p={p} />)}

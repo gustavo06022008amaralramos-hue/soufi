@@ -127,15 +127,16 @@ function gerarAmortizacao(pv, taxaAnual, meses, nRows = 8) {
 /* ── Componentes UI ──────────────────────────────────── */
 function KpiCard({ icon: Icon, label, value, sub, cor='#1B4332', bg='#F0F7F2', border='rgba(45,106,79,0.18)' }) {
   return (
-    <div style={{ background:bg, border:`1px solid ${border}`, borderRadius:12, padding:'16px 18px', display:'flex', alignItems:'flex-start', gap:12 }}>
-      <div style={{ width:36, height:36, borderRadius:9, background:`${cor}18`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
-        <Icon size={16} color={cor} />
+    <div style={{ background:bg, border:`1px solid ${border}`, borderRadius:12, padding:'14px 16px', minWidth:0 }}>
+      <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:8 }}>
+        <div style={{ width:28, height:28, borderRadius:8, background:`${cor}18`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>
+          <Icon size={14} color={cor} />
+        </div>
+        <p style={{ fontSize:10, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.8, lineHeight:1.3 }}>{label}</p>
       </div>
-      <div>
-        <p style={{ fontSize:10, color:'#6B7280', textTransform:'uppercase', letterSpacing:0.8, marginBottom:2 }}>{label}</p>
-        <p style={{ fontSize:22, fontWeight:800, color:cor, lineHeight:1 }}>{value}</p>
-        {sub && <p style={{ fontSize:10, color:'#9CA3AF', marginTop:3 }}>{sub}</p>}
-      </div>
+      <p style={{ fontSize:'clamp(18px, 1.9vw, 24px)', fontWeight:800, color:cor, lineHeight:1.1,
+        whiteSpace:'nowrap', fontVariantNumeric:'tabular-nums' }}>{value}</p>
+      {sub && <p style={{ fontSize:10, color:'#9CA3AF', marginTop:4 }}>{sub}</p>}
     </div>
   );
 }
@@ -299,7 +300,7 @@ export default function CustosPage() {
       </div>
 
       {/* ── KPIs principais ── */}
-      <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:14, marginBottom:20 }}>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(160px, 1fr))', gap:12, marginBottom:20 }}>
         <KpiCard icon={DollarSign} label="Receita Bruta Total" value={fmtR(r.receita)} sub={`${fmtR(r.receita_ha)}/ha`} cor="#1A7A3C" bg="#F0FDF4" border="rgba(26,122,60,0.2)" />
         <KpiCard icon={Package} label="Custo de Produção" value={fmtR(r.custo_total)} sub={`${fmtR(r.custo_total_ha)}/ha`} cor="#0284c7" bg="#EFF6FF" border="rgba(2,132,199,0.2)" />
         <KpiCard
