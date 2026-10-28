@@ -1,38 +1,37 @@
 # Deploy do SOUFII
 
-São dois projetos separados na Vercel, a partir do mesmo repositório:
+Projetos na Vercel, a partir do mesmo repositório:
 
 | Projeto | Pasta raiz | O que é |
 |---|---|---|
 | `soufi-sigma` (já existe) | `frontend` | o site (React/Vite) |
 | `soufi-api` (novo) | `./` (raiz) | a API (FastAPI, `main.py`) |
 
-## 1. Criar o projeto da API
+## Opção A (recomendada): site e API no MESMO projeto da Vercel (`soufi-sigma`)
 
-1. Em vercel.com: **Add New → Project** → importe o repositório `soufi`.
-2. **Project Name:** `soufi-api`.
-3. **Framework Preset:** `FastAPI` (se não aparecer, `Other`).
-4. **Root Directory:** deixe `./` (não troque para `frontend`).
-5. **Build and Output Settings:** deixe tudo no padrão.
-6. **Environment Variables** (as mesmas do `.env` local ou do painel do Render):
-   - `SUPABASE_URL`
-   - `SUPABASE_KEY`
-   - opcionais: `ALLOWED_ORIGINS` (ex.: `https://soufi-sigma.vercel.app`), `RATE_LIMIT_POR_MIN` (padrão 300)
-7. **Deploy.**
-8. Teste abrindo `https://soufi-api.vercel.app/` (ou a URL que a Vercel mostrar). Tem que aparecer
-   `"commit"` com o último commit do GitHub e `"rotas": 14` ou mais.
+O `vercel.json` da raiz compila o site (`frontend/`) e publica a API como função Python em
+`/api` (`api/index.py`, que repassa para o `main.py`). O site chama a API no próprio endereço.
 
-## 2. Apontar o site para a API nova
+1. Projeto **soufi-sigma → Settings → General → Root Directory**: troque `frontend` por **`./`**
+   (deixe o campo vazio / raiz) e salve.
+2. **Settings → Build & Deployment → Framework Preset:** **Other**. Deixe Build/Install/Output
+   sem override (o `vercel.json` já define).
+3. **Settings → Environment Variables**, em Production:
+   - `SUPABASE_URL` e `SUPABASE_KEY` (mesmos valores do `.env`/Render)
+   - `VITE_API_URL` = **`/api`**
+4. **Deployments → ⋯ → Redeploy** (desmarque "Use existing Build Cache").
+5. Teste:
+   - `https://soufi-sigma.vercel.app/api/` → `"rotas": 14` ou mais e `"commit"` preenchido
+   - `https://soufi-sigma.vercel.app/zoneamento` abre direto (antes dava 404)
+   - Zoneamento → Guarapuava → aba **Seguro**: "Época de semeadura" e GDD aparecem
 
-1. No projeto `soufi-sigma`: **Settings → Environment Variables → Add**
-   - Key: `VITE_API_URL`
-   - Value: a URL da API do passo 1 (sem barra no final)
-   - Environment: Production (e Preview, se quiser)
-2. **Deployments** → no deploy mais recente, **⋯ → Redeploy** (desmarque "Use existing Build Cache").
-3. Teste no site: Zoneamento → abra Guarapuava → aba **Seguro**. A barra "Época de semeadura" e o
-   card de GDD têm que aparecer (antes mostravam "Não foi possível consultar").
+Para voltar atrás: Root Directory de novo em `frontend` e apague `VITE_API_URL`.
 
-A variável `VITE_API_URL` da Vercel tem prioridade sobre o `frontend/.env.production` do repositório.
+## Opção B: API num projeto separado (`soufi-api`)
+
+1. **Add New → Project** → importe `soufi` → Project Name `soufi-api`, Framework **FastAPI**
+   (ou Other), Root Directory **`./`**, variáveis `SUPABASE_URL` e `SUPABASE_KEY` → Deploy.
+2. No `soufi-sigma`: variável `VITE_API_URL` = URL do `soufi-api` (sem barra no final) → Redeploy.
 
 ## 3. Conferências depois do deploy
 
